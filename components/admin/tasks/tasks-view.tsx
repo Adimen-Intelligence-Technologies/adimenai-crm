@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -41,16 +41,33 @@ export function TasksView({ initialTasks }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [, startTransition] = useTransition();
 
-  // Auto-sync desde Excel al cargar la página
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function runSync() {
+    try {
+      const res = await fetch("/api/tasks/sync-excel", { method: "POST" });
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        tasks?: Task[];
+        created?: number;
+        updated?: number;
+        deleted?: number;
+      };
+      if (data.tasks) {
+        setTasks(data.tasks);
+      }
+    } catch {
+      // Ignorar errores de polling silenciosamente
+    }
+  }
+
+  // Sincronización inicial + polling cada 30s
   useEffect(() => {
-    fetch("/api/tasks/sync-excel", { method: "POST" })
-      .then((r) => r.json())
-      .then((result) => {
-        if (result.created || result.updated) {
-          window.location.reload();
-        }
-      })
-      .catch(() => {});
+    runSync();
+    pollRef.current = setInterval(runSync, 30000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, []);
 
   const sensors = useSensors(
@@ -206,15 +223,16 @@ export function TasksView({ initialTasks }: Props) {
         throw new Error(data?.error ?? "Error al sincronizar");
       }
       const result = (await res.json()) as {
-        created: number;
-        updated: number;
-        sheet: string;
+        created?: number;
+        updated?: number;
+        deleted?: number;
+        sheet?: string;
+        tasks?: Task[];
       };
+      if (result.tasks) setTasks(result.tasks);
       alert(
-        `Sincronizado desde hoja ${result.sheet}: ${result.created} creadas, ${result.updated} actualizadas.`
+        `Sincronizado: ${result.created ?? 0} creadas, ${result.updated ?? 0} actualizadas, ${result.deleted ?? 0} eliminadas.`
       );
-      // Recargar la página para reflejar cambios
-      window.location.reload();
     } catch (err) {
       alert(
         err instanceof Error ? err.message : "Error al sincronizar desde Excel"
@@ -399,25 +417,24 @@ function computeOptimistic(
       (t) => colTasks.find((c) => c._id === t._id) ?? t
     );
   } else {
-    next = next
-      .filter((t) => t.column !== fromColumn || t._id === activeId)
-      .map((t) =>
-        t.column === fromColumn && t.order > fromOrder
-          ? { ...t, order: t.order - 1 }
-          : t
-      );
-    next = next
-      .filter((t) => t.column !== targetColumn || t._id === activeId)
-      .map((t) =>
-        t.column === targetColumn && t.order >= targetOrder
-          ? { ...t, order: t.order + 1 }
-          : t
-      );
-    next = next.map((t) =>
-      t._id === activeId
-        ? { ...t, column: targetColumn, order: targetOrder }
-        : t
-    );
+    next = next.map((t) => {
+      if (t.column === fromColumn && t.order > fromOrder && t._id !== activeId) {
+        return { ...t, order: t.order - 1 };
+      }
+      return t;
+    });
+    next = next.map((t) => {
+      if (t._id === activeId) {
+        return { ...t, column: targetColumn, order: targetOrder };
+      }
+      return t;
+    });
+    next = next.map((t) => {
+      if (t.column === targetColumn && t.order >= targetOrder && t._id !== activeId) {
+        return { ...t, order: t.order + 1 };
+      }
+      return t;
+    });
   }
 
   return next;

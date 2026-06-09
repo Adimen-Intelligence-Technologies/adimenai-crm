@@ -10,8 +10,8 @@ export async function POST() {
       );
     }
 
-    const result = await syncTasksFromExcel();
-    return NextResponse.json(result);
+    const { tasks, ...result } = await syncTasksFromExcel();
+    return NextResponse.json({ ...result, tasks });
   } catch (err) {
     console.error("Error sincronizando desde Excel:", err);
     return NextResponse.json(

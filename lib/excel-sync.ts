@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { listTasks, createTask, updateTask } from "@/lib/repositories/tasks";
+import { listTasks, createTask, updateTask, deleteTask } from "@/lib/repositories/tasks";
 import type { Task } from "@/lib/repositories/tasks";
 
 const ASSIGNEE_MAP: Record<string, string> = {
@@ -99,7 +99,7 @@ export async function syncTasksFromExcel() {
 
   let created = 0;
   let updated = 0;
-  const now = new Date().toISOString();
+  let deleted = 0;
 
   for (const ex of excelTasks) {
     const key = normalizeKey(ex.scope, ex.title);
@@ -109,7 +109,6 @@ export async function syncTasksFromExcel() {
       const isPending = existing.column === "backlog" || existing.column === "in_progress";
       const shouldBePending = ex.column === "backlog";
 
-      // Only update if the done/pending status actually changed
       if (isPending !== shouldBePending) {
         await updateTask(existing._id, {
           column: shouldBePending ? "backlog" : "done",
@@ -117,7 +116,6 @@ export async function syncTasksFromExcel() {
         });
         updated++;
       } else if (existing.assignee !== ex.assignee) {
-        // Update assignee even if status didn't change
         await updateTask(existing._id, { assignee: ex.assignee });
         updated++;
       }
@@ -134,10 +132,25 @@ export async function syncTasksFromExcel() {
     }
   }
 
+  // Delete done tasks that no longer appear in Excel
+  const excelKeys = new Set(excelTasks.map((ex) => normalizeKey(ex.scope, ex.title)));
+  for (const dbTask of dbTasks) {
+    if (dbTask.column !== "done") continue;
+    const key = normalizeKey(dbTask.scope, dbTask.title);
+    if (!excelKeys.has(key)) {
+      await deleteTask(dbTask._id);
+      deleted++;
+    }
+  }
+
+  const allTasks = await listTasks();
+
   return {
     created,
     updated,
+    deleted,
     total: excelTasks.length,
     sheet: latestSheetName,
+    tasks: allTasks,
   };
 }

@@ -5,6 +5,7 @@ import {
   taskColumnEnum,
 } from "@/lib/schemas/task";
 import { createTask, listTasks } from "@/lib/repositories/tasks";
+import { scheduleAutoExport } from "@/lib/auto-export";
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const task = await createTask(parsed.data);
+    scheduleAutoExport();
     return NextResponse.json(task, { status: 201 });
   } catch (err) {
     console.error("POST /api/tasks", err);

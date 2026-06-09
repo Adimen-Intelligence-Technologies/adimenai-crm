@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { moveTask } from "@/lib/repositories/tasks";
+import { scheduleAutoExport } from "@/lib/auto-export";
 import { taskColumnEnum } from "@/lib/schemas/task";
 
 const moveSchema = z.object({
@@ -29,6 +30,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         { status: 404 }
       );
     }
+    scheduleAutoExport();
     return NextResponse.json(result);
   } catch (err) {
     console.error("PATCH /api/tasks/[id]/move", err);

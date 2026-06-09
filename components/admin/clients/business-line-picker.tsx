@@ -41,10 +41,14 @@ const lines: Array<{
   },
 ];
 
-export function BusinessLinePicker({ allReady }: { allReady?: boolean }) {
-  const cardLines = allReady
+export function BusinessLinePicker({ allReady, baseHref }: { allReady?: boolean; baseHref?: string }) {
+  const cardLines = (allReady
     ? lines.map((l) => ({ ...l, state: "ready" as CardState }))
-    : lines;
+    : lines
+  ).map((l) => ({
+    ...l,
+    href: baseHref ? `${baseHref}/${l.id}` : l.href,
+  }));
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

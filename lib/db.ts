@@ -40,3 +40,8 @@ export async function getClientsCollection() {
   const db = await getDb();
   return db.collection("clients");
 }
+
+export async function getTasksCollection() {
+  const db = await getDb();
+  return db.collection("tasks");
+}

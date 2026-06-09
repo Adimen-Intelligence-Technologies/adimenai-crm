@@ -1,4 +1,4 @@
-import { Users, type LucideIcon } from "lucide-react";
+import { ListChecks, Users, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -16,6 +16,7 @@ export const navGroups: NavGroup[] = [
     label: "Operación",
     items: [
       { label: "Clientes", href: "/admin/clients", icon: Users },
+      { label: "Tareas", href: "/admin/tasks", icon: ListChecks },
     ],
   },
 ];

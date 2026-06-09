@@ -23,8 +23,8 @@ export function ClientTable({ clients }: { clients: Client[] }) {
             <th className="px-4 py-2.5">Nombre</th>
             <th className="hidden px-4 py-2.5 sm:table-cell">Línea</th>
             <th className="hidden px-4 py-2.5 md:table-cell">Tipo</th>
-            <th className="hidden px-4 py-2.5 lg:table-cell">Ciudad</th>
-            <th className="hidden px-4 py-2.5 lg:table-cell">Teléfono</th>
+            <th className="px-4 py-2.5">Ciudad</th>
+            <th className="hidden px-4 py-2.5 md:table-cell">Teléfono</th>
             <th className="px-4 py-2.5 text-right">Acciones</th>
           </tr>
         </thead>
@@ -50,7 +50,10 @@ export function ClientTable({ clients }: { clients: Client[] }) {
 }
 
 function ClientRow({ client }: { client: Client }) {
-  const primaryAddress = client.addresses?.[0];
+  const primaryAddress =
+    client.addresses?.find((a) => a.isPrimary) ??
+    client.addresses?.find((a) => a.city?.trim()) ??
+    client.addresses?.[0];
   const primaryPhone = client.phones?.[0];
   const theme = businessLineTheme[client.businessLine];
 
@@ -77,11 +80,11 @@ function ClientRow({ client }: { client: Client }) {
           ? herrikonektTypeLabels[client.type as HerrikonektType] ?? client.type
           : "—"}
       </td>
-      <td className="hidden px-4 py-3 text-zinc-600 lg:table-cell">
-        {primaryAddress?.city ?? "—"}
+      <td className="px-4 py-3 text-zinc-600">
+        {primaryAddress?.city || "—"}
       </td>
-      <td className="hidden px-4 py-3 text-zinc-600 lg:table-cell">
-        {primaryPhone ?? "—"}
+      <td className="hidden px-4 py-3 text-zinc-600 md:table-cell">
+        {primaryPhone || "—"}
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center justify-end gap-1">

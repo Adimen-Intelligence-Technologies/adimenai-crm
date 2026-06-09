@@ -40,6 +40,8 @@ export function DriveExplorer({ rootFolderId, rootName }: Props) {
   const [creating, setCreating] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [preview, setPreview] = useState<DriveItem | null>(null);
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const current = path[path.length - 1];
@@ -111,6 +113,7 @@ export function DriveExplorer({ rootFolderId, rootName }: Props) {
   }
 
   async function handleUpload(file: File) {
+    setUploading(true);
     const form = new FormData();
     form.append("file", file);
     form.append("parentId", current.id);
@@ -119,10 +122,17 @@ export function DriveExplorer({ rootFolderId, rootName }: Props) {
         method: "POST",
         body: form,
       });
-      if (!res.ok) throw new Error("Error al subir archivo");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(data?.error ?? "Error al subir archivo");
+      }
       await fetchFolder(current.id);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Error al subir archivo");
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -224,10 +234,11 @@ export function DriveExplorer({ rootFolderId, rootName }: Props) {
             size="sm"
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
             className="gap-1"
           >
-            <Upload className="size-4" />
-            Subir archivo
+            <Upload className={cn("size-4", uploading && "animate-bounce")} />
+            {uploading ? "Subiendo…" : "Subir archivo"}
           </Button>
           <input
             ref={fileInputRef}
@@ -307,12 +318,16 @@ export function DriveExplorer({ rootFolderId, rootName }: Props) {
                   img && "cursor-pointer"
                 )}
               >
-                {img ? (
+                {img && !brokenImages.has(item.id) ? (
                   <div className="flex size-14 items-center justify-center overflow-hidden rounded-md">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`/api/drive/file/${item.id}`}
                       alt={item.name}
                       className="max-h-full max-w-full object-contain"
+                      onError={() =>
+                        setBrokenImages((prev) => new Set(prev).add(item.id))
+                      }
                     />
                   </div>
                 ) : (

@@ -1,4 +1,4 @@
-import { uploadDriveFile } from "@/lib/drive-files";
+import { google } from "googleapis";
 
 export async function POST(req: Request) {
   try {
@@ -13,17 +13,42 @@ export async function POST(req: Request) {
       );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const item = await uploadDriveFile(
-      parentId,
-      file.name,
-      file.type || "application/octet-stream",
-      buffer
-    );
+    const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT!);
+    const auth = new google.auth.JWT({
+      email: credentials.client_email,
+      key: credentials.private_key,
+      scopes: ["https://www.googleapis.com/auth/drive"],
+    });
 
-    return Response.json({ item });
+    const drive = google.drive({ version: "v3", auth });
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const mimeType = file.type || "application/octet-stream";
+
+    const res = await drive.files.create({
+      requestBody: {
+        name: file.name,
+        parents: [parentId],
+      },
+      media: {
+        mimeType,
+        body: buffer,
+      },
+      fields: "id, name, mimeType",
+    });
+
+    return Response.json({
+      item: {
+        id: res.data.id!,
+        name: res.data.name!,
+        mimeType: res.data.mimeType!,
+      },
+    });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    return Response.json({ error: message }, { status: 500 });
+    console.error("Upload error:", err);
+    return Response.json(
+      { error: err instanceof Error ? err.message : "Error desconocido" },
+      { status: 500 }
+    );
   }
 }

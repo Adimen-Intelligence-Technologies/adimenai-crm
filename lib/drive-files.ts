@@ -83,16 +83,17 @@ export async function getDriveFolderName(folderId: string): Promise<string> {
 
 export async function downloadDriveFile(fileId: string): Promise<{
   data: Buffer;
-  mimeType: string;
 }> {
   const drive = getClient();
   const res = await drive.files.get(
     { fileId, alt: "media" },
-    { responseType: "arraybuffer" }
+    { responseType: "stream" }
   );
-  const mimeType =
-    res.headers?.["content-type"] ?? "application/octet-stream";
-  return { data: Buffer.from(res.data as ArrayBuffer), mimeType };
+  const chunks: Buffer[] = [];
+  for await (const chunk of res.data as unknown as AsyncIterable<Buffer>) {
+    chunks.push(chunk);
+  }
+  return { data: Buffer.concat(chunks) };
 }
 
 export async function getDriveFileMetadata(fileId: string): Promise<{

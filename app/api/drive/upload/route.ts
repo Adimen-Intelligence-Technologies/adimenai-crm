@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { Readable } from "stream";
 
 export async function POST(req: Request) {
   try {
@@ -21,10 +22,10 @@ export async function POST(req: Request) {
     });
 
     const drive = google.drive({ version: "v3", auth });
-
     const buffer = Buffer.from(await file.arrayBuffer());
     const mimeType = file.type || "application/octet-stream";
 
+    // Upload as multipart (media + metadata) with a stream body
     const res = await drive.files.create({
       requestBody: {
         name: file.name,
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
       },
       media: {
         mimeType,
-        body: buffer,
+        body: Readable.from(buffer),
       },
       fields: "id, name, mimeType",
     });
@@ -45,9 +46,14 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
-    console.error("Upload error:", err);
+    const message = err instanceof Error ? err.message : "Error desconocido";
     return Response.json(
-      { error: err instanceof Error ? err.message : "Error desconocido" },
+      {
+        error: message,
+        ...(process.env.NODE_ENV === "development" && {
+          stack: err instanceof Error ? err.stack : undefined,
+        }),
+      },
       { status: 500 }
     );
   }

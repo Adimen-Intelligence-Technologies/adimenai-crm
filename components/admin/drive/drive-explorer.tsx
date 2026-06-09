@@ -130,7 +130,11 @@ export function DriveExplorer({ rootFolderId, rootName }: Props) {
       }
       await fetchFolder(current.id);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al subir archivo");
+      alert(
+        err instanceof Error
+          ? "Error al subir archivo: " + err.message
+          : "Error al subir archivo"
+      );
     } finally {
       setUploading(false);
     }

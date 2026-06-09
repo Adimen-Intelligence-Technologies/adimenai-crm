@@ -13,18 +13,14 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { ExternalLink, FileDown, FileSpreadsheet, LayoutGrid, Plus, RefreshCw, X } from "lucide-react";
+import { ExternalLink, FileDown, FileSpreadsheet, LayoutGrid, Plus, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  taskAssigneeEnum,
-  taskAssigneeLabels,
   taskColumnOrder,
-  type TaskAssignee,
   type TaskColumn,
 } from "@/lib/schemas/task";
 import type { Task } from "@/lib/repositories/tasks";
-import { AssigneeAvatar } from "./assignee-avatar";
 import { KanbanColumn } from "./kanban-column";
 import { TaskCard } from "./task-card";
 import { TaskForm } from "./task-form";
@@ -39,10 +35,10 @@ type Props = {
 export function TasksView({ initialTasks }: Props) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [assignee, setAssignee] = useState<TaskAssignee | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [view, setView] = useState<ViewMode>("sheet");
+  const [searchQuery, setSearchQuery] = useState("");
   const [, startTransition] = useTransition();
 
   // Auto-sync desde Excel al cargar la página
@@ -65,9 +61,14 @@ export function TasksView({ initialTasks }: Props) {
   );
 
   const filtered = useMemo(() => {
-    if (!assignee) return tasks;
-    return tasks.filter((t) => t.assignee === assignee);
-  }, [tasks, assignee]);
+    if (!searchQuery.trim()) return tasks;
+    const q = searchQuery.toLowerCase();
+    return tasks.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        t.scope.toLowerCase().includes(q)
+    );
+  }, [tasks, searchQuery]);
 
   const tasksByColumn: Record<TaskColumn, Task[]> = {
     backlog: [],
@@ -288,65 +289,34 @@ export function TasksView({ initialTasks }: Props) {
             <FileDown className="size-3.5" />
             {exporting ? "Exportando…" : "Exportar a Excel"}
           </Button>
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-            className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
-          >
-            <Plus />
-            Nueva tarea
-          </Button>
-        </div>
-      </header>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          {assignee && (
-            <button
-              type="button"
-              onClick={() => setAssignee(null)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
-            >
-              Filtrando por {taskAssigneeLabels[assignee]}
-              <X className="size-3.5 text-zinc-400" />
-            </button>
-          )}
-          <div className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white p-1">
-            {taskAssigneeEnum.options.map((a) => (
-              <button
-                key={a}
-                type="button"
-                onClick={() => setAssignee(assignee === a ? null : a)}
-                className={cn(
-                  "rounded-sm p-1 transition-colors",
-                  assignee === a
-                    ? "ring-2 ring-[#3B1E8A] ring-offset-1"
-                    : "opacity-50 hover:opacity-100"
-                )}
-                aria-label={`Filtrar por ${taskAssigneeLabels[a]}`}
-              >
-                <AssigneeAvatar assignee={a} size="sm" />
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {view === "sheet" ? (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-end rounded-lg border border-zinc-200 bg-white p-3">
+          {view === "sheet" && (
             <a
               href="https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md bg-[#3B1E8A] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#2D1666]"
+              className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
             >
               <ExternalLink className="size-3.5" />
               Editar en Drive
             </a>
-          </div>
+          )}
+          {view !== "sheet" && (
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+              className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
+            >
+              <Plus />
+              Nueva tarea
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {view === "sheet" ? (
+        <div className="flex flex-col gap-4">
           <div className="overflow-hidden rounded-lg border border-zinc-200">
             <iframe
               src="https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit?widget=true&headers=0"
@@ -356,28 +326,40 @@ export function TasksView({ initialTasks }: Props) {
           </div>
         </div>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {taskColumnOrder.map((col) => (
-              <KanbanColumn
-                key={col}
-                column={col}
-                tasks={tasksByColumn[col]}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))}
+        <div className="flex flex-col gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Buscar tareas por título o ámbito…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#3B1E8A] focus:outline-none focus:ring-1 focus:ring-[#3B1E8A]"
+            />
           </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {taskColumnOrder.map((col) => (
+                <KanbanColumn
+                  key={col}
+                  column={col}
+                  tasks={tasksByColumn[col]}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
 
-          <DragOverlay>
-            {activeTask ? <TaskCard task={activeTask} /> : null}
-          </DragOverlay>
-        </DndContext>
+            <DragOverlay>
+              {activeTask ? <TaskCard task={activeTask} /> : null}
+            </DragOverlay>
+          </DndContext>
+        </div>
       )}
 
       <TaskForm

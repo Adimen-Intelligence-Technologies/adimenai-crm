@@ -38,10 +38,13 @@ export default function AdminDashboardPage() {
   return (
     <>
       <PageHeader
-        title="Panel"
-        description="Resumen de la actividad de tu empresa"
+        title="Resumen de tu empresa"
+        description="Una vista rápida de clientes, embudos, tareas e ingresos."
         actions={
-          <Button size="sm" className="gap-1.5">
+          <Button
+            size="lg"
+            className="rounded-full bg-[#7252FF] px-6 text-base font-semibold text-white hover:bg-[#6c4cff]"
+          >
             <Plus />
             Nuevo cliente
           </Button>
@@ -59,20 +62,20 @@ export default function AdminDashboardPage() {
           title="Actividad reciente"
           description="Últimos movimientos del equipo"
         >
-          <ul className="flex flex-col divide-y divide-border">
+          <ul className="flex flex-col divide-y divide-zinc-100">
             {activity.map((a) => (
               <li key={a.name} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                <Avatar size="sm" className="ring-1 ring-border">
-                  <AvatarFallback className="bg-foreground text-background text-[11px] font-semibold">
+                <Avatar size="sm" className="ring-1 ring-zinc-200">
+                  <AvatarFallback className="bg-[#6C47FF] text-white text-[11px] font-semibold">
                     {a.initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-foreground">
-                    <span className="font-medium text-foreground">{a.name}</span>{" "}
-                    <span className="text-muted-foreground">{a.action}</span>
+                  <p className="truncate text-sm text-zinc-900">
+                    <span className="font-semibold">{a.name}</span>{" "}
+                    <span className="text-zinc-500">{a.action}</span>
                   </p>
-                  <p className="text-xs text-muted-foreground">{a.time}</p>
+                  <p className="text-xs text-zinc-500">{a.time}</p>
                 </div>
               </li>
             ))}
@@ -83,17 +86,17 @@ export default function AdminDashboardPage() {
           title="Próximas tareas"
           description="Pendientes para esta semana"
         >
-          <ul className="flex flex-col gap-2.5">
+          <ul className="flex flex-col gap-2">
             {tasks.map((t) => (
               <li
                 key={t.title}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2.5"
+                className="flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-white px-3 py-2.5"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
+                  <p className="truncate text-sm font-medium text-zinc-900">
                     {t.title}
                   </p>
-                  <p className="text-xs text-muted-foreground">{t.tag}</p>
+                  <p className="text-xs text-zinc-500">{t.tag}</p>
                 </div>
                 <Badge
                   variant="outline"

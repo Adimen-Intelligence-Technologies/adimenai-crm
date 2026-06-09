@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Lato } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
+
+const lato = Lato({
+  variable: "--font-lato",
+  subsets: ["latin"],
+  weight: ["100", "300", "400", "700", "900"],
+  display: "swap",
+});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,7 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} h-full antialiased`}>
+    <html
+      lang="es"
+      className={`${lato.variable} ${inter.variable} h-full antialiased`}
+    >
       <body className="min-h-full bg-background text-foreground">
         <TooltipProvider delayDuration={150}>{children}</TooltipProvider>
       </body>

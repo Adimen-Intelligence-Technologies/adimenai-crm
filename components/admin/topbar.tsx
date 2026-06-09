@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { getBreadcrumb } from "@/lib/nav";
+import { SidebarToggle } from "./sidebar-toggle";
 import { TopbarActions } from "./topbar-actions";
 import { TopbarSearch } from "./topbar-search";
 
@@ -10,12 +11,13 @@ export function Topbar() {
   const title = getBreadcrumb(pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-zinc-200 bg-white px-4 md:px-6">
+      <SidebarToggle />
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
+        <h1 className="truncate text-lg font-semibold tracking-tight text-zinc-950">
           {title}
         </h1>
-        <p className="hidden text-xs text-muted-foreground sm:block">
+        <p className="hidden text-xs text-zinc-500 sm:block">
           Gestiona tu empresa desde un solo lugar
         </p>
       </div>

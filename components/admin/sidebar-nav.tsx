@@ -19,7 +19,7 @@ export function SidebarNav() {
               <h3
                 className={cn(
                   "px-3 pb-2 text-[11px] font-semibold tracking-[0.08em] uppercase",
-                  "text-sidebar-foreground/50"
+                  "text-white/40"
                 )}
               >
                 {group.label}

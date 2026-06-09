@@ -16,10 +16,10 @@ type Props = {
 
 export function SectionCard({ title, description, action, children }: Props) {
   return (
-    <Card>
+    <Card className="rounded-md border-zinc-200 shadow-none">
       <CardHeader>
         <div>
-          <CardTitle className="text-base font-semibold text-foreground">
+          <CardTitle className="text-base font-semibold tracking-tight text-zinc-950">
             {title}
           </CardTitle>
           {description && <CardDescription>{description}</CardDescription>}

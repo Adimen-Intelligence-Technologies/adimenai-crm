@@ -13,13 +13,13 @@ export function KpiCard({ label, value, delta, icon: Icon }: KpiCardProps) {
   const positive = delta >= 0;
 
   return (
-    <Card className="gap-0 py-5">
+    <Card className="gap-0 rounded-md border-zinc-200 py-5 shadow-none">
       <CardContent className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <span className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
             {label}
           </span>
-          <span className="text-2xl font-semibold tracking-tight text-foreground">
+          <span className="text-2xl font-bold tracking-tight text-zinc-950">
             {value}
           </span>
           <span
@@ -38,7 +38,7 @@ export function KpiCard({ label, value, delta, icon: Icon }: KpiCardProps) {
           </span>
         </div>
         <span
-          className="inline-flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary"
+          className="inline-flex size-10 items-center justify-center rounded-md bg-[#6C47FF]/10 text-[#6C47FF]"
           aria-hidden
         >
           <Icon className="size-5" />

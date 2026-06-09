@@ -25,9 +25,9 @@ export function NavLink({ item }: Props) {
       href={item.href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-        "text-muted-foreground hover:bg-accent hover:text-foreground",
-        isActive && "bg-primary/10 text-primary",
+        "group flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium transition-colors",
+        "text-white/70 hover:bg-white/[0.08] hover:text-white",
+        isActive && "bg-white/[0.10] text-white",
         !open && "justify-center px-0"
       )}
     >
@@ -35,8 +35,8 @@ export function NavLink({ item }: Props) {
         className={cn(
           "size-[18px] shrink-0",
           isActive
-            ? "text-primary"
-            : "text-muted-foreground group-hover:text-foreground"
+            ? "text-[#A18CFF]"
+            : "text-white/60 group-hover:text-white"
         )}
       />
       {open && <span className="truncate">{item.label}</span>}

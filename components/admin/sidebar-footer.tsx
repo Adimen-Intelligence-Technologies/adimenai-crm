@@ -21,23 +21,23 @@ export function SidebarFooter() {
     <button
       type="button"
       className={cn(
-        "group flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-white/[0.06]",
+        "group flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors hover:bg-white/[0.08]",
         !open && "justify-center"
       )}
     >
-      <Avatar size="sm" className="ring-1 ring-white/10">
-        <AvatarFallback className="bg-[#A18CFF] text-white text-[11px] font-semibold">
+      <Avatar size="sm" className="ring-1 ring-white/15">
+        <AvatarFallback className="bg-[#6C47FF] text-white text-[11px] font-semibold">
           AD
         </AvatarFallback>
       </Avatar>
       {open && (
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-white">AdimenAi</p>
-          <p className="truncate text-xs text-sidebar-foreground/50">admin@adimenai.com</p>
+          <p className="truncate text-xs text-white/50">admin@adimenai.com</p>
         </div>
       )}
       {open && (
-        <MoreHorizontal className="size-4 shrink-0 text-sidebar-foreground/50 group-hover:text-white" />
+        <MoreHorizontal className="size-4 shrink-0 text-white/40 group-hover:text-white" />
       )}
     </button>
   );

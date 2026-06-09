@@ -21,10 +21,10 @@ export function TopbarActions() {
         variant="ghost"
         size="icon-sm"
         aria-label="Notificaciones"
-        className="relative text-muted-foreground hover:text-foreground"
+        className="relative text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
       >
         <Bell />
-        <Badge className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full px-1 text-[10px]">
+        <Badge className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-[#6C47FF] px-1 text-[10px] text-white hover:bg-[#6C47FF]">
           3
         </Badge>
       </Button>
@@ -34,16 +34,16 @@ export function TopbarActions() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 gap-2 px-2 text-foreground hover:bg-accent"
+            className="h-10 gap-2 rounded-full px-2 text-zinc-900 hover:bg-zinc-100"
             aria-label="Menú de usuario"
           >
-            <Avatar size="sm" className="ring-1 ring-border">
-              <AvatarFallback className="bg-[#A18CFF] text-white text-[11px] font-semibold">
+            <Avatar size="sm" className="ring-1 ring-zinc-200">
+              <AvatarFallback className="bg-[#6C47FF] text-white text-[11px] font-semibold">
                 AD
               </AvatarFallback>
             </Avatar>
             <span className="hidden text-sm font-medium sm:inline">AdimenAi</span>
-            <ChevronDown className="size-3.5 text-muted-foreground" />
+            <ChevronDown className="size-3.5 text-zinc-400" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={6} className="min-w-48">

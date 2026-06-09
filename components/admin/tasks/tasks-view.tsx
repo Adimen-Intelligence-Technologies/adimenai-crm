@@ -13,7 +13,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { Plus, X } from "lucide-react";
+import { LayoutGrid, List, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -29,8 +29,10 @@ import { AssigneeAvatar } from "./assignee-avatar";
 import { KanbanColumn } from "./kanban-column";
 import { TaskCard } from "./task-card";
 import { TaskForm } from "./task-form";
+import { TaskList } from "./task-list";
 
 type ScopeFilter = "all" | TaskScope;
+type ViewMode = "kanban" | "list";
 
 const scopeFilters: Array<{ id: ScopeFilter; label: string }> = [
   { id: "all", label: "Todos" },
@@ -51,6 +53,7 @@ export function TasksView({ initialTasks }: Props) {
   const [assignee, setAssignee] = useState<TaskAssignee | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
+  const [view, setView] = useState<ViewMode>("kanban");
   const [, startTransition] = useTransition();
 
   const sensors = useSensors(
@@ -97,9 +100,6 @@ export function TasksView({ initialTasks }: Props) {
     const activeTask = tasks.find((t) => t._id === activeIdStr);
     if (!activeTask) return;
 
-    // Determinar columna destino:
-    // - si se suelta sobre otra tarjeta, la columna destino es la de esa tarjeta
-    // - si se suelta sobre una columna vacía (drop zone), la columna destino es la del over.id
     let targetColumn: TaskColumn;
     let targetOrder: number;
 
@@ -116,7 +116,6 @@ export function TasksView({ initialTasks }: Props) {
       targetOrder = overIndex >= 0 ? overIndex : 0;
     }
 
-    // Sin cambios
     if (
       activeTask.column === targetColumn &&
       activeTask.order === targetOrder
@@ -124,7 +123,6 @@ export function TasksView({ initialTasks }: Props) {
       return;
     }
 
-    // Update optimista
     const previous = tasks;
     const optimistic = computeOptimistic(
       tasks,
@@ -143,7 +141,6 @@ export function TasksView({ initialTasks }: Props) {
         });
         if (!res.ok) throw new Error("Error al mover");
         const data = (await res.json()) as { moved: Task; affected: Task[] };
-        // Reemplaza por la respuesta del backend
         setTasks((current) => mergeAffected(current, data.affected, activeIdStr));
       } catch (err) {
         console.error(err);
@@ -181,23 +178,59 @@ export function TasksView({ initialTasks }: Props) {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            Tareas
+            Gestión administrativa
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
             Gestiona el trabajo del equipo. Arrastra las tarjetas para
             cambiar su estado.
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-          className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
-        >
-          <Plus />
-          Nueva tarea
-        </Button>
+        <div className="flex items-center gap-2">
+          <div
+            role="group"
+            aria-label="Cambiar vista"
+            className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white p-1"
+          >
+            <button
+              type="button"
+              onClick={() => setView("kanban")}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 text-sm font-medium transition-colors",
+                view === "kanban"
+                  ? "bg-[#3B1E8A] text-white"
+                  : "text-zinc-600 hover:text-zinc-900"
+              )}
+              aria-pressed={view === "kanban"}
+            >
+              <LayoutGrid className="size-3.5" />
+              Kanban
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("list")}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 text-sm font-medium transition-colors",
+                view === "list"
+                  ? "bg-[#3B1E8A] text-white"
+                  : "text-zinc-600 hover:text-zinc-900"
+              )}
+              aria-pressed={view === "list"}
+            >
+              <List className="size-3.5" />
+              Listado
+            </button>
+          </div>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+            className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
+          >
+            <Plus />
+            Nueva tarea
+          </Button>
+        </div>
       </header>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -253,28 +286,36 @@ export function TasksView({ initialTasks }: Props) {
         </div>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {taskColumnOrder.map((col) => (
-            <KanbanColumn
-              key={col}
-              column={col}
-              tasks={tasksByColumn[col]}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+      {view === "kanban" ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {taskColumnOrder.map((col) => (
+              <KanbanColumn
+                key={col}
+                column={col}
+                tasks={tasksByColumn[col]}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
 
-        <DragOverlay>
-          {activeTask ? <TaskCard task={activeTask} /> : null}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeTask ? <TaskCard task={activeTask} /> : null}
+          </DragOverlay>
+        </DndContext>
+      ) : (
+        <TaskList
+          tasks={filtered}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
 
       <TaskForm
         open={formOpen}

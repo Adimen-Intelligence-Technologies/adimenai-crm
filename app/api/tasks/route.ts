@@ -3,7 +3,6 @@ import {
   createTaskSchema,
   taskAssigneeEnum,
   taskColumnEnum,
-  taskScopeEnum,
 } from "@/lib/schemas/task";
 import { createTask, listTasks } from "@/lib/repositories/tasks";
 
@@ -16,11 +15,7 @@ export async function GET(request: NextRequest) {
 
     const filter: Parameters<typeof listTasks>[0] = {};
     if (scope) {
-      const parsed = taskScopeEnum.safeParse(scope);
-      if (!parsed.success) {
-        return NextResponse.json({ error: "scope inválido" }, { status: 400 });
-      }
-      filter.scope = parsed.data;
+      filter.scope = scope;
     }
     if (assignee) {
       const parsed = taskAssigneeEnum.safeParse(assignee);

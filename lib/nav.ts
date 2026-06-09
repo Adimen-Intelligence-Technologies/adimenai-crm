@@ -16,7 +16,7 @@ export const navGroups: NavGroup[] = [
     label: "Operación",
     items: [
       { label: "Clientes", href: "/admin/clients", icon: Users },
-      { label: "Tareas", href: "/admin/tasks", icon: ListChecks },
+      { label: "Gestión administrativa", href: "/admin/tasks", icon: ListChecks },
     ],
   },
 ];

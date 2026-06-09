@@ -1,19 +1,25 @@
 import { z } from "zod";
 
-export const taskScopeEnum = z.enum([
-  "adimenai",
-  "herrikonekt",
-  "hiopos",
-  "general",
-]);
-export type TaskScope = z.infer<typeof taskScopeEnum>;
+/**
+ * Ámbito ahora es texto libre. Mantenemos un set de "ámbitos sugeridos" que
+ * se ofrecen como quick-pickers en el formulario, pero el usuario puede
+ * escribir el que quiera.
+ */
+export const suggestedScopes = [
+  "Todos",
+  "AdimenAi",
+  "Herrikonekt",
+  "Hiopos",
+  "General",
+] as const;
 
-export const taskScopeLabels: Record<TaskScope, string> = {
-  adimenai: "AdimenAi",
-  herrikonekt: "Herrikonekt",
-  hiopos: "Hiopos",
-  general: "General",
-};
+export type TaskScope = string;
+
+export function normalizeScope(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "General";
+  return trimmed;
+}
 
 export const taskColumnEnum = z.enum(["backlog", "in_progress", "done"]);
 export type TaskColumn = z.infer<typeof taskColumnEnum>;
@@ -53,7 +59,11 @@ export const taskAssigneeColors: Record<TaskAssignee, string> = {
 export const createTaskSchema = z.object({
   title: z.string().trim().min(1, "El título es obligatorio"),
   description: z.string().optional().default(""),
-  scope: taskScopeEnum.default("general"),
+  scope: z
+    .string()
+    .trim()
+    .min(1, "El ámbito es obligatorio")
+    .default("General"),
   column: taskColumnEnum.default("backlog"),
   assignee: taskAssigneeEnum,
   dueDate: z.string().optional().default(""),

@@ -13,16 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
+  suggestedScopes,
   taskAssigneeEnum,
   taskAssigneeLabels,
   taskColumnEnum,
   taskColumnLabels,
-  taskScopeEnum,
-  taskScopeLabels,
   type TaskAssignee,
   type TaskColumn,
-  type TaskScope,
 } from "@/lib/schemas/task";
+import { businessLineTheme } from "@/lib/theme";
 import type { Task } from "@/lib/repositories/tasks";
 import { AssigneeAvatar } from "./assignee-avatar";
 
@@ -38,7 +37,7 @@ type Props = {
 type FormValues = {
   title: string;
   description: string;
-  scope: TaskScope;
+  scope: string;
   column: TaskColumn;
   assignee: TaskAssignee;
   dueDate: string;
@@ -48,7 +47,7 @@ function defaultValues(initial?: InitialTask): FormValues {
   return {
     title: initial?.title ?? "",
     description: initial?.description ?? "",
-    scope: (initial?.scope as TaskScope) ?? "general",
+    scope: initial?.scope ?? "General",
     column: (initial?.column as TaskColumn) ?? "backlog",
     assignee: (initial?.assignee as TaskAssignee) ?? "andrea",
     dueDate: initial?.dueDate ?? "",
@@ -175,28 +174,32 @@ export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
             </Field>
 
             <Field label="Ámbito" required>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {taskScopeEnum.options.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => set("scope", s)}
-                    className={cn(
-                      "rounded-md border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors",
-                      values.scope === s
-                        ? s === "adimenai"
-                          ? "border-[#6D28D9] bg-[#6D28D9] text-white"
-                          : s === "herrikonekt"
-                            ? "border-emerald-600 bg-emerald-600 text-white"
-                            : s === "hiopos"
-                              ? "border-red-600 bg-red-600 text-white"
-                              : "border-zinc-900 bg-zinc-900 text-white"
-                        : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
-                    )}
-                  >
-                    {taskScopeLabels[s]}
-                  </button>
-                ))}
+              <Input
+                value={values.scope}
+                onChange={(e) => set("scope", e.target.value)}
+                placeholder="Ej. Herrikonekt, AdimenAi, General..."
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {suggestedScopes.map((s) => {
+                  const theme = businessLineTheme[s.toLowerCase() as keyof typeof businessLineTheme];
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => set("scope", s)}
+                      className={cn(
+                        "rounded-md border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide transition-colors",
+                        values.scope === s
+                          ? "border-zinc-900 bg-zinc-900 text-white"
+                          : theme
+                            ? `${theme.badge} border-transparent`
+                            : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+                      )}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
               </div>
             </Field>
 

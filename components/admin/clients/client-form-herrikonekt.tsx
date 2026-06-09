@@ -355,7 +355,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
           className="text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
         >
           <Link
-            href={mode === "create" ? "/admin/clients" : `/admin/clients/${initial?._id}`}
+            href="/admin/clients"
           >
             <ChevronLeft />
           </Link>

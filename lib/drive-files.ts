@@ -80,3 +80,34 @@ export async function getDriveFolderName(folderId: string): Promise<string> {
   });
   return res.data.name ?? "Drive";
 }
+
+export async function downloadDriveFile(fileId: string): Promise<{
+  data: Buffer;
+  mimeType: string;
+}> {
+  const drive = getClient();
+  const res = await drive.files.get(
+    { fileId, alt: "media" },
+    { responseType: "arraybuffer" }
+  );
+  const mimeType =
+    res.headers?.["content-type"] ?? "application/octet-stream";
+  return { data: Buffer.from(res.data as ArrayBuffer), mimeType };
+}
+
+export async function getDriveFileMetadata(fileId: string): Promise<{
+  name: string;
+  mimeType: string;
+  thumbnailLink?: string;
+}> {
+  const drive = getClient();
+  const res = await drive.files.get({
+    fileId,
+    fields: "name, mimeType, thumbnailLink",
+  });
+  return {
+    name: res.data.name ?? "",
+    mimeType: res.data.mimeType ?? "application/octet-stream",
+    thumbnailLink: res.data.thumbnailLink ?? undefined,
+  };
+}

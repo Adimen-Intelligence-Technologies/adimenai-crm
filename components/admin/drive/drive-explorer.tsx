@@ -8,8 +8,11 @@ import {
   Trash2,
   Upload,
   Plus,
+  X,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export type DriveItem = {
   id: string;
@@ -36,6 +39,7 @@ export function DriveExplorer({ rootFolderId, rootName }: Props) {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [preview, setPreview] = useState<DriveItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const current = path[path.length - 1];
@@ -128,6 +132,10 @@ export function DriveExplorer({ rootFolderId, rootName }: Props) {
   const files = (items ?? []).filter(
     (i) => i.mimeType !== "application/vnd.google-apps.folder"
   );
+
+  function isImage(mimeType: string) {
+    return mimeType.startsWith("image/");
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -288,32 +296,73 @@ export function DriveExplorer({ rootFolderId, rootName }: Props) {
             </div>
           ))}
 
-          {files.map((item) => (
-            <a
-              key={item.id}
-              href={`https://drive.google.com/file/d/${item.id}/view`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative flex flex-col items-center gap-2 rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
-            >
-              <File className="size-10 text-zinc-400" />
-              <span className="max-w-full truncate text-center text-xs font-medium text-zinc-700">
-                {item.name}
-              </span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleDelete(item);
-                }}
-                className="absolute right-1 top-1 hidden rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500 group-hover:block"
-                title="Eliminar"
+          {files.map((item) => {
+            const img = isImage(item.mimeType);
+            return (
+              <div
+                key={item.id}
+                onClick={() => img && setPreview(item)}
+                className={cn(
+                  "group relative flex flex-col items-center gap-2 rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300 hover:bg-zinc-50",
+                  img && "cursor-pointer"
+                )}
               >
-                <Trash2 className="size-3.5" />
-              </button>
-            </a>
-          ))}
+                {img ? (
+                  <div className="flex size-14 items-center justify-center overflow-hidden rounded-md">
+                    <img
+                      src={`/api/drive/file/${item.id}`}
+                      alt={item.name}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <File className="size-10 text-zinc-400" />
+                )}
+                <span className="max-w-full truncate text-center text-xs font-medium text-zinc-700">
+                  {item.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item);
+                  }}
+                  className="absolute right-1 top-1 hidden rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500 group-hover:block"
+                  title="Eliminar"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {/* Image preview modal */}
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div
+            className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setPreview(null)}
+              className="absolute right-2 top-2 z-10 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
+            >
+              <X className="size-5" />
+            </button>
+            <img
+              src={`/api/drive/file/${preview.id}`}
+              alt={preview.name}
+              className="block max-h-[85vh] max-w-[85vw] object-contain"
+            />
+            <div className="border-t border-zinc-200 px-4 py-2 text-center text-sm text-zinc-600">
+              {preview.name}
+            </div>
+          </div>
         </div>
       )}
     </div>

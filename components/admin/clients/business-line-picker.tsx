@@ -41,10 +41,14 @@ const lines: Array<{
   },
 ];
 
-export function BusinessLinePicker() {
+export function BusinessLinePicker({ allReady }: { allReady?: boolean }) {
+  const cardLines = allReady
+    ? lines.map((l) => ({ ...l, state: "ready" as CardState }))
+    : lines;
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      {lines.map((line) => (
+      {cardLines.map((line) => (
         <BusinessLineCard key={line.id} line={line} />
       ))}
     </div>

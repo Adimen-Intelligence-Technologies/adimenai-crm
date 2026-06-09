@@ -11,7 +11,7 @@ export default function MarketingPage() {
           Selecciona una línea de negocio para gestionar su marketing.
         </p>
       </header>
-      <BusinessLinePicker />
+      <BusinessLinePicker allReady />
     </div>
   );
 }

@@ -101,12 +101,13 @@ export async function createDailySheetIfMissing() {
     row.getCell(9).font = { size: 10 };
     row.getCell(11).font = { size: 10 };
 
-    if (task.column === "backlog" || task.column === "in_progress") {
+    if (task.column === "done") {
       row.getCell(4).fill = {
         type: "pattern",
         pattern: "solid",
         fgColor: { argb: "FF6AA84F" },
       };
+      row.getCell(4).font = { size: 10, underline: true };
     }
 
     rowNum++;

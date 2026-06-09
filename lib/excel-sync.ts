@@ -74,8 +74,11 @@ export async function syncTasksFromExcel() {
     )
       continue;
 
-    const cellFill = row.getCell(4).fill as { fgColor?: { argb?: string } } | null | undefined;
+    const cell = row.getCell(4);
+    const cellFill = cell.fill as { fgColor?: { argb?: string } } | null | undefined;
     const isGreen = cellFill?.fgColor?.argb === "FF6AA84F";
+    const isUnderlined = !!(cell.font as { underline?: boolean | string } | null | undefined)?.underline;
+    const isDone = isGreen || isUnderlined;
 
     const respStr = responsible
       ? String(responsible).trim().toLowerCase().replace(/\s+/g, "")
@@ -86,7 +89,7 @@ export async function syncTasksFromExcel() {
     excelTasks.push({
       scope: currentScope || "General",
       title: actionStr,
-      column: isGreen ? "backlog" : "done",
+      column: isDone ? "done" : "backlog",
       assignee,
     });
   }
@@ -126,7 +129,7 @@ export async function syncTasksFromExcel() {
         title: ex.title,
         description: "",
         scope: ex.scope,
-        column: ex.column,
+        column: "backlog",
         assignee: ex.assignee,
         dueDate: "",
       });

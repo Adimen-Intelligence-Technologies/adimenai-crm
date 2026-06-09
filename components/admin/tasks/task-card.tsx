@@ -56,10 +56,10 @@ export const TaskCard = forwardRef<HTMLDivElement, Props>(function TaskCard(
       }}
       style={style}
       className={cn(
-        "group relative rounded-lg border bg-white p-3 shadow-xs transition-colors",
+        "group relative rounded-lg border p-3 shadow-xs transition-colors",
         isDoneColumn
-          ? "border-zinc-200 opacity-70"
-          : "border-zinc-200 hover:border-zinc-300",
+          ? "border-green-200 bg-green-50 opacity-70"
+          : "border-zinc-200 bg-white hover:border-zinc-300",
         isDragging && "cursor-grabbing border-[#3B1E8A] shadow-lg opacity-50",
         !isDragging && "cursor-grab"
       )}
@@ -104,7 +104,7 @@ export const TaskCard = forwardRef<HTMLDivElement, Props>(function TaskCard(
         </div>
       </div>
 
-      <h3 className="mt-2 text-sm font-semibold text-zinc-900">{task.title}</h3>
+      <h3 className={cn("mt-2 text-sm font-semibold", isDoneColumn ? "text-zinc-500 line-through" : "text-zinc-900")}>{task.title}</h3>
 
       {task.description && (
         <p className="mt-1 line-clamp-2 text-xs text-zinc-500">

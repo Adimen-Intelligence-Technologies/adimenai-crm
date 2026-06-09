@@ -86,9 +86,10 @@ export async function exportTasksToDrive() {
         row.getCell(c).fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: "FFC6EFCE" },
+          fgColor: { argb: "FF6AA84F" },
         };
       }
+      row.getCell(4).font = { size: 10, underline: true };
     }
 
     rowNum++;

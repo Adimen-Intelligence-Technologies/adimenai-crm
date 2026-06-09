@@ -10,6 +10,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const rawLine = searchParams.get("businessLine");
     const q = searchParams.get("q") ?? undefined;
+    const page = parseInt(searchParams.get("page") ?? "1", 10) || 1;
+    const pageSize = parseInt(searchParams.get("pageSize") ?? "25", 10) || 25;
 
     let businessLine;
     if (rawLine) {
@@ -23,8 +25,8 @@ export async function GET(request: NextRequest) {
       businessLine = parsed.data;
     }
 
-    const clients = await listClients({ businessLine, q });
-    return NextResponse.json(clients);
+    const result = await listClients({ businessLine, q, page, pageSize });
+    return NextResponse.json(result);
   } catch (err) {
     console.error("GET /api/clients", err);
     return NextResponse.json(

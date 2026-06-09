@@ -29,17 +29,20 @@ export async function exportTasksToDrive() {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buf);
 
-  console.log("Sheet names:", workbook.worksheets.map((s) => JSON.stringify(s.name)));
-
   // 2. Buscar o crear la hoja "comité administrativo adimenAI"
   const adminName = "comité administrativo adimenAI";
   let sheet = workbook.getWorksheet(adminName);
   if (!sheet) {
-    sheet = workbook.worksheets.find(
+    const matching = workbook.worksheets.filter(
       (ws) => ws.name.toLowerCase().includes("comité") || ws.name.toLowerCase().includes("administrativo")
-    ) ?? null;
-    if (sheet) {
+    );
+    if (matching.length > 0) {
+      sheet = matching[0];
       sheet.name = adminName;
+      // Eliminar duplicados
+      for (let i = 1; i < matching.length; i++) {
+        workbook.removeWorksheet(matching[i].id);
+      }
     }
   }
   if (!sheet) {

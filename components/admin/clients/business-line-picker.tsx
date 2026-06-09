@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Lock, Sparkles, Store } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type CardState = "ready" | "coming-soon";
@@ -12,7 +13,7 @@ const lines: Array<{
   description: string;
   href: string;
   state: CardState;
-  icon: React.ComponentType<{ className?: string }>;
+  logo: string;
 }> = [
   {
     id: "adimenai",
@@ -20,7 +21,7 @@ const lines: Array<{
     description: "Servicios de web, branding, impresión, SEO y marketing.",
     href: "/admin/clients/new/adimenai",
     state: "coming-soon",
-    icon: Sparkles,
+    logo: "/logo-adimenai.jpg",
   },
   {
     id: "herrikonekt",
@@ -28,7 +29,7 @@ const lines: Array<{
     description: "Comercios locales sincronizados con la app móvil.",
     href: "/admin/clients/new/herrikonekt",
     state: "ready",
-    icon: Store,
+    logo: "/logo-herrikonket.png",
   },
   {
     id: "hiopos",
@@ -36,7 +37,7 @@ const lines: Array<{
     description: "TPV y software para empresas (partner).",
     href: "/admin/clients/new/hiopos",
     state: "coming-soon",
-    icon: Lock,
+    logo: "/logo-hiopos.jpg",
   },
 ];
 
@@ -55,7 +56,6 @@ function BusinessLineCard({
 }: {
   line: (typeof lines)[number];
 }) {
-  const Icon = line.icon;
   const disabled = line.state === "coming-soon";
 
   const content = (
@@ -68,8 +68,14 @@ function BusinessLineCard({
       )}
     >
       <div className="flex items-center justify-between">
-        <div className="flex size-9 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-700">
-          <Icon className="size-4" />
+        <div className="flex size-10 items-center justify-center overflow-hidden rounded-md border border-zinc-200 bg-white">
+          <Image
+            src={line.logo}
+            alt={line.title}
+            width={40}
+            height={40}
+            className="max-h-full max-w-full object-contain"
+          />
         </div>
         {disabled ? (
           <span className="text-xs text-zinc-400">Próximamente</span>

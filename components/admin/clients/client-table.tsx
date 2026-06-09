@@ -14,7 +14,17 @@ import { businessLineTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/lib/repositories/clients";
 
-export function ClientTable({ clients }: { clients: Client[] }) {
+export function ClientTable({
+  clients,
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  clients: Client[];
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
       <table className="w-full text-left text-sm">
@@ -45,6 +55,52 @@ export function ClientTable({ clients }: { clients: Client[] }) {
           )}
         </tbody>
       </table>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3">
+          <span className="text-sm text-zinc-500">
+            Página {page} de {totalPages}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+              .map((p, idx, arr) => (
+                <span key={p} className="flex items-center">
+                  {idx > 0 && arr[idx - 1] !== p - 1 && (
+                    <span className="px-1 text-zinc-300">···</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onPageChange(p)}
+                    className={[
+                      "min-w-[32px] rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
+                      p === page
+                        ? "bg-[#3B1E8A] text-white"
+                        : "text-zinc-600 hover:bg-zinc-100",
+                    ].join(" ")}
+                  >
+                    {p}
+                  </button>
+                </span>
+              ))}
+            <button
+              type="button"
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages}
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

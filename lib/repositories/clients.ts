@@ -40,12 +40,22 @@ function toClient(doc: ClientDoc): Client {
   return { _id: _id.toString(), ...rest };
 }
 
+export type PaginatedResult<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export async function listClients(filter: {
   businessLine?: BusinessLine;
   q?: string;
-} = {}): Promise<Client[]> {
+  page?: number;
+  pageSize?: number;
+} = {}): Promise<PaginatedResult<Client>> {
   const collection = await getClientsCollection();
-    const query: Record<string, unknown> = {};
+  const query: Record<string, unknown> = {};
   if (filter.businessLine) query.businessLine = filter.businessLine;
   if (filter.q && filter.q.trim()) {
     const rx = new RegExp(escapeRegex(filter.q.trim()), "i");
@@ -56,11 +66,22 @@ export async function listClients(filter: {
       { subType: rx },
     ];
   }
+  const page = filter.page ?? 1;
+  const pageSize = filter.pageSize ?? 25;
+  const total = await collection.countDocuments(query);
   const docs = (await collection
     .find(query)
     .sort({ createdAt: -1 })
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
     .toArray()) as unknown as ClientDoc[];
-  return docs.map(toClient);
+  return {
+    items: docs.map(toClient),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
 }
 
 export async function getClient(id: string): Promise<Client | null> {

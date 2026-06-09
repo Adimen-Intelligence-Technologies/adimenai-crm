@@ -3,9 +3,9 @@ import { listClients } from "@/lib/repositories/clients";
 
 export async function GET() {
   try {
-    const clients = await listClients({ businessLine: "herrikonekt" });
+    const all = await listClients({ businessLine: "herrikonekt", page: 1, pageSize: 9999 });
     return NextResponse.json(
-      clients.map((c) => ({
+      all.items.map((c) => ({
         id: c._id,
         name: c.name,
         description: c.description ?? "",

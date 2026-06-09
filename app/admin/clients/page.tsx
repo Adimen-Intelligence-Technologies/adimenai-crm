@@ -3,14 +3,14 @@ import { listClients } from "@/lib/repositories/clients";
 import { businessLineEnum } from "@/lib/schemas/client";
 import { ClientsView } from "@/components/admin/clients/clients-view";
 
-type SearchParams = Promise<{ line?: string; q?: string }>;
+type SearchParams = Promise<{ line?: string; q?: string; page?: string }>;
 
 export default async function ClientsPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { line, q } = await searchParams;
+  const { line, q, page: pageStr } = await searchParams;
 
   let businessLine;
   if (line) {
@@ -18,11 +18,12 @@ export default async function ClientsPage({
     if (parsed.success) businessLine = parsed.data;
   }
 
-  const clients = await listClients({ businessLine, q });
+  const page = parseInt(pageStr ?? "1", 10) || 1;
+  const result = await listClients({ businessLine, q, page, pageSize: 25 });
 
   return (
     <Suspense fallback={null}>
-      <ClientsView clients={clients} />
+      <ClientsView result={result} />
     </Suspense>
   );
 }

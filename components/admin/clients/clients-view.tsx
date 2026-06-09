@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { businessLineLabels, type BusinessLine } from "@/lib/schemas/client";
 import { ClientTable } from "./client-table";
-import type { Client } from "@/lib/repositories/clients";
+import type { PaginatedResult, Client } from "@/lib/repositories/clients";
 
 type Filter = "all" | BusinessLine;
 
@@ -19,16 +19,18 @@ const filters: Array<{ id: Filter; label: string }> = [
   { id: "hiopos", label: businessLineLabels.hiopos },
 ];
 
-export function ClientsView({ clients }: { clients: Client[] }) {
+export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeFilter = (searchParams.get("line") ?? "all") as Filter;
   const q = searchParams.get("q") ?? "";
+  const currentPage = parseInt(searchParams.get("page") ?? "1", 10) || 1;
 
   function setFilter(next: Filter) {
     const params = new URLSearchParams(searchParams.toString());
     if (next === "all") params.delete("line");
     else params.set("line", next);
+    params.delete("page");
     router.replace(`/admin/clients?${params.toString()}`);
   }
 
@@ -36,6 +38,14 @@ export function ClientsView({ clients }: { clients: Client[] }) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set("q", value);
     else params.delete("q");
+    params.delete("page");
+    router.replace(`/admin/clients?${params.toString()}`);
+  }
+
+  function goToPage(page: number) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (page <= 1) params.delete("page");
+    else params.set("page", String(page));
     router.replace(`/admin/clients?${params.toString()}`);
   }
 
@@ -97,7 +107,12 @@ export function ClientsView({ clients }: { clients: Client[] }) {
         </div>
       </div>
 
-      <ClientTable clients={clients} />
+      <ClientTable
+        clients={result.items}
+        page={result.page}
+        totalPages={result.totalPages}
+        onPageChange={goToPage}
+      />
     </div>
   );
 }

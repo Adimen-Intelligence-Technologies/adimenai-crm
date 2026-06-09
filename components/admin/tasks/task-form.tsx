@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   Sheet,
   SheetContent,
@@ -60,25 +60,26 @@ export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const mode: "create" | "edit" = initial?._id ? "edit" : "create";
+  const initialRef = useRef(initial);
 
-  // Re-sync al cambiar `open` o `initial`
-  if (open) {
-    const next = defaultValues(initial);
-    if (
-      next.title !== values.title ||
-      next.description !== values.description ||
-      next.scope !== values.scope ||
-      next.column !== values.column ||
-      next.assignee !== values.assignee ||
-      next.dueDate !== values.dueDate
-    ) {
-      // Solo re-sincroniza una vez
-      if (error !== null) {
-        setError(null);
-      }
-      setValues(next);
+  // Re-sincronizar solo cuando cambia la referencia de `initial` (al abrir una tarea distinta)
+  useEffect(() => {
+    if (initial !== initialRef.current) {
+      initialRef.current = initial;
+      setValues(defaultValues(initial));
+      setError(null);
     }
-  }
+  }, [initial]);
+
+  // Reset al abrir el Sheet (open pasa de false a true)
+  const prevOpen = useRef(open);
+  useEffect(() => {
+    if (open && !prevOpen.current) {
+      setValues(defaultValues(initial));
+      setError(null);
+    }
+    prevOpen.current = open;
+  }, [open, initial]);
 
   function set<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));

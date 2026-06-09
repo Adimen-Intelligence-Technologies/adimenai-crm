@@ -17,6 +17,8 @@ function normalizeKey(scope: string, title: string): string {
 }
 
 export async function syncTasksFromExcel() {
+  const syncStart = new Date().toISOString();
+
   const url =
     "https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/export?format=xlsx";
 
@@ -111,6 +113,9 @@ export async function syncTasksFromExcel() {
     const existing = dbByKey.get(key);
 
     if (existing) {
+      // Si la tarea se modificó en CRM después de que este sync empezara, no la sobrescribimos
+      if (existing.updatedAt > syncStart) continue;
+
       const isPending = existing.column === "backlog" || existing.column === "in_progress";
       const shouldBePending = ex.column === "backlog";
 

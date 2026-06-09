@@ -1,4 +1,4 @@
-import { ListChecks, Users, type LucideIcon } from "lucide-react";
+import { Folder, ListChecks, Users, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -8,6 +8,8 @@ export type NavItem = {
 
 export type NavGroup = {
   label: string;
+  folder?: boolean;
+  folderIcon?: LucideIcon;
   items: NavItem[];
 };
 
@@ -20,6 +22,8 @@ export const navGroups: NavGroup[] = [
   },
   {
     label: "4. Comité administrativo",
+    folder: true,
+    folderIcon: Folder,
     items: [
       { label: "Gestión administrativa", href: "/admin/tasks", icon: ListChecks },
     ],

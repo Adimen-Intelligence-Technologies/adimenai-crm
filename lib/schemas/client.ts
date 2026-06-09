@@ -1,4 +1,26 @@
 import { z } from "zod";
+import {
+  Banknote,
+  Briefcase,
+  Building2,
+  Building,
+  Car,
+  Cross,
+  Fuel,
+  Hammer,
+  HardHat,
+  HeartPulse,
+  Hotel,
+  Landmark,
+  Pill,
+  Scale,
+  ShoppingBag,
+  Stethoscope,
+  Store,
+  Users,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
 
 export const businessLineEnum = z.enum(["adimenai", "herrikonekt", "hiopos"]);
 export type BusinessLine = z.infer<typeof businessLineEnum>;
@@ -46,6 +68,28 @@ export const herrikonektTypeLabels: Record<HerrikonektType, string> = {
   hoteles_y_alojamientos: "Hoteles y Alojamientos",
   asociaciones: "Asociaciones",
   funerarias: "Funerarias",
+};
+
+export const herrikonektTypeIcons: Record<HerrikonektType, LucideIcon> = {
+  bares_y_restaurantes: Store,
+  comercios: ShoppingBag,
+  servicios_profesionales: Briefcase,
+  servicios_municipales: Building,
+  sanidad_y_servicios_sociales: HeartPulse,
+  farmacias: Pill,
+  taxis: Car,
+  centros_medicos: Stethoscope,
+  veterinarios: HardHat,
+  gestorias_y_asesorias: Landmark,
+  abogados: Scale,
+  inmobiliarias: Building2,
+  bancos: Banknote,
+  talleres: Wrench,
+  ferreterias: Hammer,
+  gasolineras: Fuel,
+  hoteles_y_alojamientos: Hotel,
+  asociaciones: Users,
+  funerarias: Cross,
 };
 
 export const herrikonektSubTypeByType: Record<HerrikonektType, string[]> = {
@@ -254,6 +298,12 @@ const billingSchema = z.object({
 });
 export type ClientBilling = z.infer<typeof billingSchema>;
 
+export const socialLinksSchema = z.object({
+  instagram: z.string().optional().default(""),
+  facebook: z.string().optional().default(""),
+});
+export type ClientSocialLinks = z.infer<typeof socialLinksSchema>;
+
 export const createHerrikonektSchema = z.object({
   businessLine: z.literal("herrikonekt"),
   name: z.string().min(1, "El nombre es obligatorio"),
@@ -263,15 +313,19 @@ export const createHerrikonektSchema = z.object({
     .url("URL no válida")
     .optional()
     .or(z.literal("")),
-  phones: z
-    .array(z.string().min(1, "Teléfono vacío"))
-    .default([]),
+  email: z
+    .string()
+    .email("Email no válido")
+    .optional()
+    .or(z.literal("")),
+  phone: z.string().optional().default(""),
   addresses: z
     .array(addressSchema)
     .min(1, "Añade al menos una dirección"),
   type: herrikonektTypeEnum,
   subType: z.string().min(1, "Selecciona un subtipo"),
   syncToApp: z.boolean().default(true),
+  social: socialLinksSchema.optional(),
   billing: billingSchema.optional(),
 });
 export type CreateHerrikonektInput = z.infer<typeof createHerrikonektSchema>;

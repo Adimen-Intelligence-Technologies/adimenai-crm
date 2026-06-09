@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, CreditCard, MapPin, Plus, Receipt, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   herrikonektSubTypeByType,
   herrikonektTypeEnum,
-  herrikonektTypeLabels,
   paymentMethodEnum,
   paymentMethodLabels,
   taxIdTypeEnum,
@@ -20,6 +19,7 @@ import {
   type TaxIdType,
 } from "@/lib/schemas/client";
 import type { Client } from "@/lib/repositories/clients";
+import { TypeCombobox } from "./type-combobox";
 
 type InitialClient = Partial<Client> & { _id?: string };
 
@@ -54,12 +54,48 @@ type FormState = {
   name: string;
   description: string;
   website: string;
-  phones: string[];
+  phone: string;
   addresses: AddressForm[];
   type: HerrikonektType;
   subType: string;
   syncToApp: boolean;
+  email: string;
+  social: { instagram: string; facebook: string };
   billing: BillingForm;
+};
+
+type StepId = "basics" | "category" | "contact" | "billing";
+
+const stepOrder: StepId[] = ["basics", "category", "contact", "billing"];
+
+const stepMeta: Record<
+  StepId,
+  { id: StepId; title: string; subtitle: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+  basics: {
+    id: "basics",
+    title: "Datos básicos",
+    subtitle: "Nombre, email, web, teléfonos y redes del comercio.",
+    icon: Receipt,
+  },
+  category: {
+    id: "category",
+    title: "Categoría",
+    subtitle: "Tipo y subtipo dentro de Herrikonekt.",
+    icon: Tag,
+  },
+  contact: {
+    id: "contact",
+    title: "Direcciones",
+    subtitle: "Dirección del comercio. Puedes añadir varias.",
+    icon: MapPin,
+  },
+  billing: {
+    id: "billing",
+    title: "Facturación",
+    subtitle: "Datos fiscales para emitir facturas cuando se necesite.",
+    icon: CreditCard,
+  },
 };
 
 function emptyAddress(isPrimary = false): AddressForm {
@@ -106,12 +142,22 @@ function billingFromClient(billing?: Client["billing"]): BillingForm {
   };
 }
 
+function socialFromClient(
+  social?: Client["social"]
+): { instagram: string; facebook: string } {
+  return {
+    instagram: social?.instagram ?? "",
+    facebook: social?.facebook ?? "",
+  };
+}
+
 function toFormState(initial?: InitialClient): FormState {
   return {
     name: initial?.name ?? "",
     description: initial?.description ?? "",
     website: initial?.website ?? "",
-    phones: initial?.phones && initial.phones.length > 0 ? initial.phones : [""],
+    email: initial?.email ?? "",
+    phone: initial?.phone ?? "",
     addresses:
       initial?.addresses && initial.addresses.length > 0
         ? initial.addresses.map((a, idx) => ({
@@ -128,6 +174,7 @@ function toFormState(initial?: InitialClient): FormState {
       herrikonektTypeEnum.enum.bares_y_restaurantes,
     subType: initial?.subType ?? "",
     syncToApp: initial?.syncToApp ?? true,
+    social: socialFromClient(initial?.social),
     billing: billingFromClient(initial?.billing),
   };
 }
@@ -137,6 +184,8 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(() => toFormState(initial));
+  const [step, setStep] = useState<StepId>("basics");
+  const [stepErrors, setStepErrors] = useState<Partial<Record<StepId, string>>>({});
 
   const subTypeOptions = herrikonektSubTypeByType[form.type] ?? [];
 
@@ -185,8 +234,40 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
     }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const stepValidity = useMemo(
+    () => ({
+      basics: form.name.trim().length > 0,
+      category: form.subType.trim().length > 0,
+      contact: form.addresses.some((a) => a.line1.trim() && a.city.trim()),
+      billing: !form.billing.invoicingActive || form.billing.taxId.trim().length > 0,
+    }),
+    [form]
+  );
+
+  const allValid = stepValidity.basics && stepValidity.category && stepValidity.contact && stepValidity.billing;
+
+  const currentIndex = stepOrder.indexOf(step);
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === stepOrder.length - 1;
+
+  function goNext() {
+    setStepErrors((prev) => {
+      const next = { ...prev };
+      delete next[step];
+      return next;
+    });
+    if (currentIndex < stepOrder.length - 1) {
+      setStep(stepOrder[currentIndex + 1]);
+    }
+  }
+
+  function goPrev() {
+    if (currentIndex > 0) {
+      setStep(stepOrder[currentIndex - 1]);
+    }
+  }
+
+  async function handleSubmit() {
     setError(null);
 
     const payload = {
@@ -194,7 +275,8 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
       name: form.name.trim(),
       description: form.description.trim(),
       website: form.website.trim(),
-      phones: form.phones.map((p) => p.trim()).filter(Boolean),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
       addresses: form.addresses
         .filter((a) => a.line1.trim() && a.city.trim())
         .map((a) => ({
@@ -208,6 +290,10 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
       type: form.type,
       subType: form.subType,
       syncToApp: form.syncToApp,
+      social: {
+        instagram: form.social.instagram.trim(),
+        facebook: form.social.facebook.trim(),
+      },
       billing: form.billing.invoicingActive
         ? {
             invoicingActive: true,
@@ -232,16 +318,6 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
           }
         : { invoicingActive: false },
     };
-
-    if (payload.addresses.length === 0) {
-      setError("Añade al menos una dirección completa.");
-      return;
-    }
-
-    if (payload.billing.invoicingActive && !payload.billing.taxId) {
-      setError("Si activas facturación, indica el NIF/CIF del cliente.");
-      return;
-    }
 
     startTransition(async () => {
       try {
@@ -270,44 +346,27 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            asChild
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Volver"
-            className="text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-          >
-            <Link
-              href={
-                mode === "create" ? "/admin/clients" : `/admin/clients/${initial?._id}`
-              }
-            >
-              <ArrowLeft />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-lg font-semibold text-zinc-900">
-              {mode === "create" ? "Nuevo cliente" : "Editar cliente"}
-            </h1>
-            <p className="text-sm text-zinc-500">
-              Herrikonekt · Comercio local
-            </p>
-          </div>
-        </div>
+    <div className="flex flex-col gap-6">
+      <header className="flex items-center gap-3">
         <Button
-          type="submit"
-          disabled={isPending}
-          className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
+          asChild
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Volver"
+          className="text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
         >
-          {isPending
-            ? "Guardando…"
-            : mode === "create"
-              ? "Crear cliente"
-              : "Guardar cambios"}
+          <Link
+            href={mode === "create" ? "/admin/clients" : `/admin/clients/${initial?._id}`}
+          >
+            <ChevronLeft />
+          </Link>
         </Button>
+        <div>
+          <h1 className="text-lg font-semibold text-zinc-900">
+            {mode === "create" ? "Nuevo cliente" : "Editar cliente"}
+          </h1>
+          <p className="text-sm text-zinc-500">Herrikonekt · Comercio local</p>
+        </div>
       </header>
 
       {error && (
@@ -316,30 +375,55 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
         </div>
       )}
 
+      <Stepper
+        currentStep={step}
+        onSelect={(s) => {
+          if (s === step) return;
+          const targetIndex = stepOrder.indexOf(s);
+          if (targetIndex < currentIndex) {
+            setStep(s);
+            return;
+          }
+          for (let i = 0; i < targetIndex; i++) {
+            if (!stepValidity[stepOrder[i]]) return;
+          }
+          setStep(s);
+        }}
+        isStepReachable={(s) => {
+          const targetIndex = stepOrder.indexOf(s);
+          if (targetIndex <= currentIndex) return true;
+          for (let i = 0; i < targetIndex; i++) {
+            if (!stepValidity[stepOrder[i]]) return false;
+          }
+          return true;
+        }}
+        isStepValid={(s) => stepValidity[s]}
+      />
+
       <div className="rounded-lg border border-zinc-200 bg-white p-5">
-        <Subgroup
-          title="Datos básicos"
-          description="Nombre, descripción y sitio web del comercio."
-        >
-          <div className="grid grid-cols-1 gap-x-4 gap-y-4">
-            <Field label="Nombre" required>
-              <Input
-                value={form.name}
-                onChange={(e) => update("name", e.target.value)}
-                placeholder="Ej. Bar Amaya"
-                required
-              />
-            </Field>
-            <Field label="Descripción">
-              <Textarea
-                value={form.description}
-                onChange={(e) => update("description", e.target.value)}
-                placeholder="Notas internas sobre el comercio"
-                rows={2}
-              />
-            </Field>
-            <div className="grid grid-cols-1 gap-x-4 gap-y-4 md:grid-cols-3">
-              <Field label="Página web" className="md:col-span-2">
+        {step === "basics" && (
+          <StepShell
+            title={stepMeta.basics.title}
+            subtitle={stepMeta.basics.subtitle}
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Nombre" required>
+                <Input
+                  value={form.name}
+                  onChange={(e) => update("name", e.target.value)}
+                  placeholder="Ej. Bar Amaya"
+                  required
+                />
+              </Field>
+              <Field label="Email">
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => update("email", e.target.value)}
+                  placeholder="info@cliente.com"
+                />
+              </Field>
+              <Field label="Página web">
                 <Input
                   type="url"
                   value={form.website}
@@ -347,388 +431,525 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                   placeholder="https://"
                 />
               </Field>
-              <Field label="Sincronizar app">
+              <Field label="Instagram">
+                <Input
+                  value={form.social.instagram}
+                  onChange={(e) =>
+                    update("social", {
+                      ...form.social,
+                      instagram: e.target.value,
+                    })
+                  }
+                  placeholder="@usuario o URL"
+                />
+              </Field>
+              <Field label="Facebook">
+                <Input
+                  value={form.social.facebook}
+                  onChange={(e) =>
+                    update("social", {
+                      ...form.social,
+                      facebook: e.target.value,
+                    })
+                  }
+                  placeholder="URL de la página"
+                />
+              </Field>
+              <Field label="Sincronizar con la app">
                 <Switch
                   checked={form.syncToApp}
                   onChange={(v) => update("syncToApp", v)}
                   label={form.syncToApp ? "Activado" : "Desactivado"}
                 />
               </Field>
+
+              <Field label="Teléfono" className="sm:col-span-2">
+                <Input
+                  value={form.phone}
+                  onChange={(e) => update("phone", e.target.value)}
+                  placeholder="943 12 34 56"
+                />
+              </Field>
+
+              <Field label="Descripción" className="sm:col-span-2">
+                <Textarea
+                  value={form.description}
+                  onChange={(e) => update("description", e.target.value)}
+                  placeholder="Notas internas sobre el comercio"
+                  rows={3}
+                />
+              </Field>
             </div>
-          </div>
-        </Subgroup>
+          </StepShell>
+        )}
 
-        <Subgroup
-          title="Categoría"
-          description="Tipo y subtipo dentro de Herrikonekt."
-        >
-          <div className="grid grid-cols-1 gap-x-4 gap-y-4 md:grid-cols-2">
-            <Field label="Tipo" required>
-              <NativeSelect
-                value={form.type}
-                onChange={(e) => update("type", e.target.value as HerrikonektType)}
-              >
-                {herrikonektTypeEnum.options.map((t) => (
-                  <option key={t} value={t}>
-                    {herrikonektTypeLabels[t]}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
-            <Field label="Subtipo" required>
-              <NativeSelect
-                value={form.subType}
-                onChange={(e) => update("subType", e.target.value)}
-                required
-              >
-                <option value="">Selecciona…</option>
-                {subTypeOptions.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
-          </div>
-        </Subgroup>
-
-        <Subgroup
-          title="Facturación"
-          description="Datos fiscales para emitir facturas cuando el cliente contrate publicidad."
-        >
-          <div className="mb-4 flex flex-col gap-3 rounded-md border border-zinc-200 bg-zinc-50/50 p-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-zinc-900">
-                Activar facturación
-              </p>
-              <p className="text-sm text-zinc-500">
-                Guarda los datos fiscales para poder emitir facturas tras los
-                servicios publicitarios.
-              </p>
+        {step === "category" && (
+          <StepShell
+            title={stepMeta.category.title}
+            subtitle={stepMeta.category.subtitle}
+          >
+            <div className="flex flex-col gap-5">
+              <Field label="Tipo" required>
+                <TypeCombobox
+                  value={form.type}
+                  onChange={(v) => update("type", v)}
+                  placeholder="Selecciona un tipo…"
+                />
+              </Field>
+              <Field label="Subtipo" required>
+                <NativeSelect
+                  value={form.subType}
+                  onChange={(e) => update("subType", e.target.value)}
+                  required
+                >
+                  <option value="">Selecciona…</option>
+                  {subTypeOptions.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </Field>
             </div>
-            <Switch
-              checked={form.billing.invoicingActive}
-              onChange={(v) => updateBilling("invoicingActive", v)}
-              label={form.billing.invoicingActive ? "Activado" : "Desactivado"}
-            />
-          </div>
+          </StepShell>
+        )}
 
-          {form.billing.invoicingActive && (
-            <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 gap-x-4 gap-y-4 md:grid-cols-2">
-                <Field label="Razón social" className="md:col-span-2">
-                  <Input
-                    value={form.billing.legalName}
-                    onChange={(e) => updateBilling("legalName", e.target.value)}
-                    placeholder={form.name || "Nombre fiscal"}
-                  />
-                </Field>
-                <Field label="Tipo de identificador">
-                  <NativeSelect
-                    value={form.billing.taxIdType}
-                    onChange={(e) =>
-                      updateBilling("taxIdType", e.target.value as TaxIdType)
-                    }
-                  >
-                    {taxIdTypeEnum.options.map((t) => (
-                      <option key={t} value={t}>
-                        {taxIdTypeLabels[t]}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </Field>
-                <Field label="NIF / CIF" required>
-                  <Input
-                    value={form.billing.taxId}
-                    onChange={(e) => updateBilling("taxId", e.target.value)}
-                    placeholder="B12345678"
-                    required
-                  />
-                </Field>
-                <Field label="Email de facturación" className="md:col-span-2">
-                  <Input
-                    type="email"
-                    value={form.billing.billingEmail}
-                    onChange={(e) => updateBilling("billingEmail", e.target.value)}
-                    placeholder="facturacion@cliente.com"
-                  />
-                </Field>
-                <Field label="Teléfono de facturación" className="md:col-span-2">
-                  <Input
-                    value={form.billing.billingPhone}
-                    onChange={(e) => updateBilling("billingPhone", e.target.value)}
-                    placeholder="943 12 34 56"
-                  />
-                </Field>
-              </div>
-
-              <div className="rounded-md border border-zinc-200 bg-white p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <p className="text-sm font-medium text-zinc-900">
-                    Dirección fiscal
-                  </p>
+        {step === "contact" && (
+          <StepShell
+            title={stepMeta.contact.title}
+            subtitle={stepMeta.contact.subtitle}
+          >
+            <div className="flex flex-col gap-6">
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-zinc-900">
+                  Direcciones
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {form.addresses.map((address, i) => (
+                    <div
+                      key={i}
+                      className="rounded-md border border-zinc-200 bg-zinc-50/40 p-4"
+                    >
+                      <div className="mb-3 flex items-center justify-between">
+                        <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
+                          <input
+                            type="radio"
+                            name="primaryAddress"
+                            checked={address.isPrimary}
+                            onChange={() => setPrimaryAddress(i)}
+                            className="size-4 accent-[#3B1E8A]"
+                          />
+                          Dirección principal
+                        </label>
+                        {form.addresses.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Quitar dirección"
+                            className="text-zinc-500 hover:bg-rose-50 hover:text-rose-600"
+                            onClick={() =>
+                              update(
+                                "addresses",
+                                form.addresses.filter((_, idx) => idx !== i)
+                              )
+                            }
+                          >
+                            <X />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-6">
+                        <Field
+                          label="Calle y número"
+                          required
+                          className="sm:col-span-4"
+                        >
+                          <Input
+                            value={address.line1}
+                            onChange={(e) =>
+                              updateAddress(i, { line1: e.target.value })
+                            }
+                            placeholder="Kale Nagusia 12"
+                            required
+                          />
+                        </Field>
+                        <Field label="Complemento" className="sm:col-span-2">
+                          <Input
+                            value={address.line2}
+                            onChange={(e) =>
+                              updateAddress(i, { line2: e.target.value })
+                            }
+                            placeholder="Bajo A"
+                          />
+                        </Field>
+                        <Field
+                          label="Ciudad"
+                          required
+                          className="sm:col-span-3"
+                        >
+                          <Input
+                            value={address.city}
+                            onChange={(e) =>
+                              updateAddress(i, { city: e.target.value })
+                            }
+                            placeholder="Elgoibar"
+                            required
+                          />
+                        </Field>
+                        <Field label="Código postal" className="sm:col-span-1">
+                          <Input
+                            value={address.zip}
+                            onChange={(e) =>
+                              updateAddress(i, { zip: e.target.value })
+                            }
+                            placeholder="20870"
+                          />
+                        </Field>
+                        <Field label="País" className="sm:col-span-2">
+                          <Input
+                            value={address.country}
+                            onChange={(e) =>
+                              updateAddress(i, { country: e.target.value })
+                            }
+                            placeholder="España"
+                          />
+                        </Field>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex justify-end">
                   <Button
                     type="button"
-                    variant="ghost"
                     size="sm"
-                    onClick={copyPrimaryAddressToBilling}
-                    className="text-[#3B1E8A] hover:bg-[#3B1E8A]/10"
+                    onClick={() =>
+                      update("addresses", [
+                        ...form.addresses,
+                        emptyAddress(false),
+                      ])
+                    }
+                    className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
                   >
-                    Usar la principal
+                    <Plus />
+                    Añadir dirección
                   </Button>
                 </div>
-                <div className="grid grid-cols-1 gap-x-3 gap-y-3 sm:grid-cols-6">
-                  <Field label="Calle y número" className="sm:col-span-4">
+              </div>
+            </div>
+          </StepShell>
+        )}
+
+        {step === "billing" && (
+          <StepShell
+            title={stepMeta.billing.title}
+            subtitle={stepMeta.billing.subtitle}
+          >
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50/60 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-zinc-900">
+                    Activar datos de facturación
+                  </p>
+                  <p className="text-sm text-zinc-500">
+                    Necesarios para emitir facturas de servicios publicitarios.
+                  </p>
+                </div>
+                <Switch
+                  checked={form.billing.invoicingActive}
+                  onChange={(v) => updateBilling("invoicingActive", v)}
+                  label={form.billing.invoicingActive ? "Activado" : "Desactivado"}
+                />
+              </div>
+
+              {form.billing.invoicingActive && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Razón social" className="sm:col-span-2">
+                    <Input
+                      value={form.billing.legalName}
+                      onChange={(e) => updateBilling("legalName", e.target.value)}
+                      placeholder={form.name || "Nombre fiscal"}
+                    />
+                  </Field>
+                  <Field label="Tipo de identificador">
+                    <NativeSelect
+                      value={form.billing.taxIdType}
+                      onChange={(e) =>
+                        updateBilling("taxIdType", e.target.value as TaxIdType)
+                      }
+                    >
+                      {taxIdTypeEnum.options.map((t) => (
+                        <option key={t} value={t}>
+                          {taxIdTypeLabels[t]}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                  <Field label="NIF / CIF" required>
+                    <Input
+                      value={form.billing.taxId}
+                      onChange={(e) => updateBilling("taxId", e.target.value)}
+                      placeholder="B12345678"
+                      required
+                    />
+                  </Field>
+                  <Field label="Email de facturación">
+                    <Input
+                      type="email"
+                      value={form.billing.billingEmail}
+                      onChange={(e) =>
+                        updateBilling("billingEmail", e.target.value)
+                      }
+                      placeholder="facturacion@cliente.com"
+                    />
+                  </Field>
+                  <Field label="Teléfono de facturación">
+                    <Input
+                      value={form.billing.billingPhone}
+                      onChange={(e) =>
+                        updateBilling("billingPhone", e.target.value)
+                      }
+                      placeholder="943 12 34 56"
+                    />
+                  </Field>
+                  <Field
+                    label="Calle y número (fiscal)"
+                    className="sm:col-span-2"
+                  >
                     <Input
                       value={form.billing.address.line1}
-                      onChange={(e) => updateBillingAddress({ line1: e.target.value })}
+                      onChange={(e) =>
+                        updateBillingAddress({ line1: e.target.value })
+                      }
                       placeholder="Kale Nagusia 12"
                     />
                   </Field>
-                  <Field label="Complemento" className="sm:col-span-2">
+                  <Field label="Complemento (fiscal)">
                     <Input
                       value={form.billing.address.line2}
-                      onChange={(e) => updateBillingAddress({ line2: e.target.value })}
+                      onChange={(e) =>
+                        updateBillingAddress({ line2: e.target.value })
+                      }
                       placeholder="Bajo A"
                     />
                   </Field>
-                  <Field label="Ciudad" className="sm:col-span-3">
+                  <Field label="Ciudad (fiscal)">
                     <Input
                       value={form.billing.address.city}
-                      onChange={(e) => updateBillingAddress({ city: e.target.value })}
+                      onChange={(e) =>
+                        updateBillingAddress({ city: e.target.value })
+                      }
                       placeholder="Elgoibar"
                     />
                   </Field>
-                  <Field label="Código postal" className="sm:col-span-1">
+                  <Field label="Código postal (fiscal)">
                     <Input
                       value={form.billing.address.zip}
-                      onChange={(e) => updateBillingAddress({ zip: e.target.value })}
+                      onChange={(e) =>
+                        updateBillingAddress({ zip: e.target.value })
+                      }
                       placeholder="20870"
                     />
                   </Field>
-                  <Field label="País" className="sm:col-span-2">
+                  <Field label="País (fiscal)">
                     <Input
                       value={form.billing.address.country}
-                      onChange={(e) => updateBillingAddress({ country: e.target.value })}
+                      onChange={(e) =>
+                        updateBillingAddress({ country: e.target.value })
+                      }
                       placeholder="España"
                     />
                   </Field>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-x-4 gap-y-4 md:grid-cols-3">
-                <Field label="Método de pago">
-                  <NativeSelect
-                    value={form.billing.paymentMethod}
-                    onChange={(e) =>
-                      updateBilling("paymentMethod", e.target.value as PaymentMethod)
-                    }
-                  >
-                    {paymentMethodEnum.options.map((p) => (
-                      <option key={p} value={p}>
-                        {paymentMethodLabels[p]}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </Field>
-                <Field label="Condiciones de pago" className="md:col-span-2">
-                  <Input
-                    value={form.billing.paymentTerms}
-                    onChange={(e) => updateBilling("paymentTerms", e.target.value)}
-                    placeholder="Pago a 30 días, día 5 del mes siguiente…"
-                  />
-                </Field>
-                <Field
-                  label="Notas internas de facturación"
-                  className="md:col-span-3"
-                >
-                  <Textarea
-                    value={form.billing.internalNotes}
-                    onChange={(e) => updateBilling("internalNotes", e.target.value)}
-                    placeholder="Persona de contacto, forma de envío de factura, observaciones…"
-                    rows={2}
-                  />
-                </Field>
-              </div>
-            </div>
-          )}
-        </Subgroup>
-
-        <Subgroup
-          title="Teléfonos"
-          description="Añade uno o varios teléfonos de contacto."
-          action={
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => update("phones", [...form.phones, ""])}
-              className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
-            >
-              <Plus />
-              Añadir
-            </Button>
-          }
-        >
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {form.phones.map((phone, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <Input
-                  value={phone}
-                  onChange={(e) => {
-                    const next = [...form.phones];
-                    next[i] = e.target.value;
-                    update("phones", next);
-                  }}
-                  placeholder="943 12 34 56"
-                />
-                {form.phones.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Quitar teléfono"
-                    className="text-zinc-500 hover:bg-rose-50 hover:text-rose-600"
-                    onClick={() =>
-                      update(
-                        "phones",
-                        form.phones.filter((_, idx) => idx !== i)
-                      )
-                    }
-                  >
-                    <X />
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        </Subgroup>
-
-        <Subgroup
-          title="Direcciones"
-          description="Marca una como principal. Puedes añadir varias."
-          action={
-            <Button
-              type="button"
-              size="sm"
-              onClick={() =>
-                update("addresses", [...form.addresses, emptyAddress(false)])
-              }
-              className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
-            >
-              <Plus />
-              Añadir
-            </Button>
-          }
-          isLast
-        >
-          <div className="flex flex-col gap-4">
-            {form.addresses.map((address, i) => (
-              <div
-                key={i}
-                className="rounded-md border border-zinc-200 bg-zinc-50/40 p-4"
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
-                    <input
-                      type="radio"
-                      name="primaryAddress"
-                      checked={address.isPrimary}
-                      onChange={() => setPrimaryAddress(i)}
-                      className="size-4 accent-[#3B1E8A]"
-                    />
-                    Dirección principal
-                  </label>
-                  {form.addresses.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="Quitar dirección"
-                      className="text-zinc-500 hover:bg-rose-50 hover:text-rose-600"
-                      onClick={() =>
-                        update(
-                          "addresses",
-                          form.addresses.filter((_, idx) => idx !== i)
+                  <Field label="Método de pago">
+                    <NativeSelect
+                      value={form.billing.paymentMethod}
+                      onChange={(e) =>
+                        updateBilling(
+                          "paymentMethod",
+                          e.target.value as PaymentMethod
                         )
                       }
                     >
-                      <X />
+                      {paymentMethodEnum.options.map((p) => (
+                        <option key={p} value={p}>
+                          {paymentMethodLabels[p]}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                  <Field label="Condiciones de pago">
+                    <Input
+                      value={form.billing.paymentTerms}
+                      onChange={(e) =>
+                        updateBilling("paymentTerms", e.target.value)
+                      }
+                      placeholder="Pago a 30 días, día 5 del mes siguiente…"
+                    />
+                  </Field>
+                  <Field label="Notas internas" className="sm:col-span-2">
+                    <Textarea
+                      value={form.billing.internalNotes}
+                      onChange={(e) =>
+                        updateBilling("internalNotes", e.target.value)
+                      }
+                      placeholder="Persona de contacto, forma de envío de factura, observaciones…"
+                      rows={3}
+                    />
+                  </Field>
+                  <div className="sm:col-span-2 -mt-1 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={copyPrimaryAddressToBilling}
+                      className="text-[#3B1E8A] hover:bg-[#3B1E8A]/10"
+                    >
+                      Copiar dirección principal como dirección fiscal
                     </Button>
-                  )}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 gap-x-3 gap-y-3 sm:grid-cols-6">
-                  <Field label="Calle y número" required className="sm:col-span-4">
-                    <Input
-                      value={address.line1}
-                      onChange={(e) => updateAddress(i, { line1: e.target.value })}
-                      placeholder="Kale Nagusia 12"
-                      required
-                    />
-                  </Field>
-                  <Field label="Complemento" className="sm:col-span-2">
-                    <Input
-                      value={address.line2}
-                      onChange={(e) => updateAddress(i, { line2: e.target.value })}
-                      placeholder="Bajo A"
-                    />
-                  </Field>
-                  <Field label="Ciudad" required className="sm:col-span-3">
-                    <Input
-                      value={address.city}
-                      onChange={(e) => updateAddress(i, { city: e.target.value })}
-                      placeholder="Elgoibar"
-                      required
-                    />
-                  </Field>
-                  <Field label="Código postal" className="sm:col-span-1">
-                    <Input
-                      value={address.zip}
-                      onChange={(e) => updateAddress(i, { zip: e.target.value })}
-                      placeholder="20870"
-                    />
-                  </Field>
-                  <Field label="País" className="sm:col-span-2">
-                    <Input
-                      value={address.country}
-                      onChange={(e) => updateAddress(i, { country: e.target.value })}
-                      placeholder="España"
-                    />
-                  </Field>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Subgroup>
+              )}
+            </div>
+          </StepShell>
+        )}
       </div>
-    </form>
+
+      <footer className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t border-zinc-200 bg-white px-4 py-3 sm:-mx-6 sm:px-6 md:-mx-10 md:px-10">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={goPrev}
+          disabled={isFirst}
+        >
+          <ChevronLeft />
+          Atrás
+        </Button>
+        <p className="hidden text-xs text-zinc-500 sm:block">
+          Paso {currentIndex + 1} de {stepOrder.length}
+        </p>
+        {isLast ? (
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isPending || !allValid}
+            className="bg-[#3B1E8A] text-white hover:bg-[#2D1666] disabled:bg-zinc-200 disabled:text-zinc-500"
+          >
+            {isPending
+              ? "Guardando…"
+              : mode === "create"
+                ? "Crear cliente"
+                : "Guardar cambios"}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={goNext}
+            className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
+          >
+            Siguiente
+            <ChevronRight />
+          </Button>
+        )}
+      </footer>
+
+      {stepErrors[step] && (
+        <div
+          role="alert"
+          className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+        >
+          {stepErrors[step]}
+        </div>
+      )}
+    </div>
   );
 }
 
-function Subgroup({
-  title,
-  description,
-  children,
-  action,
-  isLast = false,
+function Stepper({
+  currentStep,
+  onSelect,
+  isStepReachable,
+  isStepValid,
 }: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
-  isLast?: boolean;
+  currentStep: StepId;
+  onSelect: (step: StepId) => void;
+  isStepReachable: (step: StepId) => boolean;
+  isStepValid: (step: StepId) => boolean;
 }) {
   return (
-    <div className={cn(isLast ? "" : "border-b border-zinc-200 pb-6 mb-6")}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
-          {description && (
-            <p className="mt-0.5 text-sm text-zinc-500">{description}</p>
-          )}
-        </div>
-        {action}
+    <ol
+      className="flex flex-wrap items-center gap-1 rounded-lg border border-zinc-200 bg-white p-2"
+      aria-label="Pasos del formulario"
+    >
+      {stepOrder.map((s, i) => {
+        const meta = stepMeta[s];
+        const Icon = meta.icon;
+        const isCurrent = s === currentStep;
+        const reachable = isStepReachable(s);
+        const valid = isStepValid(s);
+        return (
+          <li key={s} className="flex flex-1 items-center gap-1 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => reachable && onSelect(s)}
+              disabled={!reachable}
+              aria-current={isCurrent ? "step" : undefined}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
+                isCurrent
+                  ? "bg-[#3B1E8A]/10 text-[#3B1E8A]"
+                  : reachable
+                    ? "text-zinc-700 hover:bg-zinc-50"
+                    : "cursor-not-allowed text-zinc-400"
+              )}
+            >
+              <span
+                className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
+                  isCurrent
+                    ? "border-[#3B1E8A] bg-[#3B1E8A] text-white"
+                    : valid && reachable
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-zinc-200 bg-white text-zinc-500"
+                )}
+              >
+                {valid && !isCurrent ? (
+                  <Check className="size-3.5" />
+                ) : (
+                  <Icon className="size-3.5" />
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">
+                  {meta.title}
+                </span>
+                <span className="block truncate text-xs text-zinc-500">
+                  Paso {i + 1}
+                </span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function StepShell({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="mb-5">
+        <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+        <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
       </div>
-      <div className="mt-4">{children}</div>
+      {children}
     </div>
   );
 }
@@ -746,7 +967,7 @@ function Field({
 }) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <label className="text-sm font-medium text-zinc-700">
+      <label className="text-sm font-semibold text-zinc-700">
         {label}
         {required && <span className="ml-0.5 text-rose-500">*</span>}
       </label>
@@ -804,16 +1025,16 @@ function Switch({
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={cn(
-        "inline-flex h-9 w-full items-center justify-between rounded-md border px-3 text-sm transition-colors",
+        "inline-flex h-9 w-full items-center justify-between gap-3 rounded-md border px-3 text-sm transition-colors",
         checked
           ? "border-[#3B1E8A] bg-[#3B1E8A] text-white"
           : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
       )}
     >
-      <span>{label}</span>
+      <span className="shrink-0">{label}</span>
       <span
         className={cn(
-          "relative inline-flex h-4 w-7 items-center rounded-full transition-colors",
+          "relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors",
           checked ? "bg-white/30" : "bg-zinc-300"
         )}
       >

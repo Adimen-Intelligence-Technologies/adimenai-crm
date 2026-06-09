@@ -10,7 +10,7 @@ export async function GET() {
         name: c.name,
         description: c.description ?? "",
         website: c.website ?? "",
-        phones: c.phones,
+        phones: c.phone ? [c.phone] : [],
         addresses: c.addresses,
         type: c.type,
         subType: c.subType,

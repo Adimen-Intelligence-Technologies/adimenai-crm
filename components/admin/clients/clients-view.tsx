@@ -41,18 +41,18 @@ export function ClientsView({ clients }: { clients: Client[] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
             Clientes
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-500">
             Gestiona los clientes de AdimenAi, Herrikonekt y Hiopos.
           </p>
         </div>
         <Button
           asChild
-          className="rounded-full bg-[#6C47FF] text-white hover:bg-[#5d3ce0]"
+          className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
         >
           <Link href="/admin/clients/new">
             <Plus />
@@ -61,9 +61,9 @@ export function ClientsView({ clients }: { clients: Client[] }) {
         </Button>
       </header>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <nav
-          className="flex flex-wrap items-center gap-1 rounded-full border border-zinc-200 bg-white p-1"
+          className="inline-flex w-fit items-center gap-1 rounded-md border border-zinc-200 bg-white p-1"
           aria-label="Filtrar por línea de negocio"
         >
           {filters.map((f) => (
@@ -72,9 +72,9 @@ export function ClientsView({ clients }: { clients: Client[] }) {
               type="button"
               onClick={() => setFilter(f.id)}
               className={cn(
-                "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                "rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
                 activeFilter === f.id
-                  ? "bg-[#6C47FF] text-white"
+                  ? "bg-[#3B1E8A] text-white"
                   : "text-zinc-600 hover:text-zinc-900"
               )}
             >

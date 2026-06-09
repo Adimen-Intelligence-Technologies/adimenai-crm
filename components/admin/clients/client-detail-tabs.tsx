@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Phone, Receipt, Store } from "lucide-react";
+import { MapPin, Receipt, Store } from "lucide-react";
 import {
   businessLineLabels,
   herrikonektTypeLabels,
@@ -11,21 +11,15 @@ import {
   type PaymentMethod,
   type TaxIdType,
 } from "@/lib/schemas/client";
+import { businessLineTheme } from "@/lib/theme";
 import type { Client } from "@/lib/repositories/clients";
 import { cn } from "@/lib/utils";
 
-const businessLineStyles: Record<Client["businessLine"], string> = {
-  adimenai: "bg-violet-50 text-violet-700 border-violet-100",
-  herrikonekt: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  hiopos: "bg-amber-50 text-amber-700 border-amber-100",
-};
-
-type Tab = "data" | "addresses" | "phones" | "billing" | "sync";
+type Tab = "data" | "addresses" | "billing" | "sync";
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: "data", label: "Datos" },
   { id: "addresses", label: "Direcciones" },
-  { id: "phones", label: "Teléfonos" },
   { id: "billing", label: "Facturación" },
   { id: "sync", label: "Sincronización" },
 ];
@@ -34,6 +28,7 @@ export function ClientDetailTabs({ client }: { client: Client }) {
   const [tab, setTab] = useState<Tab>("data");
   const isHerrikonekt = client.businessLine === "herrikonekt";
   const billingActive = !!client.billing?.invoicingActive;
+  const theme = businessLineTheme[client.businessLine];
   const visibleTabs = tabs.filter((t) => {
     if (t.id === "sync") return isHerrikonekt;
     if (t.id === "billing") return billingActive;
@@ -51,7 +46,7 @@ export function ClientDetailTabs({ client }: { client: Client }) {
             <span
               className={cn(
                 "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
-                businessLineStyles[client.businessLine]
+                theme.badge
               )}
             >
               {businessLineLabels[client.businessLine]}
@@ -115,6 +110,54 @@ export function ClientDetailTabs({ client }: { client: Client }) {
             {isHerrikonekt && client.subType && (
               <Item label="Subtipo">{client.subType}</Item>
             )}
+            {client.email && (
+              <Item label="Email">
+                <a
+                  href={`mailto:${client.email}`}
+                  className="text-[#3B1E8A] hover:underline"
+                >
+                  {client.email}
+                </a>
+              </Item>
+            )}
+            {client.phone && (
+              <Item label="Teléfono">
+                <a
+                  href={`tel:${client.phone}`}
+                  className="text-[#3B1E8A] hover:underline"
+                >
+                  {client.phone}
+                </a>
+              </Item>
+            )}
+            {client.social?.instagram && (
+              <Item label="Instagram">
+                <a
+                  href={
+                    client.social.instagram.startsWith("http")
+                      ? client.social.instagram
+                      : `https://instagram.com/${client.social.instagram.replace(/^@/, "")}`
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#3B1E8A] hover:underline"
+                >
+                  {client.social.instagram}
+                </a>
+              </Item>
+            )}
+            {client.social?.facebook && (
+              <Item label="Facebook">
+                <a
+                  href={client.social.facebook}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#3B1E8A] hover:underline"
+                >
+                  {client.social.facebook}
+                </a>
+              </Item>
+            )}
             <Item label="Creado">
               {new Date(client.createdAt).toLocaleDateString("es-ES", {
                 day: "2-digit",
@@ -164,34 +207,6 @@ export function ClientDetailTabs({ client }: { client: Client }) {
                       </span>
                     )}
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {tab === "phones" && (
-        <div className="rounded-xl border border-zinc-200 bg-white">
-          {client.phones.length === 0 ? (
-            <EmptyState
-              icon={<Phone className="size-5" />}
-              title="Sin teléfonos"
-              description="Este cliente no tiene teléfonos guardados."
-            />
-          ) : (
-            <ul className="divide-y divide-zinc-100">
-              {client.phones.map((phone, i) => (
-                <li key={i} className="flex items-center gap-3 px-5 py-3">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-500">
-                    <Phone className="size-4" />
-                  </div>
-                  <a
-                    href={`tel:${phone}`}
-                    className="text-sm font-medium text-zinc-900 hover:text-[#3B1E8A]"
-                  >
-                    {phone}
-                  </a>
                 </li>
               ))}
             </ul>

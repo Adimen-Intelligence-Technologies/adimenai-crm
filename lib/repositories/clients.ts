@@ -3,6 +3,7 @@ import { getClientsCollection } from "@/lib/db";
 import type {
   BusinessLine,
   ClientBilling,
+  ClientSocialLinks,
   CreateHerrikonektInput,
   UpdateHerrikonektInput,
 } from "@/lib/schemas/client";
@@ -13,7 +14,8 @@ export type Client = {
   name: string;
   description?: string;
   website?: string;
-  phones: string[];
+  email?: string;
+  phone?: string;
   addresses: Array<{
     line1: string;
     line2?: string;
@@ -25,6 +27,7 @@ export type Client = {
   type?: string;
   subType?: string;
   syncToApp?: boolean;
+  social?: ClientSocialLinks;
   billing?: ClientBilling;
   createdAt: string;
   updatedAt: string;
@@ -42,14 +45,14 @@ export async function listClients(filter: {
   q?: string;
 } = {}): Promise<Client[]> {
   const collection = await getClientsCollection();
-  const query: Record<string, unknown> = {};
+    const query: Record<string, unknown> = {};
   if (filter.businessLine) query.businessLine = filter.businessLine;
   if (filter.q && filter.q.trim()) {
     const rx = new RegExp(escapeRegex(filter.q.trim()), "i");
     query.$or = [
       { name: rx },
       { "addresses.city": rx },
-      { phones: rx },
+      { phone: rx },
       { subType: rx },
     ];
   }

@@ -1,0 +1,56 @@
+import { NextResponse, type NextRequest } from "next/server";
+import {
+  businessLineEnum,
+  createHerrikonektSchema,
+} from "@/lib/schemas/client";
+import { createClient, listClients } from "@/lib/repositories/clients";
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const rawLine = searchParams.get("businessLine");
+    const q = searchParams.get("q") ?? undefined;
+
+    let businessLine;
+    if (rawLine) {
+      const parsed = businessLineEnum.safeParse(rawLine);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: "businessLine inválido" },
+          { status: 400 }
+        );
+      }
+      businessLine = parsed.data;
+    }
+
+    const clients = await listClients({ businessLine, q });
+    return NextResponse.json(clients);
+  } catch (err) {
+    console.error("GET /api/clients", err);
+    return NextResponse.json(
+      { error: "Error al listar clientes" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const parsed = createHerrikonektSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Datos inválidos", issues: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const client = await createClient(parsed.data);
+    return NextResponse.json(client, { status: 201 });
+  } catch (err) {
+    console.error("POST /api/clients", err);
+    return NextResponse.json(
+      { error: "Error al crear cliente" },
+      { status: 500 }
+    );
+  }
+}

@@ -320,7 +320,7 @@ export function TasksView({ initialTasks }: Props) {
           <div className="overflow-hidden rounded-lg border border-zinc-200">
             <iframe
               src="https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit?widget=true&headers=0"
-              className="h-[75vh] w-full"
+              className="h-[90vh] w-full"
               title="Hoja de cálculo de comité"
             />
           </div>

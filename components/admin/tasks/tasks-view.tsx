@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -13,7 +13,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { LayoutGrid, List, Plus, X } from "lucide-react";
+import { ExternalLink, FileDown, FileSpreadsheet, LayoutGrid, Plus, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -22,25 +22,15 @@ import {
   taskColumnOrder,
   type TaskAssignee,
   type TaskColumn,
-  type TaskScope,
 } from "@/lib/schemas/task";
 import type { Task } from "@/lib/repositories/tasks";
 import { AssigneeAvatar } from "./assignee-avatar";
 import { KanbanColumn } from "./kanban-column";
 import { TaskCard } from "./task-card";
 import { TaskForm } from "./task-form";
-import { TaskList } from "./task-list";
 
-type ScopeFilter = "all" | TaskScope;
-type ViewMode = "kanban" | "list";
 
-const scopeFilters: Array<{ id: ScopeFilter; label: string }> = [
-  { id: "all", label: "Todos" },
-  { id: "adimenai", label: "AdimenAi" },
-  { id: "herrikonekt", label: "Herrikonekt" },
-  { id: "hiopos", label: "Hiopos" },
-  { id: "general", label: "General" },
-];
+type ViewMode = "kanban" | "sheet";
 
 type Props = {
   initialTasks: Task[];
@@ -49,12 +39,23 @@ type Props = {
 export function TasksView({ initialTasks }: Props) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [scope, setScope] = useState<ScopeFilter>("all");
   const [assignee, setAssignee] = useState<TaskAssignee | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
-  const [view, setView] = useState<ViewMode>("kanban");
+  const [view, setView] = useState<ViewMode>("sheet");
   const [, startTransition] = useTransition();
+
+  // Auto-sync desde Excel al cargar la página
+  useEffect(() => {
+    fetch("/api/tasks/sync-excel", { method: "POST" })
+      .then((r) => r.json())
+      .then((result) => {
+        if (result.created || result.updated) {
+          window.location.reload();
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -64,12 +65,9 @@ export function TasksView({ initialTasks }: Props) {
   );
 
   const filtered = useMemo(() => {
-    return tasks.filter((t) => {
-      if (scope !== "all" && t.scope !== scope) return false;
-      if (assignee && t.assignee !== assignee) return false;
-      return true;
-    });
-  }, [tasks, scope, assignee]);
+    if (!assignee) return tasks;
+    return tasks.filter((t) => t.assignee === assignee);
+  }, [tasks, assignee]);
 
   const tasksByColumn: Record<TaskColumn, Task[]> = {
     backlog: [],
@@ -173,6 +171,58 @@ export function TasksView({ initialTasks }: Props) {
     }
   }
 
+  const [exporting, setExporting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/tasks/export", { method: "POST" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(data?.error ?? "Error al exportar");
+      }
+      alert("Excel exportado y subido a Drive correctamente.");
+    } catch (err) {
+      alert(
+        err instanceof Error ? err.message : "Error al exportar a Drive"
+      );
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleSync() {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/tasks/sync-excel", { method: "POST" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(data?.error ?? "Error al sincronizar");
+      }
+      const result = (await res.json()) as {
+        created: number;
+        updated: number;
+        sheet: string;
+      };
+      alert(
+        `Sincronizado desde hoja ${result.sheet}: ${result.created} creadas, ${result.updated} actualizadas.`
+      );
+      // Recargar la página para reflejar cambios
+      window.location.reload();
+    } catch (err) {
+      alert(
+        err instanceof Error ? err.message : "Error al sincronizar desde Excel"
+      );
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -207,19 +257,37 @@ export function TasksView({ initialTasks }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => setView("list")}
+              onClick={() => setView("sheet")}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 text-sm font-medium transition-colors",
-                view === "list"
+                view === "sheet"
                   ? "bg-[#3B1E8A] text-white"
                   : "text-zinc-600 hover:text-zinc-900"
               )}
-              aria-pressed={view === "list"}
+              aria-pressed={view === "sheet"}
             >
-              <List className="size-3.5" />
-              Listado
+              <FileSpreadsheet className="size-3.5" />
+              Hoja
             </button>
           </div>
+          <Button
+            onClick={handleSync}
+            variant="outline"
+            disabled={syncing}
+            className="gap-1.5"
+          >
+            <RefreshCw className={cn("size-3.5", syncing && "animate-spin")} />
+            {syncing ? "Sincronizando…" : "Sincronizar"}
+          </Button>
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            disabled={exporting}
+            className="gap-1.5"
+          >
+            <FileDown className="size-3.5" />
+            {exporting ? "Exportando…" : "Exportar a Excel"}
+          </Button>
           <Button
             onClick={() => {
               setEditing(null);
@@ -234,26 +302,6 @@ export function TasksView({ initialTasks }: Props) {
       </header>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <nav
-          className="inline-flex w-fit flex-wrap items-center gap-1 rounded-md border border-zinc-200 bg-white p-1"
-          aria-label="Filtrar por ámbito"
-        >
-          {scopeFilters.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setScope(f.id)}
-              className={cn(
-                "rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
-                scope === f.id
-                  ? "bg-[#3B1E8A] text-white"
-                  : "text-zinc-600 hover:text-zinc-900"
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
-        </nav>
         <div className="flex items-center gap-2">
           {assignee && (
             <button
@@ -286,7 +334,28 @@ export function TasksView({ initialTasks }: Props) {
         </div>
       </div>
 
-      {view === "kanban" ? (
+      {view === "sheet" ? (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-end rounded-lg border border-zinc-200 bg-white p-3">
+            <a
+              href="https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-md bg-[#3B1E8A] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#2D1666]"
+            >
+              <ExternalLink className="size-3.5" />
+              Editar en Drive
+            </a>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-zinc-200">
+            <iframe
+              src="https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit?widget=true&headers=0"
+              className="h-[75vh] w-full"
+              title="Hoja de cálculo de comité"
+            />
+          </div>
+        </div>
+      ) : (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -309,12 +378,6 @@ export function TasksView({ initialTasks }: Props) {
             {activeTask ? <TaskCard task={activeTask} /> : null}
           </DragOverlay>
         </DndContext>
-      ) : (
-        <TaskList
-          tasks={filtered}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
       )}
 
       <TaskForm

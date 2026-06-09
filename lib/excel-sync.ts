@@ -1,0 +1,143 @@
+import ExcelJS from "exceljs";
+import { listTasks, createTask, updateTask } from "@/lib/repositories/tasks";
+import type { Task } from "@/lib/repositories/tasks";
+
+const ASSIGNEE_MAP: Record<string, string> = {
+  iñaki: "inaki",
+  "iñaki&karra": "inaki",
+  "iñaki&asier": "inaki",
+  karra: "asier",
+  asier: "asier",
+  andrea: "andrea",
+  joseba: "joseba",
+};
+
+function normalizeKey(scope: string, title: string): string {
+  return `${scope.trim().toLowerCase()}||${title.trim().toLowerCase()}`;
+}
+
+export async function syncTasksFromExcel() {
+  const url =
+    "https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/export?format=xlsx";
+
+  const res = await fetch(url);
+  const buf = await res.arrayBuffer();
+
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buf);
+
+  // Find the most recent sheet by date name (DDMMYYYY)
+  const sheetNames = wb.worksheets
+    .map((s) => s.name)
+    .filter((n) => /^\d{8}$/.test(n))
+    .sort()
+    .reverse();
+
+  if (sheetNames.length === 0) {
+    throw new Error("No se encontró ninguna hoja con formato fecha");
+  }
+
+  const latestSheetName = sheetNames[0];
+  const ws = wb.getWorksheet(latestSheetName)!;
+
+  // Read Excel rows
+  const excelTasks: Array<{
+    scope: string;
+    title: string;
+    column: "backlog" | "done";
+    assignee: Task["assignee"];
+  }> = [];
+
+  let currentScope = "";
+
+  for (let r = 8; r <= ws.rowCount; r++) {
+    const row = ws.getRow(r);
+    const scope = row.getCell(1).value;
+    const action = row.getCell(4).value;
+    const responsible = row.getCell(9).value;
+
+    if (!action) continue;
+    const actionStr = String(action).trim();
+    const scopeStr = scope ? String(scope).trim() : "";
+
+    if (scopeStr && scopeStr !== "ÁMBITOS DE TRABAJO") {
+      currentScope = scopeStr;
+    }
+
+    const lowerAction = actionStr.toLowerCase();
+    if (
+      scopeStr === "ÁMBITOS DE TRABAJO" ||
+      lowerAction.includes("próximo comité") ||
+      lowerAction.includes("proximo comité")
+    )
+      continue;
+
+    const cellFill = row.getCell(4).fill as { fgColor?: { argb?: string } } | null | undefined;
+    const isGreen = cellFill?.fgColor?.argb === "FF6AA84F";
+
+    const respStr = responsible
+      ? String(responsible).trim().toLowerCase().replace(/\s+/g, "")
+      : "";
+    const assignee =
+      (ASSIGNEE_MAP[respStr] as Task["assignee"]) ?? ("inaki" as Task["assignee"]);
+
+    excelTasks.push({
+      scope: currentScope || "General",
+      title: actionStr,
+      column: isGreen ? "backlog" : "done",
+      assignee,
+    });
+  }
+
+  // Build lookup by key from existing DB tasks
+  const dbTasks = await listTasks();
+  const dbByKey = new Map<string, Task>();
+  for (const t of dbTasks) {
+    const key = normalizeKey(t.scope, t.title);
+    dbByKey.set(key, t);
+  }
+
+  let created = 0;
+  let updated = 0;
+  const now = new Date().toISOString();
+
+  for (const ex of excelTasks) {
+    const key = normalizeKey(ex.scope, ex.title);
+    const existing = dbByKey.get(key);
+
+    if (existing) {
+      const isPending = existing.column === "backlog" || existing.column === "in_progress";
+      const shouldBePending = ex.column === "backlog";
+
+      // Only update if the done/pending status actually changed
+      if (isPending !== shouldBePending) {
+        await updateTask(existing._id, {
+          column: shouldBePending ? "backlog" : "done",
+          assignee: ex.assignee,
+        });
+        updated++;
+      } else if (existing.assignee !== ex.assignee) {
+        // Update assignee even if status didn't change
+        await updateTask(existing._id, { assignee: ex.assignee });
+        updated++;
+      }
+    } else {
+      await createTask({
+        title: ex.title,
+        description: "",
+        scope: ex.scope,
+        column: ex.column,
+        assignee: ex.assignee,
+        dueDate: "",
+      });
+      created++;
+    }
+  }
+
+  return {
+    created,
+    updated,
+    total: excelTasks.length,
+    sheet: latestSheetName,
+  };
+}

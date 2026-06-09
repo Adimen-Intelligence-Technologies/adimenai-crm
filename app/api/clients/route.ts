@@ -39,8 +39,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = createHerrikonektSchema.safeParse(body);
     if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
+      const detail = firstIssue
+        ? `${firstIssue.path.join(".") || "campo"}: ${firstIssue.message}`
+        : "Datos inválidos";
       return NextResponse.json(
-        { error: "Datos inválidos", issues: parsed.error.flatten() },
+        { error: detail, issues: parsed.error.flatten() },
         { status: 400 }
       );
     }

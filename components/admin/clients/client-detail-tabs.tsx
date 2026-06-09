@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Receipt, Store } from "lucide-react";
+import { MapPin, Phone, Receipt, Store } from "lucide-react";
 import {
   businessLineLabels,
   herrikonektTypeLabels,
@@ -15,11 +15,12 @@ import { businessLineTheme } from "@/lib/theme";
 import type { Client } from "@/lib/repositories/clients";
 import { cn } from "@/lib/utils";
 
-type Tab = "data" | "addresses" | "billing" | "sync";
+type Tab = "data" | "addresses" | "phones" | "billing" | "sync";
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: "data", label: "Datos" },
   { id: "addresses", label: "Direcciones" },
+  { id: "phones", label: "Teléfonos" },
   { id: "billing", label: "Facturación" },
   { id: "sync", label: "Sincronización" },
 ];
@@ -45,7 +46,7 @@ export function ClientDetailTabs({ client }: { client: Client }) {
             </h1>
             <span
               className={cn(
-                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                "inline-flex items-center rounded-[2px] border px-2.5 py-0.5 text-xs font-medium",
                 theme.badge
               )}
             >
@@ -120,14 +121,20 @@ export function ClientDetailTabs({ client }: { client: Client }) {
                 </a>
               </Item>
             )}
-            {client.phone && (
-              <Item label="Teléfono">
-                <a
-                  href={`tel:${client.phone}`}
-                  className="text-[#3B1E8A] hover:underline"
-                >
-                  {client.phone}
-                </a>
+            {client.phones && client.phones.length > 0 && (
+              <Item label="Teléfonos" className="sm:col-span-2">
+                <ul className="flex flex-col gap-1">
+                  {client.phones.map((p, i) => (
+                    <li key={i}>
+                      <a
+                        href={`tel:${p}`}
+                        className="text-[#3B1E8A] hover:underline"
+                      >
+                        {p}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </Item>
             )}
             {client.social?.instagram && (
@@ -207,6 +214,34 @@ export function ClientDetailTabs({ client }: { client: Client }) {
                       </span>
                     )}
                   </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {tab === "phones" && (
+        <div className="rounded-xl border border-zinc-200 bg-white">
+          {client.phones.length === 0 ? (
+            <EmptyState
+              icon={<Phone className="size-5" />}
+              title="Sin teléfonos"
+              description="Este cliente no tiene teléfonos guardados."
+            />
+          ) : (
+            <ul className="divide-y divide-zinc-100">
+              {client.phones.map((phone, i) => (
+                <li key={i} className="flex items-center gap-3 px-5 py-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-500">
+                    <Phone className="size-4" />
+                  </div>
+                  <a
+                    href={`tel:${phone}`}
+                    className="text-sm font-medium text-zinc-900 hover:text-[#3B1E8A]"
+                  >
+                    {phone}
+                  </a>
                 </li>
               ))}
             </ul>

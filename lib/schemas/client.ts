@@ -306,26 +306,22 @@ export type ClientSocialLinks = z.infer<typeof socialLinksSchema>;
 
 export const createHerrikonektSchema = z.object({
   businessLine: z.literal("herrikonekt"),
-  name: z.string().min(1, "El nombre es obligatorio"),
+  name: z.string().trim().min(1, "El nombre es obligatorio"),
   description: z.string().optional().default(""),
   website: z
-    .string()
-    .url("URL no válida")
+    .union([z.string().url("URL no válida"), z.literal("")])
     .optional()
-    .or(z.literal("")),
+    .default(""),
   email: z
-    .string()
-    .email("Email no válido")
+    .union([z.string().email("Email no válido"), z.literal("")])
     .optional()
-    .or(z.literal("")),
-  phone: z.string().optional().default(""),
-  addresses: z
-    .array(addressSchema)
-    .min(1, "Añade al menos una dirección"),
-  type: herrikonektTypeEnum,
-  subType: z.string().min(1, "Selecciona un subtipo"),
+    .default(""),
+  phones: z.array(z.string()).default([]),
+  addresses: z.array(addressSchema).default([]),
+  type: herrikonektTypeEnum.optional().default("bares_y_restaurantes"),
+  subType: z.string().optional().default(""),
   syncToApp: z.boolean().default(true),
-  social: socialLinksSchema.optional(),
+  social: socialLinksSchema.optional().default({ instagram: "", facebook: "" }),
   billing: billingSchema.optional(),
 });
 export type CreateHerrikonektInput = z.infer<typeof createHerrikonektSchema>;

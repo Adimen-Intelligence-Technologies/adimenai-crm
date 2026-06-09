@@ -15,7 +15,7 @@ export type Client = {
   description?: string;
   website?: string;
   email?: string;
-  phone?: string;
+  phones: string[];
   addresses: Array<{
     line1: string;
     line2?: string;
@@ -52,7 +52,7 @@ export async function listClients(filter: {
     query.$or = [
       { name: rx },
       { "addresses.city": rx },
-      { phone: rx },
+      { phones: rx },
       { subType: rx },
     ];
   }

@@ -17,22 +17,24 @@ export const businessLineTheme: Record<BusinessLine, BusinessLineTheme> = {
   adimenai: {
     accent: "#3B1E8A",
     accentHover: "#2D1666",
-    badge: "bg-[#3B1E8A]/10 text-[#3B1E8A] border-[#3B1E8A]/20",
-    soft: "bg-[#3B1E8A]/5",
-    icon: "text-[#3B1E8A]",
+    badge:
+      "bg-[#6D28D9] text-white border-[#6D28D9]",
+    soft: "bg-violet-100",
+    icon: "text-violet-700",
   },
   herrikonekt: {
-    accent: "#0F5132",
-    accentHover: "#0A3D26",
-    badge: "bg-emerald-900/10 text-emerald-900 border-emerald-900/20",
-    soft: "bg-emerald-900/5",
-    icon: "text-emerald-900",
+    accent: "#047857",
+    accentHover: "#065F46",
+    badge: "bg-emerald-600 text-white border-emerald-600",
+    soft: "bg-emerald-100",
+    icon: "text-emerald-700",
   },
   hiopos: {
-    accent: "#B91C1C",
-    accentHover: "#991B1B",
-    badge: "bg-red-700/10 text-red-700 border-red-700/20",
-    soft: "bg-red-700/5",
+    accent: "#DC2626",
+    accentHover: "#B91C1C",
+    badge: "bg-red-600 text-white border-red-600",
+    soft: "bg-red-100",
     icon: "text-red-700",
   },
 };
+

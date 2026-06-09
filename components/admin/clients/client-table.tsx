@@ -11,6 +11,7 @@ import {
   type HerrikonektType,
 } from "@/lib/schemas/client";
 import { businessLineTheme } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import type { Client } from "@/lib/repositories/clients";
 
 export function ClientTable({ clients }: { clients: Client[] }) {
@@ -50,6 +51,7 @@ export function ClientTable({ clients }: { clients: Client[] }) {
 
 function ClientRow({ client }: { client: Client }) {
   const primaryAddress = client.addresses?.[0];
+  const primaryPhone = client.phones?.[0];
   const theme = businessLineTheme[client.businessLine];
 
   return (
@@ -63,7 +65,10 @@ function ClientRow({ client }: { client: Client }) {
         </Link>
       </td>
       <td className="hidden px-4 py-3 sm:table-cell">
-        <Badge variant="outline" className={theme.badge}>
+        <Badge
+          variant="outline"
+          className={cn("rounded-[2px]", theme.badge)}
+        >
           {businessLineLabels[client.businessLine]}
         </Badge>
       </td>
@@ -76,7 +81,7 @@ function ClientRow({ client }: { client: Client }) {
         {primaryAddress?.city ?? "—"}
       </td>
       <td className="hidden px-4 py-3 text-zinc-600 lg:table-cell">
-        {client.phone ?? "—"}
+        {primaryPhone ?? "—"}
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center justify-end gap-1">

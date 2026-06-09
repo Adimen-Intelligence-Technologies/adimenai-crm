@@ -54,7 +54,7 @@ type FormState = {
   name: string;
   description: string;
   website: string;
-  phone: string;
+  phones: string[];
   addresses: AddressForm[];
   type: HerrikonektType;
   subType: string;
@@ -157,7 +157,7 @@ function toFormState(initial?: InitialClient): FormState {
     description: initial?.description ?? "",
     website: initial?.website ?? "",
     email: initial?.email ?? "",
-    phone: initial?.phone ?? "",
+    phones: initial?.phones && initial.phones.length > 0 ? initial.phones : [""],
     addresses:
       initial?.addresses && initial.addresses.length > 0
         ? initial.addresses.map((a, idx) => ({
@@ -237,9 +237,9 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
   const stepValidity = useMemo(
     () => ({
       basics: form.name.trim().length > 0,
-      category: form.subType.trim().length > 0,
-      contact: form.addresses.some((a) => a.line1.trim() && a.city.trim()),
-      billing: !form.billing.invoicingActive || form.billing.taxId.trim().length > 0,
+      category: true,
+      contact: true,
+      billing: true,
     }),
     [form]
   );
@@ -276,7 +276,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
       description: form.description.trim(),
       website: form.website.trim(),
       email: form.email.trim(),
-      phone: form.phone.trim(),
+      phones: form.phones.map((p) => p.trim()).filter(Boolean),
       addresses: form.addresses
         .filter((a) => a.line1.trim() && a.city.trim())
         .map((a) => ({
@@ -333,10 +333,9 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
           throw new Error(data?.error ?? "No se pudo guardar el cliente");
         }
         if (mode === "create") {
-          const created = (await res.json()) as Client;
-          router.push(`/admin/clients/${created._id}`);
+          router.push("/admin/clients");
         } else {
-          router.push(`/admin/clients/${initial?._id}`);
+          router.push("/admin/clients");
         }
         router.refresh();
       } catch (err) {
@@ -463,12 +462,50 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                 />
               </Field>
 
-              <Field label="Teléfono" className="sm:col-span-2">
-                <Input
-                  value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
-                  placeholder="943 12 34 56"
-                />
+              <Field label="Teléfonos" className="sm:col-span-2">
+                <div className="flex flex-col gap-2">
+                  {form.phones.map((phone, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Input
+                        value={phone}
+                        onChange={(e) => {
+                          const next = [...form.phones];
+                          next[i] = e.target.value;
+                          update("phones", next);
+                        }}
+                        placeholder="943 12 34 56"
+                      />
+                      {form.phones.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Quitar teléfono"
+                          className="text-zinc-500 hover:bg-rose-50 hover:text-rose-600"
+                          onClick={() =>
+                            update(
+                              "phones",
+                              form.phones.filter((_, idx) => idx !== i)
+                            )
+                          }
+                        >
+                          <X />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => update("phones", [...form.phones, ""])}
+                    className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
+                  >
+                    <Plus />
+                    Añadir teléfono
+                  </Button>
+                </div>
               </Field>
 
               <Field label="Descripción" className="sm:col-span-2">
@@ -489,18 +526,17 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
             subtitle={stepMeta.category.subtitle}
           >
             <div className="flex flex-col gap-5">
-              <Field label="Tipo" required>
+              <Field label="Tipo">
                 <TypeCombobox
                   value={form.type}
                   onChange={(v) => update("type", v)}
                   placeholder="Selecciona un tipo…"
                 />
               </Field>
-              <Field label="Subtipo" required>
+              <Field label="Subtipo">
                 <NativeSelect
                   value={form.subType}
                   onChange={(e) => update("subType", e.target.value)}
-                  required
                 >
                   <option value="">Selecciona…</option>
                   {subTypeOptions.map((s) => (
@@ -562,7 +598,6 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-6">
                         <Field
                           label="Calle y número"
-                          required
                           className="sm:col-span-4"
                         >
                           <Input
@@ -571,7 +606,6 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                               updateAddress(i, { line1: e.target.value })
                             }
                             placeholder="Kale Nagusia 12"
-                            required
                           />
                         </Field>
                         <Field label="Complemento" className="sm:col-span-2">
@@ -585,7 +619,6 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                         </Field>
                         <Field
                           label="Ciudad"
-                          required
                           className="sm:col-span-3"
                         >
                           <Input
@@ -594,7 +627,6 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                               updateAddress(i, { city: e.target.value })
                             }
                             placeholder="Elgoibar"
-                            required
                           />
                         </Field>
                         <Field label="Código postal" className="sm:col-span-1">
@@ -685,12 +717,11 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                       ))}
                     </NativeSelect>
                   </Field>
-                  <Field label="NIF / CIF" required>
+                  <Field label="NIF / CIF">
                     <Input
                       value={form.billing.taxId}
                       onChange={(e) => updateBilling("taxId", e.target.value)}
                       placeholder="B12345678"
-                      required
                     />
                   </Field>
                   <Field label="Email de facturación">

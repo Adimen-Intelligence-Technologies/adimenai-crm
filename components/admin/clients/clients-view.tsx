@@ -54,10 +54,10 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            Clientes
+            Contactos
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Gestiona los clientes de AdimenAi, Herrikonekt y Hiopos.
+            Gestiona los contactos de AdimenAi, Herrikonekt y Hiopos.
           </p>
         </div>
         <Button

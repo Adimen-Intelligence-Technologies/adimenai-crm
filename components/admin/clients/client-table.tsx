@@ -45,7 +45,7 @@ export function ClientTable({
                 colSpan={6}
                 className="px-4 py-10 text-center text-sm text-zinc-500"
               >
-                No hay clientes para mostrar.
+                No hay contactos para mostrar.
               </td>
             </tr>
           ) : (

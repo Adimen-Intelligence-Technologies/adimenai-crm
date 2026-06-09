@@ -12,7 +12,7 @@ export function TopbarSearch() {
       />
       <Input
         type="search"
-        placeholder="Buscar clientes, tareas, embudos…"
+        placeholder="Buscar contactos, tareas, embudos…"
         className="h-10 w-full rounded-full border-zinc-200 bg-zinc-50 pl-9 text-sm focus-visible:bg-white"
         aria-label="Búsqueda global"
       />

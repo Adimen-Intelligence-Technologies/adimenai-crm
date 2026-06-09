@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { navGroups } from "@/lib/nav";
+import { navGroups, navFlat } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { NavLink } from "./nav-link";
 import { useSidebar } from "./sidebar-context";
@@ -16,22 +16,11 @@ export function SidebarNav() {
   return (
     <ScrollArea className="flex-1 px-3 py-4">
       <nav aria-label="Navegación principal" className="flex flex-col gap-6">
-        {navGroups.map((group, gi) => {
+        {navGroups.map((group) => {
           const isFolder = group.folder && open;
 
           return (
             <div key={group.label} className="flex flex-col gap-1">
-              {open && !isFolder && (
-                <h3
-                  className={cn(
-                    "px-3 pb-2 text-[11px] font-semibold tracking-[0.08em] uppercase",
-                    "text-white/40"
-                  )}
-                >
-                  {group.label}
-                </h3>
-              )}
-
               {isFolder && (
                 <button
                   type="button"
@@ -56,10 +45,6 @@ export function SidebarNav() {
                 </button>
               )}
 
-              {gi > 0 && open && !isFolder && (
-                <Separator className="mb-2 bg-white/5" />
-              )}
-
               {(!isFolder || expanded) && (
                 <ul className="flex flex-col gap-0.5">
                   {group.items.map((item) => (
@@ -72,6 +57,16 @@ export function SidebarNav() {
             </div>
           );
         })}
+
+        {open && <Separator className="bg-white/5" />}
+
+        <ul className="flex flex-col gap-0.5">
+          {navFlat.map((item) => (
+            <li key={item.href}>
+              <NavLink item={item} />
+            </li>
+          ))}
+        </ul>
       </nav>
     </ScrollArea>
   );

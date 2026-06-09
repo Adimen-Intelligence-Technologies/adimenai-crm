@@ -25,7 +25,7 @@ export function NavLink({ item }: Props) {
       href={item.href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "group flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium transition-colors",
+        "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
         "text-white/70 hover:bg-white/[0.08] hover:text-white",
         isActive && "bg-white/[0.10] text-white",
         !open && "justify-center px-0"

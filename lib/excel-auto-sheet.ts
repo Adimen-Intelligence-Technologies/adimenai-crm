@@ -40,6 +40,11 @@ export async function createDailySheetIfMissing() {
     return { created: false, sheet: sheetName };
   }
 
+  const tasks = await listTasks();
+  if (tasks.length === 0) {
+    return { created: false, sheet: sheetName, reason: "no tasks" };
+  }
+
   const ws = wb.addWorksheet(sheetName);
 
   ws.getColumn(1).width = 26;
@@ -87,7 +92,6 @@ export async function createDailySheetIfMissing() {
   ws.getCell("A7").value = "\u00C1MBITOS DE TRABAJO";
   ws.getCell("A7").font = { bold: true, size: 10, color: { argb: "FF666666" } };
 
-  const tasks = await listTasks();
   let rowNum = 8;
   for (const task of tasks) {
     const row = ws.getRow(rowNum);
@@ -120,7 +124,7 @@ export async function createDailySheetIfMissing() {
   const auth = new google.auth.JWT({
     email: credentials.client_email,
     key: credentials.private_key,
-    scopes: ["https://www.googleapis.com/auth/drive.file"],
+    scopes: ["https://www.googleapis.com/auth/drive"],
   });
 
   const drive = google.drive({ version: "v3", auth });

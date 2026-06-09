@@ -28,8 +28,8 @@ export async function syncTasksFromExcel() {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(buf);
 
-  // Find the most recent sheet by date name (DDMMYYYY)
-  const sheetNames = wb.worksheets
+  // Find the most recent sheet by date name (DDMMYYYY) that has actual data
+  const sortedSheets = wb.worksheets
     .map((s) => s.name)
     .filter((n) => /^\d{8}$/.test(n))
     .sort((a, b) => {
@@ -37,12 +37,37 @@ export async function syncTasksFromExcel() {
       return toKey(b).localeCompare(toKey(a));
     });
 
-  if (sheetNames.length === 0) {
+  if (sortedSheets.length === 0) {
     throw new Error("No se encontró ninguna hoja con formato fecha");
   }
 
-  const latestSheetName = sheetNames[0];
-  const ws = wb.getWorksheet(latestSheetName)!;
+  // Probar hojas desde la más reciente hasta la más antigua, saltando las vacías
+  let latestSheetName: string | null = null;
+  let ws: ExcelJS.Worksheet | null = null;
+
+  for (const name of sortedSheets) {
+    const sheet = wb.getWorksheet(name)!;
+    const hasData = Array.from({ length: sheet.rowCount - 7 }, (_, i) => i + 8)
+      .some((r) => {
+        const val = sheet.getRow(r).getCell(4).value;
+        return val && String(val).trim().length > 0;
+      });
+    if (hasData) {
+      latestSheetName = name;
+      ws = sheet;
+      break;
+    }
+  }
+
+  // Si todas están vacías, usar la primera
+  if (!latestSheetName) {
+    latestSheetName = sortedSheets[0];
+    ws = wb.getWorksheet(latestSheetName)!;
+  }
+
+  if (!ws || !latestSheetName) {
+    throw new Error("No se encontró ninguna hoja con datos");
+  }
 
   // Read Excel rows
   const excelTasks: Array<{

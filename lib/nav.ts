@@ -13,9 +13,14 @@ export type NavGroup = {
 
 export const navGroups: NavGroup[] = [
   {
-    label: "Operación",
+    label: "3. Constitutivo y Comercial",
     items: [
       { label: "Clientes", href: "/admin/clients", icon: Users },
+    ],
+  },
+  {
+    label: "4. Comité administrativo",
+    items: [
       { label: "Gestión administrativa", href: "/admin/tasks", icon: ListChecks },
     ],
   },

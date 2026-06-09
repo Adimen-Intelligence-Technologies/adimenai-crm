@@ -39,7 +39,6 @@ export function TasksView({ initialTasks }: Props) {
   const [editing, setEditing] = useState<Task | null>(null);
   const [view, setView] = useState<ViewMode>("sheet");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sheetName, setSheetName] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -62,25 +61,24 @@ export function TasksView({ initialTasks }: Props) {
     }
   }
 
-  // Crear hoja de hoy si no existe, luego cargar la hoja más reciente
-  useEffect(() => {
-    fetch("/api/tasks/create-daily-sheet", { method: "POST" })
-      .then(() => fetch("/api/tasks/latest-sheet"))
-      .then((r) => r.json())
-      .then((data: { name?: string }) => {
-        if (data.name) setSheetName(data.name);
-      })
-      .catch(() => {});
-  }, []);
-
   // Sincronización inicial + polling cada 30s
   useEffect(() => {
+    fetch("/api/tasks/create-daily-sheet", { method: "POST" }).catch(() => {});
     runSync();
     pollRef.current = setInterval(runSync, 30000);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, []);
+
+  // Sincronizar al cambiar a vista Kanban (para tener datos frescos al alternar)
+  const prevView = useRef(view);
+  useEffect(() => {
+    if (view === "kanban" && prevView.current !== "kanban") {
+      runSync();
+    }
+    prevView.current = view;
+  }, [view]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -349,8 +347,7 @@ export function TasksView({ initialTasks }: Props) {
         <div className="flex flex-col gap-4">
           <div className="overflow-hidden rounded-lg border border-zinc-200">
             <iframe
-              key={sheetName ?? "default"}
-              src={`https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit?widget=true&headers=0${sheetName ? `&range=${sheetName}!A1` : ""}`}
+              src={`https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit?widget=true&headers=0&range=${encodeURIComponent("comité administrativo adimenAI")}!A1`}
               className="h-[90vh] w-full"
               title="Hoja de cálculo de comité"
             />

@@ -30,8 +30,10 @@ export async function syncTasksFromExcel() {
   const sheetNames = wb.worksheets
     .map((s) => s.name)
     .filter((n) => /^\d{8}$/.test(n))
-    .sort()
-    .reverse();
+    .sort((a, b) => {
+      const toKey = (s: string) => s.substring(4, 8) + s.substring(2, 4) + s.substring(0, 2);
+      return toKey(b).localeCompare(toKey(a));
+    });
 
   if (sheetNames.length === 0) {
     throw new Error("No se encontró ninguna hoja con formato fecha");

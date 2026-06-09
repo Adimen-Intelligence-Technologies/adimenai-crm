@@ -26,7 +26,10 @@ export async function GET() {
         gid: s.properties?.sheetId ?? 0,
       }))
       .filter((s) => /^\d{8}$/.test(s.name))
-      .sort((a, b) => b.name.localeCompare(a.name));
+      .sort((a, b) => {
+        const toKey = (s: string) => s.substring(4, 8) + s.substring(2, 4) + s.substring(0, 2);
+        return toKey(b.name).localeCompare(toKey(a.name));
+      });
 
     const latest = dateSheets.length > 0
       ? dateSheets[0]

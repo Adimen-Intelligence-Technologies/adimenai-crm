@@ -39,7 +39,7 @@ export function TasksView({ initialTasks }: Props) {
   const [editing, setEditing] = useState<Task | null>(null);
   const [view, setView] = useState<ViewMode>("sheet");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sheetGid, setSheetGid] = useState<number | null>(null);
+  const [sheetName, setSheetName] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -62,17 +62,15 @@ export function TasksView({ initialTasks }: Props) {
     }
   }
 
-  // Cargar el gid de la última hoja con fecha
+  // Crear hoja de hoy si no existe, luego cargar la hoja más reciente
   useEffect(() => {
-    fetch("/api/tasks/latest-sheet")
+    fetch("/api/tasks/create-daily-sheet", { method: "POST" })
+      .then(() => fetch("/api/tasks/latest-sheet"))
       .then((r) => r.json())
-      .then((data: { gid?: number }) => {
-        if (data.gid !== undefined) setSheetGid(data.gid);
+      .then((data: { name?: string }) => {
+        if (data.name) setSheetName(data.name);
       })
       .catch(() => {});
-
-    // Crear la hoja de hoy si no existe
-    fetch("/api/tasks/create-daily-sheet", { method: "POST" }).catch(() => {});
   }, []);
 
   // Sincronización inicial + polling cada 30s
@@ -351,7 +349,8 @@ export function TasksView({ initialTasks }: Props) {
         <div className="flex flex-col gap-4">
           <div className="overflow-hidden rounded-lg border border-zinc-200">
             <iframe
-              src={`https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit?widget=true&headers=0${sheetGid !== null ? `#gid=${sheetGid}` : ""}`}
+              key={sheetName ?? "default"}
+              src={`https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit?widget=true&headers=0${sheetName ? `&range=${sheetName}!A1` : ""}`}
               className="h-[90vh] w-full"
               title="Hoja de cálculo de comité"
             />

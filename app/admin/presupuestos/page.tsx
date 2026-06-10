@@ -1,12 +1,29 @@
-export default function PresupuestosPage() {
+import { Suspense } from "react";
+import { listPresupuestos } from "@/lib/repositories/presupuestos";
+import { businessLineEnum } from "@/lib/schemas/presupuesto";
+import { PresupuestosView } from "@/components/admin/presupuestos/presupuestos-view";
+
+type SearchParams = Promise<{ line?: string; q?: string; page?: string }>;
+
+export default async function PresupuestosPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { line, q, page: pageStr } = await searchParams;
+
+  let businessLine;
+  if (line) {
+    const parsed = businessLineEnum.safeParse(line);
+    if (parsed.success) businessLine = parsed.data;
+  }
+
+  const page = parseInt(pageStr ?? "1", 10) || 1;
+  const result = await listPresupuestos({ businessLine, q, page, pageSize: 25 });
+
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-          Presupuestos
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">Módulo financiero</p>
-      </header>
-    </div>
+    <Suspense fallback={null}>
+      <PresupuestosView result={result} />
+    </Suspense>
   );
 }

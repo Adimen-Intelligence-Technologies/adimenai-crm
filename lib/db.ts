@@ -45,3 +45,8 @@ export async function getTasksCollection() {
   const db = await getDb();
   return db.collection("tasks");
 }
+
+export async function getPresupuestosCollection() {
+  const db = await getDb();
+  return db.collection("presupuestos");
+}

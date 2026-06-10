@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { google } from "googleapis";
 import { readFileSync } from "fs";
+import { Readable } from "stream";
 import path from "path";
 import { getPresupuesto, setPdfDriveFileId } from "@/lib/repositories/presupuestos";
 import { PresupuestoPDF } from "@/lib/presupuesto-pdf";
@@ -64,7 +65,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
       },
       media: {
         mimeType: "application/pdf",
-        body: pdfBuffer,
+        body: Readable.from(pdfBuffer),
       },
       fields: "id",
     });

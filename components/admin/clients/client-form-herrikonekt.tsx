@@ -22,6 +22,7 @@ import {
   type TaxIdType,
 } from "@/lib/schemas/client";
 import type { Client } from "@/lib/repositories/clients";
+import { useCustomTypes } from "@/lib/stores/custom-types";
 import { CustomTypeDialog } from "./custom-type-dialog";
 import { TypeCombobox } from "./type-combobox";
 
@@ -191,6 +192,8 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
   const [step, setStep] = useState<StepId>("basics");
   const [stepErrors, setStepErrors] = useState<Partial<Record<StepId, string>>>({});
   const [customTypeDialogOpen, setCustomTypeDialogOpen] = useState(false);
+  const customTypes = useCustomTypes((s) => s.types);
+  const addCustomType = useCustomTypes((s) => s.add);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -645,6 +648,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                     if (ct) update("customTypeIcon", ct.icon);
                   }}
                   placeholder="Selecciona un tipo…"
+                  customTypes={customTypes}
                 />
               </div>
             </div>
@@ -997,6 +1001,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
         open={customTypeDialogOpen}
         onClose={() => setCustomTypeDialogOpen(false)}
         onConfirm={(name, icon) => {
+          addCustomType(name, icon);
           update("type", name);
           update("customTypeIcon", icon);
           setCustomTypeDialogOpen(false);

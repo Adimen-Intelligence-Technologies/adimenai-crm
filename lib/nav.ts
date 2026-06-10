@@ -13,12 +13,6 @@ export type NavGroup = {
   items: NavItem[];
 };
 
-export type NavFlat = {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-};
-
 export const navGroups: NavGroup[] = [
   {
     label: "4. Comité administrativo",
@@ -29,6 +23,14 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: "6. Marketing",
+    items: [{ label: "6. Marketing", href: "/admin/marketing", icon: Megaphone }],
+  },
+  {
+    label: "8. Contactos",
+    items: [{ label: "8. Contactos", href: "/admin/clients", icon: Users }],
+  },
+  {
     label: "14. Know-How",
     folder: true,
     folderIcon: Folder,
@@ -36,13 +38,8 @@ export const navGroups: NavGroup[] = [
   },
 ];
 
-export const navFlat: NavFlat[] = [
-  { label: "6. Marketing", href: "/admin/marketing", icon: Megaphone },
-  { label: "8. Contactos", href: "/admin/clients", icon: Users },
-];
-
 export function getBreadcrumb(pathname: string): string {
-  const all = [...navGroups.flatMap((g) => g.items), ...navFlat];
+  const all = navGroups.flatMap((g) => g.items);
   const match = all.find((item) =>
     item.href === "/admin"
       ? pathname === "/admin"

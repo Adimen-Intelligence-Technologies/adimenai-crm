@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { navGroups, navFlat } from "@/lib/nav";
+import { navGroups } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { NavLink } from "./nav-link";
 import { useSidebar } from "./sidebar-context";
@@ -62,16 +61,6 @@ export function SidebarNav() {
             </div>
           );
         })}
-
-        {open && <Separator className="bg-white/5" />}
-
-        <ul className="flex flex-col gap-0.5">
-          {navFlat.map((item) => (
-            <li key={item.href}>
-              <NavLink item={item} />
-            </li>
-          ))}
-        </ul>
       </nav>
     </ScrollArea>
   );

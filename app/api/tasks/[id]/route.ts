@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateTaskSchema } from "@/lib/schemas/task";
 import { deleteTask, getTask, updateTask } from "@/lib/repositories/tasks";
-import { scheduleAutoExport } from "@/lib/auto-export";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -47,7 +46,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         { status: 404 }
       );
     }
-    scheduleAutoExport();
     return NextResponse.json(task);
   } catch (err) {
     console.error("PATCH /api/tasks/[id]", err);
@@ -68,7 +66,6 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
         { status: 404 }
       );
     }
-    scheduleAutoExport();
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("DELETE /api/tasks/[id]", err);

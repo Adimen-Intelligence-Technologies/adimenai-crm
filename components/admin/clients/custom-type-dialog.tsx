@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import * as LucideIcons from "lucide-react";
-import { Check, Plus, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CUSTOM_TYPE_ICONS, type CustomTypeIcon } from "@/lib/schemas/client";
 import { cn } from "@/lib/utils";
 
 type Props = {
+  open: boolean;
+  onClose: () => void;
   onConfirm: (name: string, icon: CustomTypeIcon) => void;
 };
 
-export function CustomTypeDialog({ onConfirm }: Props) {
-  const [open, setOpen] = useState(false);
+export function CustomTypeDialog({ open, onClose, onConfirm }: Props) {
   const [name, setName] = useState("");
   const [selectedIcon, setSelectedIcon] = useState<CustomTypeIcon>("Star");
   const [error, setError] = useState<string | null>(null);
@@ -28,30 +29,16 @@ export function CustomTypeDialog({ onConfirm }: Props) {
     setName("");
     setSelectedIcon("Star");
     setError(null);
-    setOpen(false);
   }
 
   function handleClose() {
-    setOpen(false);
+    onClose();
     setName("");
     setSelectedIcon("Star");
     setError(null);
   }
 
-  if (!open) {
-    return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        onClick={() => setOpen(true)}
-        className="shrink-0 text-zinc-400 hover:text-zinc-900"
-        aria-label="Crear categoría personalizada"
-      >
-        <Plus className="size-4" />
-      </Button>
-    );
-  }
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">

@@ -22,6 +22,7 @@ import {
   type TaxIdType,
 } from "@/lib/schemas/client";
 import type { Client } from "@/lib/repositories/clients";
+import { CustomTypeDialog } from "./custom-type-dialog";
 import { TypeCombobox } from "./type-combobox";
 
 type InitialClient = Partial<Client> & { _id?: string };
@@ -189,6 +190,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
   const [form, setForm] = useState<FormState>(() => toFormState(initial));
   const [step, setStep] = useState<StepId>("basics");
   const [stepErrors, setStepErrors] = useState<Partial<Record<StepId, string>>>({});
+  const [customTypeDialogOpen, setCustomTypeDialogOpen] = useState(false);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -624,7 +626,18 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
             subtitle={stepMeta.category.subtitle}
           >
             <div className="flex flex-col gap-5">
-              <Field label="Tipo">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-semibold text-zinc-700">Tipo</label>
+                  <button
+                    type="button"
+                    onClick={() => setCustomTypeDialogOpen(true)}
+                    className="flex size-5 items-center justify-center rounded-[4px] bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
+                    aria-label="Crear categoría personalizada"
+                  >
+                    <Plus className="size-3" />
+                  </button>
+                </div>
                 <TypeCombobox
                   value={form.type}
                   onChange={(v, ct) => {
@@ -633,7 +646,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                   }}
                   placeholder="Selecciona un tipo…"
                 />
-              </Field>
+              </div>
             </div>
           </StepShell>
         )}
@@ -979,6 +992,16 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
           {stepErrors[step]}
         </div>
       )}
+
+      <CustomTypeDialog
+        open={customTypeDialogOpen}
+        onClose={() => setCustomTypeDialogOpen(false)}
+        onConfirm={(name, icon) => {
+          update("type", name);
+          update("customTypeIcon", icon);
+          setCustomTypeDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

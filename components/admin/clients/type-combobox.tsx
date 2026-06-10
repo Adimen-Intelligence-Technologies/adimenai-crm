@@ -12,8 +12,6 @@ import {
   type CustomTypeIcon,
   type HerrikonektType,
 } from "@/lib/schemas/client";
-import { CustomTypeDialog } from "./custom-type-dialog";
-
 type CustomType = {
   label: string;
   icon: CustomTypeIcon;
@@ -80,12 +78,6 @@ export function TypeCombobox({ value, onChange, placeholder, id, customTypes = [
     setQuery("");
   }
 
-  function handleCustomCreated(name: string, icon: CustomTypeIcon) {
-    onChange(name, { label: name, icon });
-    setOpen(false);
-    setQuery("");
-  }
-
   return (
     <div ref={containerRef} className="relative">
       <div className="flex gap-0">
@@ -130,8 +122,6 @@ export function TypeCombobox({ value, onChange, placeholder, id, customTypes = [
             )}
           />
         </button>
-
-        <CustomTypeDialog onConfirm={handleCustomCreated} />
       </div>
 
       {open && (

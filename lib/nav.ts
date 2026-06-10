@@ -1,4 +1,4 @@
-import { Folder, ListChecks, Megaphone, Users, type LucideIcon } from "lucide-react";
+import { BookOpen, Folder, ListChecks, Megaphone, Users, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -10,7 +10,7 @@ export type NavGroup = {
   label: string;
   folder?: boolean;
   folderIcon?: LucideIcon;
-  items: NavItem[];
+  items: (NavItem | NavGroup)[];
 };
 
 export const navGroups: NavGroup[] = [
@@ -34,12 +34,31 @@ export const navGroups: NavGroup[] = [
     label: "14. Know-How",
     folder: true,
     folderIcon: Folder,
-    items: [],
+    items: [
+      {
+        label: "Funcionalidad API",
+        folder: true,
+        folderIcon: BookOpen,
+        items: [],
+      },
+    ],
   },
 ];
 
+function flattenItems(items: (NavItem | NavGroup)[]): NavItem[] {
+  const result: NavItem[] = [];
+  for (const item of items) {
+    if ("href" in item) {
+      result.push(item);
+    } else {
+      result.push(...flattenItems(item.items));
+    }
+  }
+  return result;
+}
+
 export function getBreadcrumb(pathname: string): string {
-  const all = navGroups.flatMap((g) => g.items);
+  const all = flattenItems(navGroups.flatMap((g) => g.items));
   const match = all.find((item) =>
     item.href === "/admin"
       ? pathname === "/admin"

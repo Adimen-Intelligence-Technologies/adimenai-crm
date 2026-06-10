@@ -9,9 +9,10 @@ import { useSidebar } from "./sidebar-context";
 
 type Props = {
   item: NavItem;
+  depth?: number;
 };
 
-export function NavLink({ item }: Props) {
+export function NavLink({ item, depth = 0 }: Props) {
   const pathname = usePathname();
   const { open } = useSidebar();
 
@@ -30,6 +31,7 @@ export function NavLink({ item }: Props) {
         isActive && "bg-white/[0.10] text-white",
         !open && "justify-center px-0"
       )}
+      style={open && depth > 0 ? { paddingLeft: `${12 + depth * 12}px` } : undefined}
     >
       <item.icon
         className={cn(

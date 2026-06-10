@@ -1,4 +1,4 @@
-import { BookOpen, Folder, ListChecks, Megaphone, Users, type LucideIcon } from "lucide-react";
+import { Folder, ListChecks, Megaphone, Users, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -29,19 +29,6 @@ export const navGroups: NavGroup[] = [
   {
     label: "8. Contactos",
     items: [{ label: "8. Contactos", href: "/admin/clients", icon: Users }],
-  },
-  {
-    label: "14. Know-How",
-    folder: true,
-    folderIcon: Folder,
-    items: [
-      {
-        label: "Funcionalidad API",
-        folder: true,
-        folderIcon: BookOpen,
-        items: [],
-      },
-    ],
   },
 ];
 

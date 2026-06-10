@@ -16,6 +16,7 @@ import {
   herrikonektTypeLabels,
   type HerrikonektType,
 } from "@/lib/schemas/client";
+import { useCustomTypes } from "@/lib/stores/custom-types";
 import { businessLineTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { Client } from "@/lib/repositories/clients";
@@ -119,7 +120,6 @@ function ClientRow({ client }: { client: Client }) {
   const primaryPhone = client.phones?.[0];
   const theme = businessLineTheme[client.businessLine];
   const isHerrikonekt = client.businessLine === "herrikonekt";
-  const isPredefinedType = client.type && herrikonektTypeEnum.options.includes(client.type as HerrikonektType);
 
   return (
     <tr className="hover:bg-zinc-50/60">
@@ -141,19 +141,11 @@ function ClientRow({ client }: { client: Client }) {
       </td>
       <td className="hidden px-4 py-3 md:table-cell">
         {isHerrikonekt && client.type ? (
-          isPredefinedType ? (
-            <InlineTypeSelect clientId={client._id} currentType={client.type as HerrikonektType} />
-          ) : (
-            <span className="inline-flex items-center gap-1.5 text-sm text-zinc-700">
-              {client.customTypeIcon && (() => {
-                const Icon = LucideIcons[client.customTypeIcon as keyof typeof LucideIcons] as
-                  | React.ComponentType<{ className?: string }>
-                  | undefined;
-                return Icon ? <Icon className="size-3.5 text-zinc-500" /> : null;
-              })()}
-              {client.type}
-            </span>
-          )
+          <InlineTypeSelect
+            clientId={client._id}
+            currentType={client.type as HerrikonektType}
+            customTypeIcon={client.customTypeIcon}
+          />
         ) : (
           <span className="text-zinc-600">—</span>
         )}
@@ -184,24 +176,53 @@ function ClientRow({ client }: { client: Client }) {
   );
 }
 
-function InlineTypeSelect({ clientId, currentType }: { clientId: string; currentType?: HerrikonektType }) {
+function InlineTypeSelect({ clientId, currentType, customTypeIcon }: { clientId: string; currentType?: HerrikonektType; customTypeIcon?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const customTypes = useCustomTypes((s) => s.types);
+
+  const isPredefined = currentType ? herrikonektTypeEnum.options.includes(currentType as HerrikonektType) : false;
 
   const selected = currentType
-    ? { id: currentType, label: herrikonektTypeLabels[currentType] }
+    ? {
+        id: currentType,
+        label: isPredefined
+          ? herrikonektTypeLabels[currentType as HerrikonektType]
+          : currentType,
+        isCustom: !isPredefined,
+        iconName: customTypeIcon,
+      }
     : null;
 
-  const options = herrikonektTypeEnum.options
-    .map((t) => ({ id: t, label: herrikonektTypeLabels[t] }))
-    .filter((o) =>
-      query.trim()
-        ? o.label.toLowerCase().includes(query.trim().toLowerCase())
-        : true
-    );
+  const predefinedOptions = herrikonektTypeEnum.options
+    .map((t) => ({
+      id: t,
+      label: herrikonektTypeLabels[t],
+      isCustom: false as const,
+      iconName: undefined as string | undefined,
+      iconComponent: herrikonektTypeIcons[t],
+    }));
+
+  const customOptions = customTypes.map((ct) => ({
+    id: ct.label,
+    label: ct.label,
+    isCustom: true as const,
+    iconName: ct.icon,
+    iconComponent: LucideIcons[ct.icon as keyof typeof LucideIcons] as
+      | React.ComponentType<{ className?: string }>
+      | undefined,
+  }));
+
+  const allOptions = [...predefinedOptions, ...customOptions];
+
+  const filtered = allOptions.filter((o) =>
+    query.trim()
+      ? o.label.toLowerCase().includes(query.trim().toLowerCase())
+      : true
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -215,15 +236,35 @@ function InlineTypeSelect({ clientId, currentType }: { clientId: string; current
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  async function selectOption(t: HerrikonektType) {
+  async function selectOption(option: (typeof allOptions)[number]) {
     setOpen(false);
     setQuery("");
+    const payload: Record<string, string> = { type: option.id };
+    if (option.isCustom && option.iconName) {
+      payload.customTypeIcon = option.iconName;
+    } else {
+      payload.customTypeIcon = "";
+    }
     const res = await fetch(`/api/clients/${clientId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: t }),
+      body: JSON.stringify(payload),
     });
     if (res.ok) router.refresh();
+  }
+
+  function selectedIcon() {
+    if (selected?.isCustom && selected.iconName) {
+      const Icon = LucideIcons[selected.iconName as keyof typeof LucideIcons] as
+        | React.ComponentType<{ className?: string }>
+        | undefined;
+      return Icon ? <Icon className="size-2.5" /> : null;
+    }
+    if (selected && !selected.isCustom) {
+      const Icon = herrikonektTypeIcons[selected.id as HerrikonektType];
+      return Icon ? <Icon className="size-2.5" /> : null;
+    }
+    return null;
   }
 
   return (
@@ -246,10 +287,7 @@ function InlineTypeSelect({ clientId, currentType }: { clientId: string; current
           {selected ? (
             <>
               <span className="flex size-4 shrink-0 items-center justify-center rounded border border-zinc-200 bg-zinc-50 text-zinc-500">
-                {(() => {
-                  const Icon = herrikonektTypeIcons[selected.id];
-                  return <Icon className="size-2.5" />;
-                })()}
+                {selectedIcon()}
               </span>
               <span className="truncate font-medium text-zinc-700">{selected.label}</span>
             </>
@@ -281,9 +319,9 @@ function InlineTypeSelect({ clientId, currentType }: { clientId: string; current
                 className="h-7 pl-7 pr-7 text-xs"
                 onKeyDown={(e) => {
                   if (e.key === "Escape") { setOpen(false); setQuery(""); }
-                  if (e.key === "Enter" && options[0]) {
+                  if (e.key === "Enter" && filtered[0]) {
                     e.preventDefault();
-                    selectOption(options[0].id);
+                    selectOption(filtered[0]);
                   }
                 }}
               />
@@ -300,21 +338,20 @@ function InlineTypeSelect({ clientId, currentType }: { clientId: string; current
           </div>
 
           <ul className="max-h-56 overflow-y-auto p-1">
-            {options.length === 0 ? (
+            {filtered.length === 0 ? (
               <li className="px-3 py-6 text-center text-xs text-zinc-500">
                 Sin resultados
               </li>
             ) : (
-              options.map((o) => {
-                const Icon = herrikonektTypeIcons[o.id];
-                const isSelected = o.id === currentType;
+              filtered.map((o) => {
+                const isSelected = o.id === currentType && o.isCustom === !isPredefined;
                 return (
-                  <li key={o.id}>
+                  <li key={`${o.isCustom ? "custom" : "predef"}-${o.id}`}>
                     <button
                       type="button"
                       role="option"
                       aria-selected={isSelected}
-                      onClick={() => selectOption(o.id)}
+                      onClick={() => selectOption(o)}
                       className={cn(
                         "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs transition-colors",
                         isSelected
@@ -330,9 +367,18 @@ function InlineTypeSelect({ clientId, currentType }: { clientId: string; current
                             : "border-zinc-200 bg-zinc-50 text-zinc-500"
                         )}
                       >
-                        <Icon className="size-3" />
+                        {o.isCustom && o.iconComponent ? (
+                          <o.iconComponent className="size-3" />
+                        ) : !o.isCustom && o.iconComponent ? (
+                          <o.iconComponent className="size-3" />
+                        ) : null}
                       </span>
-                      <span className="flex-1 truncate">{o.label}</span>
+                      <span className="flex-1 truncate">
+                        {o.label}
+                        {o.isCustom && (
+                          <span className="ml-1 text-[9px] text-zinc-400">(personalizada)</span>
+                        )}
+                      </span>
                       {isSelected && <Check className="size-3 shrink-0 text-[#3B1E8A]" />}
                     </button>
                   </li>

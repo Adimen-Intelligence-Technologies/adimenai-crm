@@ -5,6 +5,7 @@ import type {
   ClientBilling,
   ClientSocialLinks,
   CreateHerrikonektInput,
+  OpeningHours,
   UpdateHerrikonektInput,
 } from "@/lib/schemas/client";
 
@@ -29,6 +30,7 @@ export type Client = {
   syncToApp?: boolean;
   social?: ClientSocialLinks;
   billing?: ClientBilling;
+  openingHours?: OpeningHours;
   createdAt: string;
   updatedAt: string;
 };

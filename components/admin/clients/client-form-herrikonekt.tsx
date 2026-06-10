@@ -8,13 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
+  dayLabels,
+  emptyOpeningHours,
   herrikonektSubTypeByType,
   herrikonektTypeEnum,
   paymentMethodEnum,
   paymentMethodLabels,
   taxIdTypeEnum,
   taxIdTypeLabels,
+  type DayHours,
   type HerrikonektType,
+  type OpeningHours,
   type PaymentMethod,
   type TaxIdType,
 } from "@/lib/schemas/client";
@@ -62,6 +66,7 @@ type FormState = {
   email: string;
   social: { instagram: string; facebook: string };
   billing: BillingForm;
+  openingHours: OpeningHours;
 };
 
 type StepId = "basics" | "category" | "contact" | "billing";
@@ -176,6 +181,7 @@ function toFormState(initial?: InitialClient): FormState {
     syncToApp: initial?.syncToApp ?? true,
     social: socialFromClient(initial?.social),
     billing: billingFromClient(initial?.billing),
+    openingHours: initial?.openingHours ?? emptyOpeningHours(),
   };
 }
 
@@ -317,6 +323,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
             internalNotes: form.billing.internalNotes.trim(),
           }
         : { invoicingActive: false },
+      openingHours: form.openingHours,
     };
 
     startTransition(async () => {
@@ -516,6 +523,106 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                   rows={3}
                 />
               </Field>
+            </div>
+
+            <div className="mt-6 border-t border-zinc-200 pt-6">
+              <h3 className="mb-1 text-sm font-semibold text-zinc-900">
+                Horario de apertura
+              </h3>
+              <p className="mb-4 text-xs text-zinc-500">
+                Horarios por día de la semana. Déjalo vacío si el comercio
+                cierra ese día.
+              </p>
+              <div className="flex flex-col gap-3">
+                {(Object.keys(dayLabels) as (keyof OpeningHours)[]).map(
+                  (day) => {
+                    const slots = form.openingHours[day];
+                    return (
+                      <div
+                        key={day}
+                        className="flex flex-wrap items-start gap-2 rounded-md border border-zinc-200 bg-zinc-50/30 p-3"
+                      >
+                        <span className="mt-1.5 min-w-20 text-sm font-medium text-zinc-700">
+                          {dayLabels[day]}
+                        </span>
+                        <div className="flex flex-1 flex-col gap-1.5">
+                          {slots.length === 0 && (
+                            <span className="text-xs text-zinc-400 italic">
+                              Cerrado
+                            </span>
+                          )}
+                          {slots.map((slot, si) => (
+                            <div
+                              key={si}
+                              className="flex items-center gap-1.5"
+                            >
+                              <Input
+                                type="time"
+                                value={slot.open}
+                                onChange={(e) => {
+                                  const next = { ...form.openingHours };
+                                  const copy = [...next[day]];
+                                  copy[si] = { ...copy[si], open: e.target.value };
+                                  next[day] = copy;
+                                  update("openingHours", next);
+                                }}
+                                className="h-8 w-32"
+                                aria-label={`${dayLabels[day]} apertura`}
+                              />
+                              <span className="text-xs text-zinc-400">a</span>
+                              <Input
+                                type="time"
+                                value={slot.close}
+                                onChange={(e) => {
+                                  const next = { ...form.openingHours };
+                                  const copy = [...next[day]];
+                                  copy[si] = { ...copy[si], close: e.target.value };
+                                  next[day] = copy;
+                                  update("openingHours", next);
+                                }}
+                                className="h-8 w-32"
+                                aria-label={`${dayLabels[day]} cierre`}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label="Quitar horario"
+                                className="size-8 shrink-0 text-zinc-400 hover:bg-rose-50 hover:text-rose-600"
+                                onClick={() => {
+                                  const next = { ...form.openingHours };
+                                  next[day] = slots.filter(
+                                    (_, idx) => idx !== si
+                                  );
+                                  update("openingHours", next);
+                                }}
+                              >
+                                <X />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Añadir horario"
+                            className="size-8 shrink-0 text-zinc-400 hover:bg-[#3B1E8A]/10 hover:text-[#3B1E8A]"
+                            onClick={() => {
+                              const next = { ...form.openingHours };
+                              next[day] = [...slots, { open: "09:00", close: "17:00" }];
+                              update("openingHours", next);
+                            }}
+                          >
+                            <Plus />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  }
+                )}
+              </div>
             </div>
           </StepShell>
         )}

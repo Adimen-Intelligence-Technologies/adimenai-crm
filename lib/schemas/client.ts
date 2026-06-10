@@ -304,6 +304,45 @@ export const socialLinksSchema = z.object({
 });
 export type ClientSocialLinks = z.infer<typeof socialLinksSchema>;
 
+const dayHoursSchema = z.object({
+  open: z.string(),
+  close: z.string(),
+});
+export type DayHours = z.infer<typeof dayHoursSchema>;
+
+const openingHoursSchema = z.object({
+  monday: z.array(dayHoursSchema).default([]),
+  tuesday: z.array(dayHoursSchema).default([]),
+  wednesday: z.array(dayHoursSchema).default([]),
+  thursday: z.array(dayHoursSchema).default([]),
+  friday: z.array(dayHoursSchema).default([]),
+  saturday: z.array(dayHoursSchema).default([]),
+  sunday: z.array(dayHoursSchema).default([]),
+});
+export type OpeningHours = z.infer<typeof openingHoursSchema>;
+
+export const dayLabels: Record<keyof OpeningHours, string> = {
+  monday: "Lunes",
+  tuesday: "Martes",
+  wednesday: "Miércoles",
+  thursday: "Jueves",
+  friday: "Viernes",
+  saturday: "Sábado",
+  sunday: "Domingo",
+};
+
+export function emptyOpeningHours(): OpeningHours {
+  return {
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+    sunday: [],
+  };
+}
+
 export const createHerrikonektSchema = z.object({
   businessLine: z.literal("herrikonekt"),
   name: z.string().trim().min(1, "El nombre es obligatorio"),
@@ -323,6 +362,7 @@ export const createHerrikonektSchema = z.object({
   syncToApp: z.boolean().default(true),
   social: socialLinksSchema.optional().default({ instagram: "", facebook: "" }),
   billing: billingSchema.optional(),
+  openingHours: openingHoursSchema.optional().default(emptyOpeningHours()),
 });
 export type CreateHerrikonektInput = z.infer<typeof createHerrikonektSchema>;
 

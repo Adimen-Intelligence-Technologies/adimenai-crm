@@ -4,10 +4,12 @@ import { useState } from "react";
 import { MapPin, Phone, Receipt, Store } from "lucide-react";
 import {
   businessLineLabels,
+  dayLabels,
   herrikonektTypeLabels,
   paymentMethodLabels,
   taxIdTypeLabels,
   type HerrikonektType,
+  type OpeningHours,
   type PaymentMethod,
   type TaxIdType,
 } from "@/lib/schemas/client";
@@ -163,6 +165,36 @@ export function ClientDetailTabs({ client }: { client: Client }) {
                 >
                   {client.social.facebook}
                 </a>
+              </Item>
+            )}
+            {client.openingHours && (
+              <Item label="Horario" className="sm:col-span-2">
+                <div className="flex flex-col gap-0.5">
+                  {(
+                    Object.keys(dayLabels) as (keyof OpeningHours)[]
+                  ).map((day) => {
+                    const slots = client.openingHours![day];
+                    return (
+                      <div key={day} className="flex gap-2 text-sm">
+                        <span className="min-w-20 font-medium text-zinc-600">
+                          {dayLabels[day]}
+                        </span>
+                        <span className="text-zinc-900">
+                          {slots.length === 0 ? (
+                            <span className="text-zinc-400">Cerrado</span>
+                          ) : (
+                            slots
+                              .map(
+                                (s) =>
+                                  `${s.open} – ${s.close}`
+                              )
+                              .join(", ")
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </Item>
             )}
             <Item label="Creado">

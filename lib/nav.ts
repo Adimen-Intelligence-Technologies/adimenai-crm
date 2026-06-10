@@ -28,6 +28,12 @@ export const navGroups: NavGroup[] = [
       { label: "Gestión administrativa", href: "/admin/tasks", icon: ListChecks },
     ],
   },
+  {
+    label: "14. Know-How",
+    folder: true,
+    folderIcon: Folder,
+    items: [],
+  },
 ];
 
 export const navFlat: NavFlat[] = [

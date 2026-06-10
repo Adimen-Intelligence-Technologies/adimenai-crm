@@ -11,7 +11,7 @@ import { useSidebar } from "./sidebar-context";
 
 export function SidebarNav() {
   const { open } = useSidebar();
-  const [expanded, setExpanded] = useState(true);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   return (
     <ScrollArea className="flex-1 px-3 py-4">
@@ -24,7 +24,12 @@ export function SidebarNav() {
               {isFolder && (
                 <button
                   type="button"
-                  onClick={() => setExpanded((v) => !v)}
+                  onClick={() =>
+                    setExpandedGroups((prev) => ({
+                      ...prev,
+                      [group.label]: !prev[group.label],
+                    }))
+                  }
                   className={cn(
                     "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     "text-white/70 hover:bg-white/[0.08] hover:text-white"
@@ -39,13 +44,13 @@ export function SidebarNav() {
                   <ChevronDown
                     className={cn(
                       "size-3.5 text-white/40 transition-transform",
-                      expanded && "rotate-180"
+                      expandedGroups[group.label] && "rotate-180"
                     )}
                   />
                 </button>
               )}
 
-              {(!isFolder || expanded) && (
+              {(!isFolder || expandedGroups[group.label]) && (
                 <ul className="flex flex-col gap-0.5">
                   {group.items.map((item) => (
                     <li key={item.href}>

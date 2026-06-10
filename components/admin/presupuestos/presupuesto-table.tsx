@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { businessLineTheme } from "@/lib/theme";
@@ -56,21 +56,11 @@ export function PresupuestoTable({
               const theme = businessLineTheme[p.businessLine as keyof typeof businessLineTheme] ?? businessLineTheme.adimenai;
               return (
                 <tr key={p._id} className="hover:bg-zinc-50/60">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/presupuestos/${p._id}`}
-                      className="font-mono text-sm font-medium text-zinc-900 hover:text-[#3B1E8A]"
-                    >
-                      {p.number}
-                    </Link>
+                  <td className="px-4 py-3 font-mono text-sm font-medium text-zinc-900">
+                    {p.number}
                   </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/presupuestos/${p._id}`}
-                      className="font-medium text-zinc-900 hover:text-[#3B1E8A]"
-                    >
-                      {p.clientSnapshot.name}
-                    </Link>
+                  <td className="px-4 py-3 font-medium text-zinc-900">
+                    {p.clientSnapshot.name}
                   </td>
                   <td className="hidden px-4 py-3 sm:table-cell">
                     <Badge variant="outline" className={cn("rounded-[2px]", theme.badge)}>
@@ -85,6 +75,11 @@ export function PresupuestoTable({
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
+                      <Button asChild variant="ghost" size="icon-sm" className="text-zinc-500 hover:text-zinc-900">
+                        <Link href={`/admin/presupuestos/${p._id}`}>
+                          <Eye />
+                        </Link>
+                      </Button>
                       <Button asChild variant="ghost" size="icon-sm" className="text-zinc-500 hover:text-zinc-900">
                         <Link href={`/admin/presupuestos/${p._id}/edit`}>
                           <Pencil />

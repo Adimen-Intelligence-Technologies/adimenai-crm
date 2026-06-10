@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileDown, Loader2 } from "lucide-react";
+import { FileDown, Loader2, Mail, MapPin, Phone, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { businessLineTheme } from "@/lib/theme";
@@ -12,6 +12,13 @@ import {
 } from "@/lib/schemas/presupuesto";
 import type { Presupuesto } from "@/lib/repositories/presupuestos";
 import { cn } from "@/lib/utils";
+
+const statusStyles: Record<string, string> = {
+  draft: "bg-zinc-100 text-zinc-700 border-zinc-200",
+  sent: "bg-blue-50 text-blue-700 border-blue-200",
+  accepted: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  rejected: "bg-rose-50 text-rose-700 border-rose-200",
+};
 
 export function PresupuestoDetail({
   presupuesto,
@@ -26,13 +33,6 @@ export function PresupuestoDetail({
     businessLineTheme[
       presupuesto.businessLine as keyof typeof businessLineTheme
     ] ?? businessLineTheme.adimenai;
-
-  const statusColors: Record<string, string> = {
-    draft: "bg-zinc-100 text-zinc-700 border-zinc-200",
-    sent: "bg-blue-50 text-blue-700 border-blue-200",
-    accepted: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    rejected: "bg-rose-50 text-rose-700 border-rose-200",
-  };
 
   async function handleGeneratePDF() {
     setGenerating(true);
@@ -63,172 +63,216 @@ export function PresupuestoDetail({
   return (
     <div className="flex flex-col gap-6">
       {error && (
-        <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
         </div>
       )}
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-lg font-semibold text-zinc-900">
-                {presupuesto.number}
-              </span>
-              <Badge
-                variant="outline"
-                className={cn("rounded-[2px]", theme.badge)}
-              >
-                {businessLineLabels[presupuesto.businessLine as keyof typeof businessLineLabels]}
-              </Badge>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "rounded-[2px]",
-                  statusColors[presupuesto.status] ?? "bg-zinc-100 text-zinc-700"
-                )}
-              >
-                {presupuestoStatusLabels[presupuesto.status] ?? presupuesto.status}
-              </Badge>
+      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+        {/* Header */}
+        <div className="relative border-b border-zinc-100 px-6 py-5">
+          <div
+            className="absolute bottom-0 left-0 top-0 w-1"
+            style={{ backgroundColor: theme.accent }}
+          />
+          <div className="flex items-start justify-between gap-4 pl-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+                  {presupuesto.number}
+                </h1>
+                <Badge
+                  variant="outline"
+                  className={cn("rounded-[2px]", theme.badge)}
+                >
+                  {businessLineLabels[presupuesto.businessLine as keyof typeof businessLineLabels]}
+                </Badge>
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-[2px] border px-2.5 py-0.5 text-xs font-medium",
+                    statusStyles[presupuesto.status] ?? "bg-zinc-100 text-zinc-700"
+                  )}
+                >
+                  {presupuestoStatusLabels[presupuesto.status] ?? presupuesto.status}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-zinc-500">
+                Creado{" "}
+                {new Date(presupuesto.createdAt).toLocaleDateString("es-ES", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
             </div>
-            {presupuesto.pdfDriveFileId && (
-              <p className="mt-1 text-xs text-emerald-600">PDF guardado en Drive</p>
-            )}
+            <Button
+              onClick={handleGeneratePDF}
+              disabled={generating}
+              size="sm"
+              className="shrink-0"
+              style={{ backgroundColor: theme.accent, color: "#fff" }}
+            >
+              {generating ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <FileDown className="size-4" />
+              )}
+              {generating ? "Generando…" : "Descargar PDF"}
+            </Button>
           </div>
-          <Button
-            onClick={handleGeneratePDF}
-            disabled={generating}
-            className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
-          >
-            {generating ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <FileDown className="size-4" />
-            )}
-            {generating ? "Generando…" : "Generar PDF"}
-          </Button>
         </div>
 
-        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Item label="Cliente">{presupuesto.clientSnapshot.name}</Item>
+        {/* Client info */}
+        <div className="grid grid-cols-1 gap-x-8 gap-y-5 px-6 py-5 sm:grid-cols-2">
+          <InfoRow
+            icon={<User className="size-4" />}
+            label="Cliente"
+            value={presupuesto.clientSnapshot.name}
+          />
           {presupuesto.clientSnapshot.nif && (
-            <Item label="NIF">{presupuesto.clientSnapshot.nif}</Item>
+            <InfoRow label="NIF/CIF" value={presupuesto.clientSnapshot.nif} />
           )}
           {presupuesto.clientSnapshot.address && (
-            <Item label="Dirección" className="sm:col-span-2">
-              {presupuesto.clientSnapshot.address}
-            </Item>
+            <InfoRow
+              icon={<MapPin className="size-4" />}
+              label="Dirección"
+              value={presupuesto.clientSnapshot.address}
+              className="sm:col-span-2"
+            />
           )}
           {presupuesto.clientSnapshot.email && (
-            <Item label="Email">{presupuesto.clientSnapshot.email}</Item>
+            <InfoRow
+              icon={<Mail className="size-4" />}
+              label="Email"
+              value={presupuesto.clientSnapshot.email}
+            />
           )}
           {presupuesto.clientSnapshot.phone && (
-            <Item label="Teléfono">{presupuesto.clientSnapshot.phone}</Item>
+            <InfoRow
+              icon={<Phone className="size-4" />}
+              label="Teléfono"
+              value={presupuesto.clientSnapshot.phone}
+            />
           )}
-          <Item label="Fecha de creación">
-            {new Date(presupuesto.createdAt).toLocaleDateString("es-ES", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-          </Item>
-        </dl>
+        </div>
 
+        {/* Introduction */}
         {presupuesto.introduction && (
-          <div className="mt-4 rounded-md bg-zinc-50 p-3">
-            <p className="text-sm text-zinc-700 whitespace-pre-line">
+          <div className="border-t border-zinc-100 px-6 py-4">
+            <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-600">
               {presupuesto.introduction}
             </p>
           </div>
         )}
-      </div>
 
-      {/* Line items table */}
-      <div className="rounded-xl border border-zinc-200 bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500">
-            <tr>
-              <th className="px-5 py-3">Título</th>
-              <th className="w-20 px-5 py-3 text-center">Cant.</th>
-              <th className="w-28 px-5 py-3 text-right">Precio ud.</th>
-              <th className="w-28 px-5 py-3 text-right">Total</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {presupuesto.items.map((item, i) => (
-              <tr key={i} className="hover:bg-zinc-50/60">
-                <td className="px-5 py-3 font-medium text-zinc-900">
-                  {item.title}
-                </td>
-                <td className="px-5 py-3 text-center text-zinc-700">
-                  {item.quantity}
-                </td>
-                <td className="px-5 py-3 text-right font-mono text-zinc-700">
-                  {item.unitPrice.toFixed(2).replace(".", ",")} €
-                </td>
-                <td className="px-5 py-3 text-right font-mono text-zinc-900">
-                  {item.total.toFixed(2).replace(".", ",")} €
-                </td>
+        {/* Items table */}
+        <div className="border-t border-zinc-100">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-100">
+                <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  Título
+                </th>
+                <th className="w-20 px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  Cant.
+                </th>
+                <th className="w-28 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  Precio ud.
+                </th>
+                <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">
+                  Total
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-zinc-50">
+              {presupuesto.items.map((item, i) => (
+                <tr key={i} className="hover:bg-zinc-50/60">
+                  <td className="px-6 py-3 font-medium text-zinc-900">
+                    {item.title}
+                  </td>
+                  <td className="px-4 py-3 text-center font-mono text-sm text-zinc-600">
+                    {item.quantity}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-sm text-zinc-600">
+                    {item.unitPrice.toFixed(2).replace(".", ",")} €
+                  </td>
+                  <td className="px-6 py-3 text-right font-mono text-sm font-medium text-zinc-900">
+                    {item.total.toFixed(2).replace(".", ",")} €
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      {/* Totals */}
-      <div className="ml-auto w-72 rounded-xl border border-zinc-200 bg-white p-5">
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-zinc-600">Subtotal</span>
-            <span className="font-mono text-zinc-900">
-              {presupuesto.subtotal.toFixed(2).replace(".", ",")} €
-            </span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-zinc-600">IVA ({presupuesto.taxRate}%)</span>
-            <span className="font-mono text-zinc-900">
-              {presupuesto.taxAmount.toFixed(2).replace(".", ",")} €
-            </span>
-          </div>
-          <div className="flex justify-between border-t border-zinc-200 pt-2 text-sm font-semibold">
-            <span className="text-zinc-900">Total</span>
-            <span className="font-mono text-zinc-900">
-              {presupuesto.total.toFixed(2).replace(".", ",")} €
-            </span>
+        {/* Totals */}
+        <div className="flex justify-end border-t border-zinc-100 px-6 py-5">
+          <div className="w-64 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Subtotal</span>
+              <span className="font-mono text-zinc-700">
+                {presupuesto.subtotal.toFixed(2).replace(".", ",")} €
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">
+                IVA ({presupuesto.taxRate}%)
+              </span>
+              <span className="font-mono text-zinc-700">
+                {presupuesto.taxAmount.toFixed(2).replace(".", ",")} €
+              </span>
+            </div>
+            <div className="flex items-center justify-between border-t border-zinc-200 pt-3 text-base font-semibold">
+              <span className="text-zinc-900">Total</span>
+              <span className="font-mono text-lg" style={{ color: theme.accent }}>
+                {presupuesto.total.toFixed(2).replace(".", ",")} €
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* Notes */}
         {presupuesto.notes && (
-          <p className="mt-3 text-xs text-zinc-500">{presupuesto.notes}</p>
+          <div className="border-t border-zinc-100 px-6 py-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+              Notas
+            </p>
+            <p className="mt-1 whitespace-pre-line text-sm text-zinc-500">
+              {presupuesto.notes}
+            </p>
+          </div>
         )}
       </div>
-
-      {presupuesto.pdfDriveFileId && (
-        <div className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="text-sm font-semibold text-zinc-900">PDF en Drive</h3>
-          <p className="mt-1 text-sm text-zinc-500">
-            El PDF se ha guardado en la carpeta de Drive.
-          </p>
-        </div>
-      )}
     </div>
   );
 }
 
-function Item({
+function InfoRow({
+  icon,
   label,
-  children,
+  value,
   className,
 }: {
+  icon?: React.ReactNode;
   label: string;
-  children: React.ReactNode;
+  value: string;
   className?: string;
 }) {
   return (
-    <div className={className}>
-      <dt className="text-xs font-medium tracking-wide text-zinc-500 uppercase">
-        {label}
-      </dt>
-      <dd className="mt-1 text-sm text-zinc-900">{children}</dd>
+    <div className={cn("flex items-start gap-2.5", className)}>
+      {icon && (
+        <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-400">
+          {icon}
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+          {label}
+        </p>
+        <p className="mt-0.5 text-sm font-medium text-zinc-900 break-words">
+          {value}
+        </p>
+      </div>
     </div>
   );
 }

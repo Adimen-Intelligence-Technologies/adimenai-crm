@@ -5,212 +5,41 @@ import {
   View,
   Text,
   Image,
+  Font,
   StyleSheet,
 } from "@react-pdf/renderer";
+
+Font.register({
+  family: "Lato",
+  fonts: [
+    {
+      src: "https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXg.woff2",
+      fontWeight: 400,
+    },
+    {
+      src: "https://fonts.gstatic.com/s/lato/v24/S6u9w4BMUTPHh6UVSwiPGQ.woff2",
+      fontWeight: 700,
+    },
+  ],
+});
+
+Font.register({
+  family: "Inter",
+  fonts: [
+    {
+      src: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTcvnYwYZ9kI.woff2",
+      fontWeight: 700,
+    },
+  ],
+});
 
 const styles = StyleSheet.create({
   page: {
     width: 595,
     height: 842,
-    padding: 0,
     backgroundColor: "#FFFFFF",
-    fontFamily: "Helvetica",
+    fontFamily: "Lato",
     position: "relative",
-  },
-  header: {
-    flexDirection: "row",
-    marginTop: 17,
-    marginHorizontal: 26,
-    height: 122,
-    backgroundColor: "#F6F8FC",
-    borderRadius: 4,
-    padding: 12,
-    alignItems: "center",
-  },
-  logoBox: {
-    width: 86,
-    height: 86,
-    backgroundColor: "#1C1135",
-    borderRadius: 6,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoImage: {
-    width: 42,
-    height: 43,
-  },
-  headerRight: {
-    flex: 1,
-    alignItems: "flex-end",
-    paddingRight: 8,
-  },
-  headerLine: {
-    height: 1,
-    backgroundColor: "#E5E5E5",
-    marginTop: 1,
-  },
-  companyName: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 12,
-    color: "#000000",
-  },
-  companyDetail: {
-    fontSize: 10,
-    color: "#000000",
-    marginTop: 2,
-  },
-  contactLine: {
-    fontSize: 10,
-    color: "#000000",
-    textAlign: "right",
-    marginTop: 2,
-  },
-  offerTitle: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 18,
-    color: "#000000",
-    textAlign: "right",
-    marginTop: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#E5E5E5",
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  body: {
-    marginHorizontal: 52,
-    marginTop: 16,
-  },
-  intro: {
-    fontSize: 12,
-    color: "#000000",
-    lineHeight: 1.4,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 15,
-    color: "#7252FF",
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  serviceItem: {
-    marginBottom: 4,
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  bullet: {
-    fontSize: 12,
-    color: "#7252FF",
-    marginRight: 6,
-    marginTop: 3,
-  },
-  serviceText: {
-    fontSize: 12,
-    color: "#000000",
-    lineHeight: 1.4,
-    flex: 1,
-  },
-  tableContainer: {
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: "#DFE4EA",
-    borderRadius: 3,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#DFE4EA",
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-  },
-  tableHeaderText: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 8,
-    color: "#0A2540",
-    lineHeight: 1,
-  },
-  colQty: { width: 30 },
-  colDesc: { width: 200 },
-  colTotal: { width: 80, textAlign: "right" },
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#DFE4EA",
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    alignItems: "center",
-  },
-  lastRow: {
-    borderBottomWidth: 0,
-  },
-  cellText: {
-    fontSize: 10,
-    color: "#0A2540",
-    lineHeight: 1,
-  },
-  cellCenter: {
-    fontSize: 10,
-    color: "#0A2540",
-    lineHeight: 1,
-    textAlign: "center",
-    width: 30,
-  },
-  cellDesc: {
-    fontSize: 8,
-    color: "#0A2540",
-    lineHeight: 1.1,
-    width: 200,
-  },
-  cellTotal: {
-    fontSize: 10,
-    color: "#0A2540",
-    lineHeight: 1,
-    textAlign: "right",
-    width: 80,
-  },
-  totalBox: {
-    marginTop: 8,
-    backgroundColor: "#F6F8FC",
-    borderRadius: 4,
-    padding: 10,
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-  },
-  totalLabel: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 12,
-    color: "#0A2540",
-    marginRight: 8,
-  },
-  totalAmount: {
-    fontFamily: "Helvetica-Bold",
-    fontSize: 12,
-    color: "#0A2540",
-  },
-  notes: {
-    fontSize: 8,
-    color: "#0A2540",
-    marginTop: 8,
-    lineHeight: 1.1,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 26,
-    right: 26,
-    height: 51,
-    backgroundColor: "#F6F8FC",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  footerLine: {
-    height: 1,
-    backgroundColor: "#E5E5E5",
-    marginBottom: 8,
-    width: 535,
   },
   leftBar: {
     position: "absolute",
@@ -230,16 +59,234 @@ const styles = StyleSheet.create({
   },
   bottomLine: {
     position: "absolute",
-    bottom: 60,
+    bottom: 12,
+    left: 26,
+    right: 26,
+    height: 1,
+    backgroundColor: "#E5E5E5",
+  },
+  footerDivider: {
+    position: "absolute",
+    top: 779,
     left: 0,
     right: 0,
     height: 1,
     backgroundColor: "#E5E5E5",
   },
+  headerBg: {
+    position: "absolute",
+    left: 26,
+    top: 17,
+    width: 543,
+    height: 122,
+    backgroundColor: "#F6F8FC",
+  },
+  divider: {
+    position: "absolute",
+    left: 26,
+    right: 26,
+    top: 140,
+    height: 1,
+    backgroundColor: "#E5E5E5",
+  },
+  logoBox: {
+    position: "absolute",
+    left: 52,
+    top: 89,
+    width: 86,
+    height: 86,
+    backgroundColor: "#1C1135",
+    borderRadius: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logoImage: {
+    width: 42,
+    height: 43,
+  },
+  offerTitle: {
+    fontFamily: "Inter",
+    position: "absolute",
+    right: 42,
+    top: 45,
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#000000",
+  },
+  companyName: {
+    position: "absolute",
+    right: 42,
+    top: 64,
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#000000",
+  },
+  companyDetail: {
+    position: "absolute",
+    right: 42,
+    top: 80,
+    fontSize: 10,
+    color: "#000000",
+  },
+  clientAddress: {
+    position: "absolute",
+    right: 42,
+    top: 94,
+    fontSize: 10,
+    color: "#000000",
+    lineHeight: 1.1,
+  },
+  contactLine: {
+    position: "absolute",
+    right: 42,
+    top: 108,
+    fontSize: 10,
+    color: "#000000",
+  },
+  body: {
+    marginLeft: 52,
+    marginRight: 52,
+    marginTop: 61,
+  },
+  intro: {
+    fontSize: 15,
+    lineHeight: 1.5,
+    color: "#000000",
+    marginBottom: 32,
+  },
+  clientSection: {
+    marginBottom: 32,
+  },
+  clientNameText: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#000000",
+    marginBottom: 4,
+  },
+  clientDetailText: {
+    fontSize: 10,
+    color: "#000000",
+    marginBottom: 2,
+  },
+  tableContainer: {
+    borderWidth: 1,
+    borderColor: "#DFE4EA",
+    borderRadius: 3,
+    marginBottom: 16,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#DFE4EA",
+    paddingVertical: 6,
+    paddingHorizontal: 20,
+  },
+  tableHeaderText: {
+    fontFamily: "Lato",
+    fontSize: 10,
+    fontWeight: 700,
+    color: "#0A2540",
+    lineHeight: 1,
+  },
+  colCant: { width: 60, textAlign: "center" },
+  colDesc: { flex: 1 },
+  colTotal: { width: 100, textAlign: "right" },
+  tableRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#DFE4EA",
+    paddingVertical: 5,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  lastRow: {
+    borderBottomWidth: 0,
+  },
+  cellCant: {
+    width: 60,
+    fontSize: 10,
+    color: "#0A2540",
+    lineHeight: 1,
+    textAlign: "center",
+  },
+  cellDesc: {
+    flex: 1,
+    fontSize: 8,
+    color: "#0A2540",
+    lineHeight: 1.1,
+  },
+  cellTotal: {
+    width: 100,
+    fontSize: 10,
+    color: "#0A2540",
+    lineHeight: 1,
+    textAlign: "right",
+  },
+  totalBox: {
+    backgroundColor: "#F6F8FC",
+    borderRadius: 4,
+    padding: 10,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  totalBoxFinal: {
+    backgroundColor: "#F6F8FC",
+    borderRadius: 4,
+    padding: 10,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  totalLabel: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#0A2540",
+    marginRight: 8,
+  },
+  totalAmount: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#0A2540",
+  },
+  notes: {
+    fontSize: 8,
+    color: "#0A2540",
+    lineHeight: 1.1,
+  },
+  footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 26,
+    right: 26,
+    height: 51,
+    backgroundColor: "#F6F8FC",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  footerLine: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "#E5E5E5",
+  },
+  footerText: {
+    fontSize: 8,
+    color: "#000000",
+  },
 });
 
 function formatPrice(n: number): string {
-  return `${n.toFixed(2).replace(".", ",")} €`;
+  const f = n.toFixed(2).replace(".", ",");
+  const [int, dec] = f.split(",");
+  const withThousandSep = int.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${withThousandSep},${dec} €`;
 }
 
 type PresupuestoPDFProps = {
@@ -270,32 +317,28 @@ export function PresupuestoPDF(props: PresupuestoPDFProps) {
       <Page size={[595, 842]} style={styles.page}>
         <View style={styles.leftBar} />
         <View style={styles.rightBar} />
+        <View style={styles.footerDivider} />
         <View style={styles.bottomLine} />
+        <View style={styles.headerBg} />
+        <View style={styles.divider} />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logoBox}>
-            {props.logoBase64 ? (
-              <Image style={styles.logoImage} src={props.logoBase64} />
-            ) : null}
-          </View>
-          <View style={styles.headerRight}>
-            <Text style={styles.companyName}>
-              Adimen Intelligence Services S.L.
-            </Text>
-            <Text style={styles.companyDetail}>
-              NIF: ES454425977
-            </Text>
-            <Text style={styles.contactLine}>
-              adimenai.tech@gmail.com | +34 650 60 90 28
-            </Text>
-            <Text style={styles.offerTitle}>Oferta comercial</Text>
-          </View>
+        {/* Logo */}
+        <View style={styles.logoBox}>
+          {props.logoBase64 ? (
+            <Image style={styles.logoImage} src={props.logoBase64} />
+          ) : null}
         </View>
 
-        <View style={{ marginHorizontal: 26 }}>
-          <View style={styles.divider} />
-        </View>
+        {/* Header text */}
+        <Text style={styles.offerTitle}>Oferta comercial</Text>
+        <Text style={styles.companyName}>
+          Adimen Intelligence Services S.L.
+        </Text>
+        <Text style={styles.companyDetail}>NIF: ES454425977</Text>
+        <Text style={styles.clientAddress}>Kalea/Lorem Ipsum dolor</Text>
+        <Text style={styles.contactLine}>
+          adimenai.tech@gmail.com | +34 650 60 90 28
+        </Text>
 
         {/* Body */}
         <View style={styles.body}>
@@ -303,25 +346,25 @@ export function PresupuestoPDF(props: PresupuestoPDFProps) {
             {props.introduction || "Presupuesto para:"}
           </Text>
 
-          <Text style={[styles.companyDetail, { marginBottom: 4 }]}>
-            {props.clientName}
-          </Text>
-          {props.clientNif ? (
-            <Text style={styles.companyDetail}>NIF: {props.clientNif}</Text>
-          ) : null}
-          {props.clientAddress ? (
-            <Text style={styles.companyDetail}>{props.clientAddress}</Text>
-          ) : null}
-          {props.clientEmail || props.clientPhone ? (
-            <Text style={styles.contactLine}>
-              {props.clientEmail}{props.clientEmail && props.clientPhone ? " | " : ""}{props.clientPhone}
-            </Text>
-          ) : null}
+          <View style={styles.clientSection}>
+            <Text style={styles.clientNameText}>{props.clientName}</Text>
+            {props.clientNif ? (
+              <Text style={styles.clientDetailText}>NIF: {props.clientNif}</Text>
+            ) : null}
+            {props.clientAddress ? (
+              <Text style={styles.clientDetailText}>{props.clientAddress}</Text>
+            ) : null}
+            {props.clientEmail || props.clientPhone ? (
+              <Text style={[styles.clientDetailText, { marginTop: 4 }]}>
+                {props.clientEmail}{props.clientEmail && props.clientPhone ? " | " : ""}{props.clientPhone}
+              </Text>
+            ) : null}
+          </View>
 
           {/* Table */}
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, styles.colQty]}>Cantidad</Text>
+              <Text style={[styles.tableHeaderText, styles.colCant]}>Cantidad</Text>
               <Text style={[styles.tableHeaderText, styles.colDesc]}>Descripción</Text>
               <Text style={[styles.tableHeaderText, styles.colTotal]}>Total</Text>
             </View>
@@ -333,15 +376,11 @@ export function PresupuestoPDF(props: PresupuestoPDFProps) {
                   ...(index === props.items.length - 1 ? [styles.lastRow] : []),
                 ]}
               >
-                <Text style={styles.cellCenter}>
+                <Text style={styles.cellCant}>
                   {String(item.quantity).padStart(2, "0")}
                 </Text>
                 <Text style={styles.cellDesc}>{item.title}</Text>
-                <Text style={styles.cellTotal}>
-                  {item.unitPrice > 0
-                    ? `${formatPrice(item.total)}${item.quantity > 1 ? ` (${formatPrice(item.unitPrice)}/ud)` : ""}`
-                    : formatPrice(item.total)}
-                </Text>
+                <Text style={styles.cellTotal}>{formatPrice(item.total)}</Text>
               </View>
             ))}
           </View>
@@ -351,11 +390,11 @@ export function PresupuestoPDF(props: PresupuestoPDFProps) {
             <Text style={styles.totalLabel}>SUBTOTAL:</Text>
             <Text style={styles.totalAmount}>{formatPrice(props.subtotal)}</Text>
           </View>
-          <View style={[styles.totalBox, { marginTop: 4 }]}>
+          <View style={styles.totalBox}>
             <Text style={styles.totalLabel}>IVA ({props.taxRate}%):</Text>
             <Text style={styles.totalAmount}>{formatPrice(props.taxAmount)}</Text>
           </View>
-          <View style={[styles.totalBox, { marginTop: 4 }]}>
+          <View style={styles.totalBoxFinal}>
             <Text style={styles.totalLabel}>TOTAL:</Text>
             <Text style={styles.totalAmount}>{formatPrice(props.total)}</Text>
           </View>
@@ -373,7 +412,7 @@ export function PresupuestoPDF(props: PresupuestoPDFProps) {
         {/* Footer */}
         <View style={styles.footer}>
           <View style={styles.footerLine} />
-          <Text style={{ fontSize: 8, color: "#000000" }}>
+          <Text style={styles.footerText}>
             Adimen Intelligence Services S.L. | adimenai.tech@gmail.com | +34 650 60 90 28
           </Text>
         </View>

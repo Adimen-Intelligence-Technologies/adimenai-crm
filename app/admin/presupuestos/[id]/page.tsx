@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, FileDown } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPresupuesto } from "@/lib/repositories/presupuestos";
 import { PresupuestoDetail } from "@/components/admin/presupuestos/presupuesto-detail";
@@ -14,8 +14,13 @@ export default async function PresupuestoDetailPage({ params }: Params) {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="mb-4 flex items-center justify-end gap-2">
-        <Button asChild variant="outline" size="sm" className="rounded-full">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <Button asChild variant="ghost" size="sm" className="text-zinc-500 hover:text-zinc-900">
+          <Link href="/admin/presupuestos">
+            <ArrowLeft /> Volver
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
           <Link href={`/admin/presupuestos/${presupuesto._id}/edit`}>
             <Pencil /> Editar
           </Link>

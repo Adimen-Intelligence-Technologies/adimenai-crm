@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import {
   dayLabels,
   emptyOpeningHours,
-  herrikonektSubTypeByType,
   herrikonektTypeEnum,
   paymentMethodEnum,
   paymentMethodLabels,
@@ -61,7 +60,6 @@ type FormState = {
   phones: string[];
   addresses: AddressForm[];
   type: HerrikonektType;
-  subType: string;
   syncToApp: boolean;
   email: string;
   social: { instagram: string; facebook: string };
@@ -177,7 +175,6 @@ function toFormState(initial?: InitialClient): FormState {
     type:
       (initial?.type as HerrikonektType | undefined) ??
       herrikonektTypeEnum.enum.bares_y_restaurantes,
-    subType: initial?.subType ?? "",
     syncToApp: initial?.syncToApp ?? true,
     social: socialFromClient(initial?.social),
     billing: billingFromClient(initial?.billing),
@@ -193,14 +190,8 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
   const [step, setStep] = useState<StepId>("basics");
   const [stepErrors, setStepErrors] = useState<Partial<Record<StepId, string>>>({});
 
-  const subTypeOptions = herrikonektSubTypeByType[form.type] ?? [];
-
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      if (key === "type") next.subType = "";
-      return next;
-    });
+    setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   function updateBilling<K extends keyof BillingForm>(key: K, value: BillingForm[K]) {
@@ -294,7 +285,6 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
           isPrimary: a.isPrimary,
         })),
       type: form.type,
-      subType: form.subType,
       syncToApp: form.syncToApp,
       social: {
         instagram: form.social.instagram.trim(),
@@ -639,19 +629,6 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                   onChange={(v) => update("type", v)}
                   placeholder="Selecciona un tipo…"
                 />
-              </Field>
-              <Field label="Subtipo">
-                <NativeSelect
-                  value={form.subType}
-                  onChange={(e) => update("subType", e.target.value)}
-                >
-                  <option value="">Selecciona…</option>
-                  {subTypeOptions.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </NativeSelect>
               </Field>
             </div>
           </StepShell>

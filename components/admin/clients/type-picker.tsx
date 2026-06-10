@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import {
-  herrikonektSubTypeByType,
   herrikonektTypeEnum,
   herrikonektTypeIcons,
   herrikonektTypeLabels,
@@ -56,11 +55,6 @@ export function TypePicker({ value, onChange }: Props) {
           );
         })}
       </div>
-      {herrikonektSubTypeByType[value] && (
-        <p className="text-xs text-zinc-500">
-          Subtipo disponible: {herrikonektSubTypeByType[value].length} opciones
-        </p>
-      )}
     </div>
   );
 }

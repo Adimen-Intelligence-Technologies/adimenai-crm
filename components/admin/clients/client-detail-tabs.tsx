@@ -110,9 +110,6 @@ export function ClientDetailTabs({ client }: { client: Client }) {
                   client.type}
               </Item>
             )}
-            {isHerrikonekt && client.subType && (
-              <Item label="Subtipo">{client.subType}</Item>
-            )}
             {client.email && (
               <Item label="Email">
                 <a

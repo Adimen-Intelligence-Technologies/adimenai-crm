@@ -26,7 +26,6 @@ export type Client = {
     isPrimary?: boolean;
   }>;
   type?: string;
-  subType?: string;
   syncToApp?: boolean;
   social?: ClientSocialLinks;
   billing?: ClientBilling;
@@ -65,7 +64,6 @@ export async function listClients(filter: {
       { name: rx },
       { "addresses.city": rx },
       { phones: rx },
-      { subType: rx },
     ];
   }
   const page = filter.page ?? 1;

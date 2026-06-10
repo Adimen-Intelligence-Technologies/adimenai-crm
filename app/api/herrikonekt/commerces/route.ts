@@ -13,7 +13,6 @@ export async function GET() {
         phones: c.phones ?? [],
         addresses: c.addresses,
         type: c.type,
-        subType: c.subType,
         syncToApp: c.syncToApp ?? false,
       }))
     );

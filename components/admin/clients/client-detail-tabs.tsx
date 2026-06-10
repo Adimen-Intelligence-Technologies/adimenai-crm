@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import * as LucideIcons from "lucide-react";
 import { MapPin, Phone, Receipt, Store } from "lucide-react";
 import {
   businessLineLabels,
   dayLabels,
+  herrikonektTypeEnum,
   herrikonektTypeLabels,
   paymentMethodLabels,
   taxIdTypeLabels,
@@ -106,8 +108,19 @@ export function ClientDetailTabs({ client }: { client: Client }) {
             )}
             {isHerrikonekt && client.type && (
               <Item label="Tipo">
-                {herrikonektTypeLabels[client.type as HerrikonektType] ??
-                  client.type}
+                {herrikonektTypeEnum.options.includes(client.type as HerrikonektType) ? (
+                  herrikonektTypeLabels[client.type as HerrikonektType]
+                ) : (
+                  <span className="inline-flex items-center gap-1.5">
+                    {client.customTypeIcon && (() => {
+                      const Icon = LucideIcons[client.customTypeIcon as keyof typeof LucideIcons] as
+                        | React.ComponentType<{ className?: string }>
+                        | undefined;
+                      return Icon ? <Icon className="size-4 text-zinc-500" /> : null;
+                    })()}
+                    {client.type}
+                  </span>
+                )}
               </Item>
             )}
             {client.email && (

@@ -59,12 +59,13 @@ type FormState = {
   website: string;
   phones: string[];
   addresses: AddressForm[];
-  type: HerrikonektType;
+  type: string;
   syncToApp: boolean;
   email: string;
   social: { instagram: string; facebook: string };
   billing: BillingForm;
   openingHours: OpeningHours;
+  customTypeIcon: string;
 };
 
 type StepId = "basics" | "category" | "contact" | "billing";
@@ -172,13 +173,12 @@ function toFormState(initial?: InitialClient): FormState {
             isPrimary: a.isPrimary ?? idx === 0,
           }))
         : [emptyAddress(true)],
-    type:
-      (initial?.type as HerrikonektType | undefined) ??
-      herrikonektTypeEnum.enum.bares_y_restaurantes,
+    type: initial?.type ?? herrikonektTypeEnum.enum.bares_y_restaurantes,
     syncToApp: initial?.syncToApp ?? true,
     social: socialFromClient(initial?.social),
     billing: billingFromClient(initial?.billing),
     openingHours: initial?.openingHours ?? emptyOpeningHours(),
+    customTypeIcon: initial?.customTypeIcon ?? "",
   };
 }
 
@@ -285,6 +285,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
           isPrimary: a.isPrimary,
         })),
       type: form.type,
+      customTypeIcon: form.customTypeIcon,
       syncToApp: form.syncToApp,
       social: {
         instagram: form.social.instagram.trim(),
@@ -626,7 +627,10 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
               <Field label="Tipo">
                 <TypeCombobox
                   value={form.type}
-                  onChange={(v) => update("type", v)}
+                  onChange={(v, ct) => {
+                    update("type", v);
+                    if (ct) update("customTypeIcon", ct.icon);
+                  }}
                   placeholder="Selecciona un tipo…"
                 />
               </Field>

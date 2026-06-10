@@ -193,6 +193,16 @@ const dayHoursSchema = z.object({
 });
 export type DayHours = z.infer<typeof dayHoursSchema>;
 
+export const CUSTOM_TYPE_ICONS = [
+  "Star", "Heart", "Flag", "Bell", "Crown", "Gem",
+  "Zap", "Flame", "Sun", "Moon", "Cloud", "Snowflake",
+  "Leaf", "TreePine", "Palmtree", "Ship", "Plane", "Car",
+  "Bike", "Dog", "Cat", "Fish", "Music", "Palette",
+  "Camera", "BookOpen", "GraduationCap", "Trophy", "Medal", "Shield",
+] as const;
+
+export type CustomTypeIcon = (typeof CUSTOM_TYPE_ICONS)[number];
+
 const openingHoursSchema = z.object({
   monday: z.array(dayHoursSchema).default([]),
   tuesday: z.array(dayHoursSchema).default([]),
@@ -240,7 +250,8 @@ export const createHerrikonektSchema = z.object({
     .default(""),
   phones: z.array(z.string()).default([]),
   addresses: z.array(addressSchema).default([]),
-  type: herrikonektTypeEnum.optional().default("bares_y_restaurantes"),
+  type: z.string().optional().default("bares_y_restaurantes"),
+  customTypeIcon: z.string().optional().default(""),
   syncToApp: z.boolean().default(true),
   social: socialLinksSchema.optional().default({ instagram: "", facebook: "" }),
   billing: billingSchema.optional(),

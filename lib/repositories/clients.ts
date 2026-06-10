@@ -26,6 +26,7 @@ export type Client = {
     isPrimary?: boolean;
   }>;
   type?: string;
+  customTypeIcon?: string;
   syncToApp?: boolean;
   social?: ClientSocialLinks;
   billing?: ClientBilling;

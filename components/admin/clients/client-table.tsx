@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteClientButton } from "./delete-client-button";
+import * as LucideIcons from "lucide-react";
 import {
   businessLineLabels,
   herrikonektTypeEnum,
@@ -111,7 +112,6 @@ export function ClientTable({
 }
 
 function ClientRow({ client }: { client: Client }) {
-  const router = useRouter();
   const primaryAddress =
     client.addresses?.find((a) => a.isPrimary) ??
     client.addresses?.find((a) => a.city?.trim()) ??
@@ -119,6 +119,7 @@ function ClientRow({ client }: { client: Client }) {
   const primaryPhone = client.phones?.[0];
   const theme = businessLineTheme[client.businessLine];
   const isHerrikonekt = client.businessLine === "herrikonekt";
+  const isPredefinedType = client.type && herrikonektTypeEnum.options.includes(client.type as HerrikonektType);
 
   return (
     <tr className="hover:bg-zinc-50/60">
@@ -139,8 +140,20 @@ function ClientRow({ client }: { client: Client }) {
         </Badge>
       </td>
       <td className="hidden px-4 py-3 md:table-cell">
-        {isHerrikonekt ? (
-          <InlineTypeSelect clientId={client._id} currentType={client.type as HerrikonektType | undefined} />
+        {isHerrikonekt && client.type ? (
+          isPredefinedType ? (
+            <InlineTypeSelect clientId={client._id} currentType={client.type as HerrikonektType} />
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-sm text-zinc-700">
+              {client.customTypeIcon && (() => {
+                const Icon = LucideIcons[client.customTypeIcon as keyof typeof LucideIcons] as
+                  | React.ComponentType<{ className?: string }>
+                  | undefined;
+                return Icon ? <Icon className="size-3.5 text-zinc-500" /> : null;
+              })()}
+              {client.type}
+            </span>
+          )
         ) : (
           <span className="text-zinc-600">—</span>
         )}

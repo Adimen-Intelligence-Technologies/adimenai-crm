@@ -14,9 +14,12 @@ import {
   Landmark,
   Pill,
   Scale,
+  Cigarette,
+  Dumbbell,
   ShoppingBag,
   Stethoscope,
   Store,
+  Syringe,
   Users,
   Wrench,
   type LucideIcon,
@@ -45,6 +48,10 @@ export const herrikonektTypeEnum = z.enum([
   "hoteles_y_alojamientos",
   "asociaciones",
   "funerarias",
+  "supermercados",
+  "gimnasios",
+  "estancos",
+  "dentistas",
 ]);
 export type HerrikonektType = z.infer<typeof herrikonektTypeEnum>;
 
@@ -68,6 +75,10 @@ export const herrikonektTypeLabels: Record<HerrikonektType, string> = {
   hoteles_y_alojamientos: "Hoteles y Alojamientos",
   asociaciones: "Asociaciones",
   funerarias: "Funerarias",
+  supermercados: "Supermercados",
+  gimnasios: "Gimnasios",
+  estancos: "Estancos",
+  dentistas: "Dentistas",
 };
 
 export const herrikonektTypeIcons: Record<HerrikonektType, LucideIcon> = {
@@ -90,6 +101,10 @@ export const herrikonektTypeIcons: Record<HerrikonektType, LucideIcon> = {
   hoteles_y_alojamientos: Hotel,
   asociaciones: Users,
   funerarias: Cross,
+  supermercados: ShoppingBag,
+  gimnasios: Dumbbell,
+  estancos: Cigarette,
+  dentistas: Syringe,
 };
 
 export const herrikonektSubTypeByType: Record<HerrikonektType, string[]> = {
@@ -223,6 +238,27 @@ export const herrikonektSubTypeByType: Record<HerrikonektType, string[]> = {
   funerarias: [
     "Funerarias",
     "Tanatorios",
+  ],
+  supermercados: [
+    "Supermercados",
+    "Hipermercados",
+    "Tiendas de conveniencia",
+  ],
+  gimnasios: [
+    "Gimnasios",
+    "Centros de fitness",
+    "CrossFit",
+    "Yoga / Pilates",
+  ],
+  estancos: [
+    "Estancos",
+    "Expendedurías de tabaco",
+  ],
+  dentistas: [
+    "Clínicas dentales",
+    "Ortodoncia",
+    "Cirugía oral",
+    "Odontopediatría",
   ],
 };
 

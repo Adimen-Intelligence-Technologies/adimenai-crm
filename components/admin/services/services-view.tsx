@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
 import { businessLineTheme } from "@/lib/theme";
 import { businessLineLabels, type BusinessLine } from "@/lib/schemas/client";
 import { ServiceTable } from "./service-table";
-import type { PaginatedResult, Service } from "@/lib/repositories/services";
+import type { PaginatedResult } from "@/lib/repositories/services";
+import type { Service } from "@/lib/schemas/service";
 
 type Filter = "all" | BusinessLine;
 

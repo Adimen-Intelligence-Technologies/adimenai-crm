@@ -4,6 +4,7 @@ import { ArrowLeft, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { businessLineTheme } from "@/lib/theme";
 import { businessLineLabels } from "@/lib/schemas/client";
+import { serviceBillingLabels, serviceBillingShort } from "@/lib/schemas/service";
 import { getService } from "@/lib/repositories/services";
 import { DeleteServiceButton } from "@/components/admin/services/delete-service-button";
 
@@ -66,29 +67,39 @@ export default async function ServiceDetailPage({
           background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accentHover} 100%)`,
         }}
       >
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <span className="rounded-md bg-white/20 px-2 py-0.5 text-[11px] font-semibold text-white">
-              {businessLineLabels[service.businessLine]}
-            </span>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">
-              {service.name}
-            </h1>
-            {service.description && (
-              <p className="mt-1 max-w-xl text-sm text-pretty text-white/80">
-                {service.description}
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="rounded-md bg-white/20 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  {businessLineLabels[service.businessLine]}
+                </span>
+                <span className="rounded-md bg-white/20 px-2 py-0.5 text-[11px] font-medium text-white">
+                  {serviceBillingLabels[service.billing]}
+                </span>
+              </div>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">
+                {service.name}
+              </h1>
+              {service.description && (
+                <p className="mt-1 max-w-xl whitespace-pre-line text-sm text-pretty text-white/80">
+                  {service.description}
+                </p>
+              )}
+            </div>
+            <div className="rounded-xl bg-white/15 px-4 py-3 text-white backdrop-blur-sm">
+              <p className="text-[10px] font-semibold tracking-wide text-white/80 uppercase">
+                Precio sin IVA
               </p>
-            )}
+              <p className="mt-0.5 font-mono text-2xl font-bold tabular-nums">
+                {formatEUR(service.price)}
+                {service.billing !== "one_time" && (
+                  <span className="ml-1 text-sm font-normal text-white/80">
+                    {serviceBillingShort[service.billing]}
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
-          <div className="rounded-xl bg-white/15 px-4 py-3 text-white backdrop-blur-sm">
-            <p className="text-[10px] font-semibold tracking-wide text-white/80 uppercase">
-              Precio sin IVA
-            </p>
-            <p className="mt-0.5 font-mono text-2xl font-bold tabular-nums">
-              {formatEUR(service.price)}
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Detalle */}
@@ -100,6 +111,15 @@ export default async function ServiceDetailPage({
             </h2>
             <div className="divide-y divide-zinc-100">
               <DetailRow label="Línea" value={businessLineLabels[service.businessLine]} />
+              <DetailRow
+                label="Facturación"
+                value={serviceBillingLabels[service.billing]}
+              />
+              <DetailRow
+                label="Descripción"
+                value={service.description || "—"}
+                block
+              />
               <DetailRow label="Precio sin IVA" value={formatEUR(service.price)} mono />
               <DetailRow label="IVA (21%)" value={formatEUR(iva)} mono />
               <DetailRow
@@ -141,8 +161,22 @@ export default async function ServiceDetailPage({
                 ok
               />
               <SummaryRow
+                label="Facturación"
+                value={serviceBillingLabels[service.billing]}
+                ok
+              />
+              <SummaryRow
+                label="Descripción"
+                value={service.description ? `${service.description.length} caracteres` : "—"}
+                ok={!!service.description}
+              />
+              <SummaryRow
                 label="Precio"
-                value={formatEUR(service.price)}
+                value={
+                  service.billing === "one_time"
+                    ? formatEUR(service.price)
+                    : `${formatEUR(service.price)} ${serviceBillingShort[service.billing]}`
+                }
                 ok
               />
             </ul>
@@ -158,12 +192,24 @@ function DetailRow({
   value,
   mono,
   highlight,
+  block,
 }: {
   label: string;
   value: string;
   mono?: boolean;
   highlight?: boolean;
+  block?: boolean;
 }) {
+  if (block) {
+    return (
+      <div className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
+        <span className="text-[11px] font-semibold tracking-[0.02em] text-zinc-500 uppercase">
+          {label}
+        </span>
+        <p className="whitespace-pre-line text-sm text-zinc-950">{value}</p>
+      </div>
+    );
+  }
   return (
     <div className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
       <span className="text-[11px] font-semibold tracking-[0.02em] text-zinc-500 uppercase">

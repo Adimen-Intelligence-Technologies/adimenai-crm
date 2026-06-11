@@ -227,14 +227,6 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
                   <SelectBilling value={billing} onChange={setBilling} />
                 </Field>
               </div>
-
-              <Field label="Línea de negocio">
-                <SelectBusinessLine
-                  value={businessLine}
-                  onChange={setBusinessLine}
-                  disabled={!!fixedBusinessLine}
-                />
-              </Field>
             </div>
           </Section>
         </div>
@@ -386,50 +378,6 @@ function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
         props.className
       )}
     />
-  );
-}
-
-function SelectBusinessLine({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: BusinessLine;
-  onChange: (v: BusinessLine) => void;
-  disabled?: boolean;
-}) {
-  const options: BusinessLine[] = ["adimenai", "herrikonekt", "hiopos"];
-  return (
-    <div className="grid grid-cols-3 gap-1.5">
-      {options.map((opt) => {
-        const isActive = opt === value;
-        const optTheme = businessLineTheme[opt];
-        return (
-          <button
-            key={opt}
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange(opt)}
-            className={cn(
-              "rounded-md border px-2 py-2 text-xs font-semibold transition-all",
-              isActive
-                ? "border-zinc-900 bg-zinc-900 text-white"
-                : "bg-white text-zinc-900 hover:bg-zinc-50",
-              disabled && !isActive && "opacity-40"
-            )}
-          >
-            {businessLineLabels[opt]}
-            {isActive && (
-              <span
-                className="ml-1 inline-block size-1.5 rounded-full"
-                style={{ backgroundColor: optTheme.accent }}
-                aria-hidden
-              />
-            )}
-          </button>
-        );
-      })}
-    </div>
   );
 }
 

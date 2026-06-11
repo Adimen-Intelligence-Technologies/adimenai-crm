@@ -122,10 +122,22 @@ function ServiceRow({ service }: { service: Service }) {
           {service.businessLine === "hiopos" && "Hiopos"}
         </span>
       </td>
+      <td className="hidden px-5 py-3.5 md:table-cell">
+        <span className="text-xs text-zinc-900">
+          {service.billing === "one_time" && "Pago único"}
+          {service.billing === "monthly" && "Mensual"}
+          {service.billing === "yearly" && "Anual"}
+        </span>
+      </td>
       <td className="px-5 py-3.5 text-right">
         <span className="font-mono text-sm font-bold tabular-nums text-zinc-900">
           {formatEUR(service.price)}
         </span>
+        {service.billing !== "one_time" && (
+          <span className="ml-1 text-[11px] text-zinc-500">
+            {serviceBillingShort[service.billing]}
+          </span>
+        )}
       </td>
       <td className="px-5 py-3.5">
         <div className="flex items-center justify-end gap-1">

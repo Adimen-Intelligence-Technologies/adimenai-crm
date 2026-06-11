@@ -69,8 +69,8 @@ export function ServicesView({ result }: { result: PaginatedResult<Service> }) {
       <PageHeader
         title="Gestión de Servicios"
         search={
-          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2">
-            <div className="group relative w-full sm:w-72">
+          <div className="flex w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center">
+            <div className="group relative w-full lg:w-72">
               <Search
                 className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-[#3B1E8A]"
                 aria-hidden
@@ -106,7 +106,7 @@ export function ServicesView({ result }: { result: PaginatedResult<Service> }) {
             </nav>
             <Button
               asChild
-              className="bg-[#3B1E8A] text-white shadow-xs hover:bg-[#2D1666]"
+              className="w-full bg-[#3B1E8A] text-white shadow-xs hover:bg-[#2D1666] sm:w-auto"
             >
               <Link href="/admin/gestion-servicios/new">
                 <Plus className="size-4" />

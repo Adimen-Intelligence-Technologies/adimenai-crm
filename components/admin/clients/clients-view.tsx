@@ -61,27 +61,23 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
     router.replace(`/admin/clients?${params.toString()}`);
   }
 
-  const showTypeFilter = activeFilter === "herrikonekt";
-
   return (
     <div className="flex animate-fade-in flex-col gap-6">
       <PageHeader
         title="Contactos"
         search={
-          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2">
-            {showTypeFilter && (
-              <div className="w-full sm:w-64">
-                <TypeCombobox
-                  value={type}
-                  onChange={(v) => setType(v)}
-                  onClear={() => setType("")}
-                  clearable
-                  clearLabel="Todas las categorías"
-                  placeholder="Categoría (escribe para buscar)"
-                />
-              </div>
-            )}
-            <div className="group relative w-full sm:w-80">
+          <div className="flex w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center">
+            <div className="w-full lg:w-64">
+              <TypeCombobox
+                value={type}
+                onChange={(v) => setType(v)}
+                onClear={() => setType("")}
+                clearable
+                clearLabel="Todas las categorías"
+                placeholder="Categoría (escribe para buscar)"
+              />
+            </div>
+            <div className="group relative w-full lg:w-72">
               <Search
                 className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-[#3B1E8A]"
                 aria-hidden
@@ -117,7 +113,7 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
             </nav>
             <Button
               asChild
-              className="bg-[#3B1E8A] text-white shadow-xs hover:bg-[#2D1666]"
+              className="w-full bg-[#3B1E8A] text-white shadow-xs hover:bg-[#2D1666] sm:w-auto"
             >
               <Link href="/admin/clients/new">
                 <Plus className="size-4" />

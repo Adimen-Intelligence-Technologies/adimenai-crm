@@ -1,4 +1,4 @@
-import { Database, DollarSign, Folder, ListChecks, Megaphone, Server, Users, type LucideIcon } from "lucide-react";
+import { Database, DollarSign, Folder, LayoutDashboard, ListChecks, Megaphone, Server, Users, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -15,6 +15,12 @@ export type NavGroup = {
 
 export const navGroups: NavGroup[] = [
   {
+    label: "General",
+    items: [
+      { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+    ],
+  },
+  {
     label: "Tareas",
     folder: true,
     folderIcon: Folder,
@@ -30,7 +36,7 @@ export const navGroups: NavGroup[] = [
       { label: "Presupuestos", href: "/admin/presupuestos", icon: DollarSign },
     ],
   },
-  
+
   {
     label: "Gestión BBDD",
     folder: true,

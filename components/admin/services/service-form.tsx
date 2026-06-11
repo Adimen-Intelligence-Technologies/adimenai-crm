@@ -3,13 +3,19 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, Save } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { businessLineTheme } from "@/lib/theme";
 import { businessLineLabels, type BusinessLine } from "@/lib/schemas/client";
-import type { Service } from "@/lib/schemas/service";
+import {
+  serviceBillingEnum,
+  serviceBillingLabels,
+  serviceBillingShort,
+  type Service,
+  type ServiceBilling,
+} from "@/lib/schemas/service";
 
 type Props = {
   mode: "create" | "edit";
@@ -38,6 +44,9 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
   const [businessLine, setBusinessLine] = useState<BusinessLine>(
     fixedBusinessLine ?? initial?.businessLine ?? "adimenai"
   );
+  const [billing, setBilling] = useState<ServiceBilling>(
+    initial?.billing ?? "one_time"
+  );
 
   // Restaurar borrador (solo create sin línea prefijada)
   useEffect(() => {
@@ -45,12 +54,19 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
     const raw = window.localStorage.getItem(`${DRAFT_KEY_PREFIX}new`);
     if (!raw) return;
     try {
-      const parsed = JSON.parse(raw) as { name: string; description: string; priceStr: string; businessLine: BusinessLine };
+      const parsed = JSON.parse(raw) as {
+        name: string;
+        description: string;
+        priceStr: string;
+        businessLine: BusinessLine;
+        billing: ServiceBilling;
+      };
       if (parsed && typeof parsed === "object") {
         setName(parsed.name ?? "");
         setDescription(parsed.description ?? "");
         setPriceStr(parsed.priceStr ?? "");
         setBusinessLine(parsed.businessLine ?? "adimenai");
+        setBilling(parsed.billing ?? "one_time");
       }
     } catch {
       // noop
@@ -62,11 +78,11 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
     const t = window.setTimeout(() => {
       window.localStorage.setItem(
         `${DRAFT_KEY_PREFIX}new`,
-        JSON.stringify({ name, description, priceStr, businessLine })
+        JSON.stringify({ name, description, priceStr, businessLine, billing })
       );
     }, 400);
     return () => window.clearTimeout(t);
-  }, [mode, fixedBusinessLine, name, description, priceStr, businessLine]);
+  }, [mode, fixedBusinessLine, name, description, priceStr, businessLine, billing]);
 
   function clearDraft() {
     if (typeof window === "undefined") return;
@@ -85,7 +101,7 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canSubmit, name, description, priceStr, businessLine]);
+  }, [canSubmit, name, description, priceStr, businessLine, billing]);
 
   async function handleSubmit() {
     setError(null);
@@ -94,6 +110,7 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
       name: name.trim(),
       description: description.trim(),
       price: eurosInput(priceStr),
+      billing,
     };
 
     startTransition(async () => {
@@ -118,6 +135,10 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
     });
   }
 
+  const completedRequired = [name.trim(), priceStr.trim()].filter(Boolean).length;
+  const totalRequired = 2;
+  const progress = (completedRequired / totalRequired) * 100;
+
   return (
     <div className="flex flex-col gap-4 pb-24">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -139,15 +160,13 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
         </div>
         <div className="flex items-center gap-2 text-[11px] text-zinc-900">
           <span className="font-semibold tabular-nums">
-            {name.trim() && priceStr.trim() ? "2/2" : name.trim() || priceStr.trim() ? "1/2" : "0/2"}
+            {completedRequired}/{totalRequired}
           </span>
           <span>obligatorios</span>
           <div className="h-1.5 w-24 overflow-hidden rounded-full bg-zinc-200">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-              style={{
-                width: `${name.trim() && priceStr.trim() ? 100 : name.trim() || priceStr.trim() ? 50 : 0}%`,
-              }}
+              style={{ width: `${progress}%` }}
             />
           </div>
           <kbd className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 font-mono text-[10px] text-zinc-900">
@@ -169,16 +188,26 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
         <div className="flex flex-col gap-4 lg:col-span-2">
           <Section title="Identidad del servicio">
             <div className="flex flex-col gap-4">
+              <Field label="Nombre / titular" required>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ej. Diseño de landing page"
+                  autoFocus
+                  required
+                />
+              </Field>
+
+              <Field label="Descripción" required>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe qué incluye el servicio, alcance, condiciones, entregables…"
+                  rows={5}
+                />
+              </Field>
+
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Field label="Nombre / descripción" required className="sm:col-span-2">
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ej. Diseño de landing page"
-                    autoFocus
-                    required
-                  />
-                </Field>
                 <Field label="Precio sin IVA" required>
                   <div className="relative">
                     <Input
@@ -194,21 +223,16 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
                     </span>
                   </div>
                 </Field>
-                <Field label="Línea de negocio">
-                  <SelectBusinessLine
-                    value={businessLine}
-                    onChange={setBusinessLine}
-                    disabled={!!fixedBusinessLine}
-                  />
+                <Field label="Facturación">
+                  <SelectBilling value={billing} onChange={setBilling} />
                 </Field>
               </div>
 
-              <Field label="Descripción interna">
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Notas, alcance, condiciones, observaciones…"
-                  rows={3}
+              <Field label="Línea de negocio">
+                <SelectBusinessLine
+                  value={businessLine}
+                  onChange={setBusinessLine}
+                  disabled={!!fixedBusinessLine}
                 />
               </Field>
             </div>
@@ -220,9 +244,19 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
             <ul className="divide-y divide-zinc-100">
               <SummaryRow label="Nombre" value={name || "—"} ok={!!name.trim()} />
               <SummaryRow
+                label="Descripción"
+                value={description ? `${description.length} caracteres` : "—"}
+                ok={!!description.trim()}
+              />
+              <SummaryRow
                 label="Precio"
                 value={priceStr ? `${priceStr.replace(".", ",")} €` : "—"}
                 ok={!!priceStr.trim()}
+              />
+              <SummaryRow
+                label="Facturación"
+                value={serviceBillingLabels[billing]}
+                ok
               />
               <SummaryRow
                 label="Línea"
@@ -236,12 +270,11 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
             <div
               className={cn(
                 "rounded-lg border p-3 transition-colors",
-                businessLine === "adimenai" && "border-violet-200 bg-violet-50/40",
-                businessLine === "herrikonekt" && "border-emerald-200 bg-emerald-50/40",
-                businessLine === "hiopos" && "border-red-200 bg-red-50/40"
+                businessLine === "adimenai" && "border-violet-200",
+                businessLine === "herrikonekt" && "border-emerald-200",
+                businessLine === "hiopos" && "border-red-200"
               )}
               style={{
-                borderColor: `${businessLineTheme[businessLine].accent}40`,
                 background: `linear-gradient(135deg, ${businessLineTheme[businessLine].accent}10, transparent)`,
               }}
             >
@@ -254,9 +287,16 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
               <p className="mt-1 truncate text-sm font-bold text-zinc-950">
                 {name || "Nombre del servicio"}
               </p>
-              <p className="mt-1 font-mono text-lg font-bold tabular-nums text-zinc-950">
+              {description && (
+                <p className="mt-1 line-clamp-3 text-[12px] text-zinc-900">
+                  {description}
+                </p>
+              )}
+              <p className="mt-2 font-mono text-lg font-bold tabular-nums text-zinc-950">
                 {priceStr ? priceStr.replace(".", ",") : "0,00"} <span className="text-sm">€</span>
-                <span className="ml-1 text-[11px] font-normal text-zinc-900">sin IVA</span>
+                <span className="ml-1 font-sans text-[12px] font-normal text-zinc-900">
+                  {serviceBillingShort[billing]}
+                </span>
               </p>
             </div>
           </Section>
@@ -268,7 +308,10 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
           <div className="hidden truncate text-xs text-zinc-900 sm:block">
             <span className="font-semibold">{name || "Sin nombre"}</span>
             {priceStr && (
-              <span className="text-zinc-900"> · {priceStr.replace(".", ",")} €</span>
+              <span className="text-zinc-900">
+                {" "}
+                · {priceStr.replace(".", ",")} € {serviceBillingShort[billing]}
+              </span>
             )}
           </div>
           <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
@@ -286,13 +329,11 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
               disabled={isPending || !canSubmit}
               className="min-w-32 bg-[#3B1E8A] text-white shadow-sm hover:bg-[#2D1666] disabled:bg-zinc-200 disabled:text-zinc-500"
             >
-              {isPending ? (
-                "Guardando…"
-              ) : mode === "create" ? (
-                "Crear servicio"
-              ) : (
-                "Guardar cambios"
-              )}
+              {isPending
+                ? "Guardando…"
+                : mode === "create"
+                  ? "Crear servicio"
+                  : "Guardar cambios"}
             </Button>
           </div>
         </div>
@@ -358,7 +399,6 @@ function SelectBusinessLine({
   disabled?: boolean;
 }) {
   const options: BusinessLine[] = ["adimenai", "herrikonekt", "hiopos"];
-  const theme = businessLineTheme[value];
   return (
     <div className="grid grid-cols-3 gap-1.5">
       {options.map((opt) => {
@@ -372,16 +412,53 @@ function SelectBusinessLine({
             onClick={() => onChange(opt)}
             className={cn(
               "rounded-md border px-2 py-2 text-xs font-semibold transition-all",
-              isActive ? "text-white shadow-sm" : "bg-white text-zinc-900 hover:bg-zinc-50",
+              isActive
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : "bg-white text-zinc-900 hover:bg-zinc-50",
               disabled && !isActive && "opacity-40"
             )}
-            style={
-              isActive
-                ? { backgroundColor: optTheme.accent, borderColor: optTheme.accent }
-                : { borderColor: optTheme.accent + "40" }
-            }
           >
             {businessLineLabels[opt]}
+            {isActive && (
+              <span
+                className="ml-1 inline-block size-1.5 rounded-full"
+                style={{ backgroundColor: optTheme.accent }}
+                aria-hidden
+              />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function SelectBilling({
+  value,
+  onChange,
+}: {
+  value: ServiceBilling;
+  onChange: (v: ServiceBilling) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
+      {serviceBillingEnum.options.map((opt) => {
+        const isActive = opt === value;
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            className={cn(
+              "rounded-md border px-2 py-2 text-xs font-semibold transition-all",
+              isActive
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : "bg-white text-zinc-900 hover:bg-zinc-50"
+            )}
+          >
+            {opt === "one_time" && "Pago único"}
+            {opt === "monthly" && "Mensual"}
+            {opt === "yearly" && "Anual"}
           </button>
         );
       })}

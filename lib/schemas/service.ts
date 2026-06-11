@@ -1,6 +1,21 @@
 import { z } from "zod";
 import { businessLineEnum, type BusinessLine } from "@/lib/schemas/client";
 
+export const serviceBillingEnum = z.enum(["one_time", "monthly", "yearly"]);
+export type ServiceBilling = z.infer<typeof serviceBillingEnum>;
+
+export const serviceBillingLabels: Record<ServiceBilling, string> = {
+  one_time: "Pago único",
+  monthly: "Suscripción mensual",
+  yearly: "Suscripción anual",
+};
+
+export const serviceBillingShort: Record<ServiceBilling, string> = {
+  one_time: "/ ud.",
+  monthly: "/ mes",
+  yearly: "/ año",
+};
+
 export const serviceSchema = z.object({
   businessLine: businessLineEnum,
   name: z.string().trim().min(1, "El nombre es obligatorio"),
@@ -8,6 +23,7 @@ export const serviceSchema = z.object({
   price: z
     .number({ invalid_type_error: "Precio no válido" })
     .nonnegative("El precio no puede ser negativo"),
+  billing: serviceBillingEnum.default("one_time"),
 });
 
 export type Service = {
@@ -16,6 +32,7 @@ export type Service = {
   name: string;
   description: string;
   price: number;
+  billing: ServiceBilling;
   createdAt: string;
   updatedAt: string;
 };

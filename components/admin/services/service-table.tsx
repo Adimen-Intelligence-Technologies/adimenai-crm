@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { businessLineTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { serviceBillingShort } from "@/lib/schemas/service";
 import type { Service } from "@/lib/schemas/service";
 import type { BusinessLine } from "@/lib/schemas/client";
 import { DeleteServiceButton } from "./delete-service-button";
@@ -30,6 +31,7 @@ export function ServiceTable({
           <tr>
             <th className="px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700">Nombre</th>
             <th className="hidden px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700 sm:table-cell">Línea</th>
+            <th className="hidden px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700 md:table-cell">Facturación</th>
             <th className="px-5 py-3.5 text-right text-[13px] font-bold tracking-tight text-zinc-700">Precio (sin IVA)</th>
             <th className="px-5 py-3.5 text-right text-[13px] font-bold tracking-tight text-zinc-700">Acciones</th>
           </tr>
@@ -37,7 +39,7 @@ export function ServiceTable({
         <tbody className="divide-y divide-zinc-100">
           {services.length === 0 ? (
             <tr>
-              <td colSpan={4} className="px-5 py-20 text-center text-sm text-zinc-500">
+              <td colSpan={5} className="px-5 py-20 text-center text-sm text-zinc-500">
                 No hay servicios para mostrar.
               </td>
             </tr>

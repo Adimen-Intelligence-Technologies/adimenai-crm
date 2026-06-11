@@ -1,0 +1,51 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { businessLineEnum } from "@/lib/schemas/client";
+import { createServiceSchema } from "@/lib/schemas/service";
+import { createService, listServices } from "@/lib/repositories/services";
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const rawLine = searchParams.get("businessLine");
+    const q = searchParams.get("q") ?? undefined;
+    const page = parseInt(searchParams.get("page") ?? "1", 10) || 1;
+    const pageSize = parseInt(searchParams.get("pageSize") ?? "7", 10) || 7;
+
+    let businessLine;
+    if (rawLine) {
+      const parsed = businessLineEnum.safeParse(rawLine);
+      if (!parsed.success) {
+        return NextResponse.json({ error: "businessLine inválido" }, { status: 400 });
+      }
+      businessLine = parsed.data;
+    }
+
+    const result = await listServices({ businessLine, q, page, pageSize });
+    return NextResponse.json(result);
+  } catch (err) {
+    console.error("GET /api/services", err);
+    return NextResponse.json({ error: "Error al listar servicios" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const parsed = createServiceSchema.safeParse(body);
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
+      const detail = firstIssue
+        ? `${firstIssue.path.join(".") || "campo"}: ${firstIssue.message}`
+        : "Datos inválidos";
+      return NextResponse.json(
+        { error: detail, issues: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const service = await createService(parsed.data);
+    return NextResponse.json(service, { status: 201 });
+  } catch (err) {
+    console.error("POST /api/services", err);
+    return NextResponse.json({ error: "Error al crear servicio" }, { status: 500 });
+  }
+}

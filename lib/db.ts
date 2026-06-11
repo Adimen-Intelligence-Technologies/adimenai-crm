@@ -50,3 +50,8 @@ export async function getPresupuestosCollection() {
   const db = await getDb();
   return db.collection("presupuestos");
 }
+
+export async function getServicesCollection() {
+  const db = await getDb();
+  return db.collection("services");
+}

@@ -21,23 +21,23 @@ export function SidebarFooter() {
     <button
       type="button"
       className={cn(
-        "group flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors hover:bg-white/[0.08]",
+        "group flex w-full items-center gap-2.5 rounded-md p-2 text-left transition-colors hover:bg-zinc-100",
         !open && "justify-center"
       )}
     >
-      <Avatar size="sm" className="ring-1 ring-white/15">
-        <AvatarFallback className="bg-[#6C47FF] text-white text-[11px] font-semibold">
+      <Avatar size="sm" className="ring-1 ring-zinc-200">
+        <AvatarFallback className="bg-[#3B1E8A] text-white text-[10px] font-semibold">
           AD
         </AvatarFallback>
       </Avatar>
       {open && (
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-white">AdimenAi</p>
-          <p className="truncate text-xs text-white/50">admin@adimenai.com</p>
+          <p className="truncate text-[13px] font-medium text-zinc-900">AdimenAi</p>
+          <p className="truncate text-[11px] text-zinc-500">admin@adimenai.com</p>
         </div>
       )}
       {open && (
-        <MoreHorizontal className="size-4 shrink-0 text-white/40 group-hover:text-white" />
+        <MoreHorizontal className="size-3.5 shrink-0 text-zinc-300 group-hover:text-zinc-500" />
       )}
     </button>
   );
@@ -45,8 +45,18 @@ export function SidebarFooter() {
   const content = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent side="right" align="end" sideOffset={8} className="min-w-48">
-        <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
+      <DropdownMenuContent side="right" align="end" sideOffset={8} className="min-w-52">
+        <div className="flex items-center gap-3 px-2 py-2">
+          <Avatar size="sm" className="ring-1 ring-zinc-200">
+            <AvatarFallback className="bg-[#3B1E8A] text-white text-[10px] font-semibold">
+              AD
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-zinc-900">AdimenAi</p>
+            <p className="truncate text-xs text-zinc-500">admin@adimenai.com</p>
+          </div>
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem>Perfil</DropdownMenuItem>
         <DropdownMenuItem>Preferencias</DropdownMenuItem>

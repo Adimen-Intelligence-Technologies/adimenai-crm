@@ -28,24 +28,26 @@ function RenderGroup({
   const isFolder = group.folder && open;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-0.5">
       {isFolder && (
         <button
           type="button"
           onClick={() => onToggle(group.label)}
           className={cn(
-            "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-            "text-white/70 hover:bg-white/[0.08] hover:text-white"
+            "group flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors duration-150",
+            "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
           )}
-          style={{ paddingLeft: `${12 + depth * 12}px` }}
+          style={{ paddingLeft: `${10 + depth * 12}px` }}
         >
           {group.folderIcon && (
-            <group.folderIcon className="size-[18px] shrink-0 text-white/60" />
+            <group.folderIcon className="size-3.5 shrink-0 text-zinc-400 transition-colors group-hover:text-zinc-600" />
           )}
-          <span className="flex-1 truncate text-left">{group.label}</span>
+          <span className="flex-1 truncate text-left text-[11px] font-semibold tracking-[0.04em] uppercase">
+            {group.label}
+          </span>
           <ChevronDown
             className={cn(
-              "size-3.5 text-white/40 transition-transform",
+              "size-3 text-zinc-300 transition-transform duration-200",
               expandedGroups[group.label] && "rotate-180"
             )}
           />
@@ -90,8 +92,8 @@ export function SidebarNav() {
   }
 
   return (
-    <ScrollArea className="flex-1 px-3 py-4">
-      <nav aria-label="Navegación principal" className="flex flex-col gap-6">
+    <ScrollArea className="flex-1 px-2.5 py-4">
+      <nav aria-label="Navegación principal" className="flex flex-col gap-5">
         {navGroups.map((group) => (
           <RenderGroup
             key={group.label}

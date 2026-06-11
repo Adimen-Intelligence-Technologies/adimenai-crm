@@ -33,9 +33,9 @@ export function ClientTable({
   onPageChange: (page: number) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+    <div className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500">
+        <thead className="border-b border-zinc-100 bg-zinc-50/40 text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
           <tr>
             <th className="px-4 py-2.5">Nombre</th>
             <th className="hidden px-4 py-2.5 sm:table-cell">Línea</th>
@@ -51,7 +51,7 @@ export function ClientTable({
             <tr>
               <td
                 colSpan={7}
-                className="px-4 py-10 text-center text-sm text-zinc-500"
+                className="px-4 py-16 text-center text-sm text-zinc-500"
               >
                 No hay contactos para mostrar.
               </td>
@@ -64,16 +64,16 @@ export function ClientTable({
         </tbody>
       </table>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3">
-          <span className="text-sm text-zinc-500">
+        <div className="flex items-center justify-between border-t border-zinc-100 px-4 py-3">
+          <span className="text-[12px] text-zinc-500">
             Página {page} de {totalPages}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-md px-2.5 py-1.5 text-[13px] font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Anterior
             </button>
@@ -88,7 +88,7 @@ export function ClientTable({
                     type="button"
                     onClick={() => onPageChange(p)}
                     className={[
-                      "min-w-[32px] rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
+                      "min-w-8 rounded-md px-2 py-1.5 text-[13px] font-medium transition-colors tabular-nums",
                       p === page
                         ? "bg-[#3B1E8A] text-white"
                         : "text-zinc-600 hover:bg-zinc-100",
@@ -102,7 +102,7 @@ export function ClientTable({
               type="button"
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-md px-2.5 py-1.5 text-[13px] font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Siguiente
             </button>
@@ -123,11 +123,11 @@ function ClientRow({ client }: { client: Client }) {
   const isHerrikonekt = client.businessLine === "herrikonekt";
 
   return (
-    <tr className="hover:bg-zinc-50/60">
+    <tr className="transition-colors duration-100 hover:bg-zinc-50/50">
       <td className="px-4 py-3">
         <Link
           href={`/admin/clients/${client._id}`}
-          className="font-medium text-zinc-900 hover:text-[#3B1E8A]"
+          className="font-medium text-zinc-900 transition-colors hover:text-[#3B1E8A]"
         >
           {client.name}
         </Link>

@@ -5,8 +5,8 @@ import { useCallback } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/admin/page-header";
 import { businessLineLabels } from "@/lib/schemas/presupuesto";
-import { businessLineTheme } from "@/lib/theme";
 import type { PaginatedResult, Presupuesto } from "@/lib/repositories/presupuestos";
 import { cn } from "@/lib/utils";
 import { PresupuestoTable } from "./presupuesto-table";
@@ -48,45 +48,46 @@ export function PresupuestosView({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            Presupuestos
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            {result.total} presupuestos
-          </p>
-        </div>
-        <Button asChild className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]">
-          <Link href="/admin/presupuestos/nuevo">
-            <Plus />
-            Nuevo presupuesto
-          </Link>
-        </Button>
-      </header>
+    <div className="flex animate-fade-in flex-col gap-6">
+      <PageHeader
 
-      <div className="flex gap-1.5">
-        {lines.map(({ value, label }) => {
-          const isActive = activeLine === value;
-          const theme = value ? businessLineTheme[value as keyof typeof businessLineTheme] : null;
-          return (
-            <button
-              key={value}
-              onClick={() => setLine(value)}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                isActive
-                  ? theme
-                    ? `${theme.soft} ${theme.icon}`
-                    : "bg-zinc-100 text-zinc-900"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-              )}
-            >
-              {label}
-            </button>
-          );
-        })}
+        title="Presupuestos"
+        actions={
+          <Button
+            asChild
+            className="bg-[#3B1E8A] text-white shadow-xs hover:bg-[#2D1666]"
+          >
+            <Link href="/admin/presupuestos/nuevo">
+              <Plus className="size-4" />
+              Nuevo presupuesto
+            </Link>
+          </Button>
+        }
+      />
+
+      <div className="flex">
+        <nav
+          className="inline-flex w-fit items-center gap-0.5 rounded-md border border-zinc-200/80 bg-white p-0.5"
+          aria-label="Filtrar por línea de negocio"
+        >
+          {lines.map(({ value, label }) => {
+            const isActive = activeLine === value;
+            return (
+              <button
+                key={value}
+                onClick={() => setLine(value)}
+                className={cn(
+                  "rounded-[5px] px-3 py-1.5 text-[13px] font-medium transition-colors duration-150",
+                  isActive
+                    ? "bg-[#3B1E8A] text-white"
+                    : "text-zinc-500 hover:text-zinc-900"
+                )}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
       <PresupuestoTable

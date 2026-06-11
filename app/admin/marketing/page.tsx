@@ -1,16 +1,14 @@
 import { BusinessLinePicker } from "@/components/admin/clients/business-line-picker";
+import { PageHeader } from "@/components/admin/page-header";
 
 export default function MarketingPage() {
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-          Marketing
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Selecciona una línea de negocio para gestionar su marketing.
-        </p>
-      </header>
+    <div className="flex animate-fade-in flex-col gap-6">
+      <PageHeader
+        eyebrow="6 · Marketing"
+        title="Marketing"
+        description="Selecciona una línea de negocio para gestionar su marketing."
+      />
       <BusinessLinePicker allReady baseHref="/admin/marketing" />
     </div>
   );

@@ -26,19 +26,20 @@ export function NavLink({ item, depth = 0 }: Props) {
       href={item.href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-        "text-white/70 hover:bg-white/[0.08] hover:text-white",
-        isActive && "bg-white/[0.10] text-white",
-        !open && "justify-center px-0"
+        "group relative flex items-center gap-2.5 rounded-md py-1.5 pr-2.5 text-[13px] font-medium transition-colors duration-150",
+        isActive
+          ? "bg-[#3B1E8A]/10 text-[#3B1E8A]"
+          : "text-zinc-900 hover:bg-[#3B1E8A]/10 hover:text-[#3B1E8A]",
+        !open && "justify-center"
       )}
-      style={open && depth > 0 ? { paddingLeft: `${12 + depth * 12}px` } : undefined}
+      style={open ? { paddingLeft: `${10 + depth * 12}px` } : undefined}
     >
       <item.icon
         className={cn(
-          "size-[18px] shrink-0",
+          "size-[15px] shrink-0 transition-colors",
           isActive
-            ? "text-[#A18CFF]"
-            : "text-white/60 group-hover:text-white"
+            ? "text-[#3B1E8A]"
+            : "text-zinc-500 group-hover:text-[#3B1E8A]"
         )}
       />
       {open && <span className="truncate">{item.label}</span>}

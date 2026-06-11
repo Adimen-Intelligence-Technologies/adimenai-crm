@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/admin/page-header";
 import { cn } from "@/lib/utils";
 import { businessLineLabels, type BusinessLine } from "@/lib/schemas/client";
 import { ClientTable } from "./client-table";
@@ -50,51 +51,51 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            Contactos
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Gestiona los contactos de AdimenAi, Herrikonekt y Hiopos.
-          </p>
-        </div>
-        <Button
-          asChild
-          className="bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
-        >
-          <Link href="/admin/clients/new">
-            <Plus />
-            Nuevo cliente
-          </Link>
-        </Button>
-      </header>
+    <div className="flex animate-fade-in flex-col gap-6">
+      <PageHeader
+       
+        title="Contactos"
+        
+        actions={
+          <Button
+            asChild
+            className="bg-[#3B1E8A] text-white shadow-xs hover:bg-[#2D1666]"
+          >
+            <Link href="/admin/clients/new">
+              <Plus className="size-4" />
+              Nuevo cliente
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <nav
-          className="inline-flex w-fit items-center gap-1 rounded-md border border-zinc-200 bg-white p-1"
+          className="inline-flex w-fit items-center gap-0.5 rounded-md border border-zinc-200/80 bg-white p-0.5"
           aria-label="Filtrar por línea de negocio"
         >
-          {filters.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                "rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
-                activeFilter === f.id
-                  ? "bg-[#3B1E8A] text-white"
-                  : "text-zinc-600 hover:text-zinc-900"
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+          {filters.map((f) => {
+            const isActive = activeFilter === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFilter(f.id)}
+                className={cn(
+                  "rounded-[5px] px-3 py-1.5 text-[13px] font-medium transition-colors duration-150",
+                  isActive
+                    ? "bg-[#3B1E8A] text-white"
+                    : "text-zinc-500 hover:text-zinc-900"
+                )}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </nav>
-        <div className="relative w-full sm:max-w-xs">
+        <div className="group relative w-full sm:max-w-xs">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400"
+            className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-zinc-600"
             aria-hidden
           />
           <Input
@@ -102,9 +103,13 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
             defaultValue={q}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por nombre, ciudad o teléfono"
-            className="pl-9"
+            className="h-9 pl-9 text-[13px] focus-visible:bg-white"
           />
         </div>
+      </div>
+
+      <div className="text-[12px] text-zinc-500">
+        {result.total.toLocaleString("es-ES")} {result.total === 1 ? "contacto" : "contactos"}
       </div>
 
       <ClientTable

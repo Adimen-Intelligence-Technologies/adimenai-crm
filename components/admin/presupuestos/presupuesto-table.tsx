@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { businessLineTheme } from "@/lib/theme";
-import { businessLineLabels, presupuestoStatusLabels } from "@/lib/schemas/presupuesto";
+import { businessLineLabels, presupuestoStatusLabels, type PresupuestoStatus } from "@/lib/schemas/presupuesto";
 import type { Presupuesto } from "@/lib/repositories/presupuestos";
 import { cn } from "@/lib/utils";
 
@@ -32,9 +31,9 @@ export function PresupuestoTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+    <div className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500">
+        <thead className="border-b border-zinc-100 bg-zinc-50/40 text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
           <tr>
             <th className="px-4 py-2.5">Nº</th>
             <th className="px-4 py-2.5">Cliente</th>
@@ -47,51 +46,73 @@ export function PresupuestoTable({
         <tbody className="divide-y divide-zinc-100">
           {presupuestos.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-4 py-10 text-center text-sm text-zinc-500">
+              <td colSpan={6} className="px-4 py-16 text-center text-sm text-zinc-500">
                 No hay presupuestos para mostrar.
               </td>
             </tr>
           ) : (
             presupuestos.map((p) => {
-              const theme = businessLineTheme[p.businessLine as keyof typeof businessLineTheme] ?? businessLineTheme.adimenai;
+              const theme =
+                businessLineTheme[p.businessLine as keyof typeof businessLineTheme] ??
+                businessLineTheme.adimenai;
               return (
-                <tr key={p._id} className="hover:bg-zinc-50/60">
-                  <td className="px-4 py-3 font-mono text-sm font-medium text-zinc-900">
+                <tr
+                  key={p._id}
+                  className="transition-colors duration-100 hover:bg-zinc-50/50"
+                >
+                  <td className="px-4 py-3 font-mono text-[12px] font-medium text-zinc-900">
                     {p.number}
                   </td>
                   <td className="px-4 py-3 font-medium text-zinc-900">
                     {p.clientSnapshot.name}
                   </td>
                   <td className="hidden px-4 py-3 sm:table-cell">
-                    <Badge variant="outline" className={cn("rounded-[2px]", theme.badge)}>
-                      {businessLineLabels[p.businessLine as keyof typeof businessLineLabels] ?? p.businessLine}
-                    </Badge>
+                    <span
+                      className={cn(
+                        "rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                        theme.badge
+                      )}
+                    >
+                      {businessLineLabels[p.businessLine as keyof typeof businessLineLabels] ??
+                        p.businessLine}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 font-mono text-sm text-zinc-900">
+                  <td className="px-4 py-3 font-mono text-[12px] tabular-nums text-zinc-900">
                     {p.total.toFixed(2).replace(".", ",")} €
                   </td>
                   <td className="hidden px-4 py-3 md:table-cell">
                     <StatusBadge status={p.status} />
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button asChild variant="ghost" size="icon-sm" className="text-zinc-500 hover:text-zinc-900">
-                        <Link href={`/admin/presupuestos/${p._id}`}>
-                          <Eye />
+                    <div className="flex justify-end gap-0.5">
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-zinc-500 hover:text-zinc-900"
+                      >
+                        <Link href={`/admin/presupuestos/${p._id}`} aria-label="Ver">
+                          <Eye className="size-4" />
                         </Link>
                       </Button>
-                      <Button asChild variant="ghost" size="icon-sm" className="text-zinc-500 hover:text-zinc-900">
-                        <Link href={`/admin/presupuestos/${p._id}/edit`}>
-                          <Pencil />
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-zinc-500 hover:text-zinc-900"
+                      >
+                        <Link href={`/admin/presupuestos/${p._id}/edit`} aria-label="Editar">
+                          <Pencil className="size-4" />
                         </Link>
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        aria-label="Eliminar"
                         className="text-zinc-500 hover:bg-rose-50 hover:text-rose-600"
                         onClick={(e) => handleDelete(p._id, e)}
                       >
-                        <Trash2 />
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
                   </td>
@@ -102,24 +123,26 @@ export function PresupuestoTable({
         </tbody>
       </table>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3">
-          <span className="text-xs text-zinc-500">
+        <div className="flex items-center justify-between border-t border-zinc-100 px-4 py-3">
+          <span className="text-[12px] text-zinc-500">
             Página {page} de {totalPages}
           </span>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-0.5">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               disabled={page <= 1}
               onClick={() => onPageChange(page - 1)}
+              className="text-zinc-600 hover:bg-zinc-100"
             >
               Anterior
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               disabled={page >= totalPages}
               onClick={() => onPageChange(page + 1)}
+              className="text-zinc-600 hover:bg-zinc-100"
             >
               Siguiente
             </Button>
@@ -130,18 +153,31 @@ export function PresupuestoTable({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const labels: Record<string, string> = presupuestoStatusLabels;
-  const colors: Record<string, string> = {
-    draft: "bg-zinc-100 text-zinc-700 border-zinc-200",
-    sent: "bg-blue-50 text-blue-700 border-blue-200",
-    accepted: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    rejected: "bg-rose-50 text-rose-700 border-rose-200",
+function StatusBadge({ status }: { status: PresupuestoStatus }) {
+  const colors: Record<PresupuestoStatus, string> = {
+    draft: "bg-zinc-100 text-zinc-600",
+    sent: "bg-amber-50 text-amber-700",
+    accepted: "bg-emerald-50 text-emerald-700",
+    rejected: "bg-rose-50 text-rose-700",
   };
 
   return (
-    <Badge variant="outline" className={cn("rounded-[2px]", colors[status] ?? "bg-zinc-100 text-zinc-700")}>
-      {labels[status] ?? status}
-    </Badge>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+        colors[status] ?? "bg-zinc-100 text-zinc-700"
+      )}
+    >
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          status === "draft" && "bg-zinc-400",
+          status === "sent" && "bg-amber-500",
+          status === "accepted" && "bg-emerald-500",
+          status === "rejected" && "bg-rose-500"
+        )}
+      />
+      {presupuestoStatusLabels[status] ?? status}
+    </span>
   );
 }

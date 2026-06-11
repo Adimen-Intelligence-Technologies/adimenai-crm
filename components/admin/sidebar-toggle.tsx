@@ -16,7 +16,7 @@ export function SidebarToggle() {
       aria-label={open ? "Cerrar menú" : "Abrir menú"}
       className="text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
     >
-      {open ? <PanelLeftClose /> : <PanelLeftOpen />}
+      {open ? <PanelLeftClose className="size-4" /> : <PanelLeftOpen className="size-4" />}
     </Button>
   );
 }

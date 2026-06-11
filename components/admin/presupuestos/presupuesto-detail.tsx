@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileDown, Loader2, Mail, MapPin, Phone, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { businessLineTheme } from "@/lib/theme";
 import {
@@ -13,12 +12,12 @@ import {
 import type { Presupuesto } from "@/lib/repositories/presupuestos";
 import { cn } from "@/lib/utils";
 
-const statusStyles: Record<string, string> = {
-  draft: "bg-zinc-100 text-zinc-700 border-zinc-200",
-  sent: "bg-blue-50 text-blue-700 border-blue-200",
-  accepted: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  rejected: "bg-rose-50 text-rose-700 border-rose-200",
-};
+  const statusStyles: Record<string, { chip: string; dot: string }> = {
+    draft: { chip: "bg-zinc-100 text-zinc-600", dot: "bg-zinc-400" },
+    sent: { chip: "bg-amber-50 text-amber-700", dot: "bg-amber-500" },
+    accepted: { chip: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+    rejected: { chip: "bg-rose-50 text-rose-700", dot: "bg-rose-500" },
+  };
 
 export function PresupuestoDetail({
   presupuesto,
@@ -68,33 +67,42 @@ export function PresupuestoDetail({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <div className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white">
         {/* Header */}
         <div className="relative border-b border-zinc-100 px-6 py-5">
-          <div
-            className="absolute bottom-0 left-0 top-0 w-1"
-            style={{ backgroundColor: theme.accent }}
-          />
-          <div className="flex items-start justify-between gap-4 pl-3">
+          <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: theme.accent }}
+                  aria-hidden
+                />
+                <h1 className="text-2xl font-bold tracking-tight text-zinc-950">
                   {presupuesto.number}
                 </h1>
-                <Badge
-                  variant="outline"
-                  className={cn("rounded-[2px]", theme.badge)}
-                >
-                  {businessLineLabels[presupuesto.businessLine as keyof typeof businessLineLabels]}
-                </Badge>
                 <span
                   className={cn(
-                    "inline-flex items-center rounded-[2px] border px-2.5 py-0.5 text-xs font-medium",
-                    statusStyles[presupuesto.status] ?? "bg-zinc-100 text-zinc-700"
+                    "rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                    theme.badge
                   )}
                 >
-                  {presupuestoStatusLabels[presupuesto.status] ?? presupuesto.status}
+                  {businessLineLabels[presupuesto.businessLine as keyof typeof businessLineLabels]}
                 </span>
+                {(() => {
+                  const st = statusStyles[presupuesto.status] ?? statusStyles.draft;
+                  return (
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                        st.chip
+                      )}
+                    >
+                      <span className={cn("size-1.5 rounded-full", st.dot)} />
+                      {presupuestoStatusLabels[presupuesto.status] ?? presupuesto.status}
+                    </span>
+                  );
+                })()}
               </div>
               <p className="mt-1 text-sm text-zinc-500">
                 Creado{" "}
@@ -109,8 +117,7 @@ export function PresupuestoDetail({
               onClick={handleGeneratePDF}
               disabled={generating}
               size="sm"
-              className="shrink-0"
-              style={{ backgroundColor: theme.accent, color: "#fff" }}
+              className="shrink-0 bg-[#3B1E8A] text-white hover:bg-[#2D1666]"
             >
               {generating ? (
                 <Loader2 className="size-4 animate-spin" />

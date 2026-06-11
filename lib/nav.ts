@@ -23,7 +23,7 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "5. Financiero",
+    label: "Financiero",
     folder: true,
     folderIcon: Folder,
     items: [
@@ -35,8 +35,8 @@ export const navGroups: NavGroup[] = [
     items: [{ label: "6. Marketing", href: "/admin/marketing", icon: Megaphone }],
   },
   {
-    label: "8. Contactos",
-    items: [{ label: "8. Contactos", href: "/admin/clients", icon: Users }],
+    label: "Contactos",
+    items: [{ label: "Contactos", href: "/admin/clients", icon: Users }],
   },
   {
     label: "Gestión BBDD",

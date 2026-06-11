@@ -191,7 +191,7 @@ export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
                       className={cn(
                         "rounded-md border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide transition-colors",
                         values.scope === s
-                          ? "border-zinc-900 bg-zinc-900 text-white"
+                          ? "border-[#3B1E8A] bg-[#3B1E8A] text-white"
                           : theme
                             ? `${theme.badge} border-transparent`
                             : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"

@@ -67,7 +67,7 @@ export async function listClients(filter: {
     ];
   }
   const page = filter.page ?? 1;
-  const pageSize = filter.pageSize ?? 25;
+  const pageSize = filter.pageSize ?? 7;
   const total = await collection.countDocuments(query);
   const docs = (await collection
     .find(query)

@@ -11,6 +11,8 @@ export type BusinessLineTheme = {
   soft: string;
   /** Color sólido para iconos sobre fondo soft. */
   icon: string;
+  /** Color de hover de fila en tablas. */
+  row: string;
 };
 
 export const businessLineTheme: Record<BusinessLine, BusinessLineTheme> = {
@@ -21,6 +23,7 @@ export const businessLineTheme: Record<BusinessLine, BusinessLineTheme> = {
       "bg-[#6D28D9] text-white border-[#6D28D9]",
     soft: "bg-violet-100",
     icon: "text-violet-700",
+    row: "hover:bg-violet-50/70",
   },
   herrikonekt: {
     accent: "#047857",
@@ -28,6 +31,7 @@ export const businessLineTheme: Record<BusinessLine, BusinessLineTheme> = {
     badge: "bg-emerald-600 text-white border-emerald-600",
     soft: "bg-emerald-100",
     icon: "text-emerald-700",
+    row: "hover:bg-emerald-50/70",
   },
   hiopos: {
     accent: "#DC2626",
@@ -35,6 +39,7 @@ export const businessLineTheme: Record<BusinessLine, BusinessLineTheme> = {
     badge: "bg-red-600 text-white border-red-600",
     soft: "bg-red-100",
     icon: "text-red-700",
+    row: "hover:bg-red-50/70",
   },
 };
 

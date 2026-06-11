@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const rawLine = searchParams.get("businessLine");
     const q = searchParams.get("q") ?? undefined;
     const page = parseInt(searchParams.get("page") ?? "1", 10) || 1;
-    const pageSize = parseInt(searchParams.get("pageSize") ?? "25", 10) || 25;
+    const pageSize = parseInt(searchParams.get("pageSize") ?? "7", 10) || 7;
 
     let businessLine;
     if (rawLine) {

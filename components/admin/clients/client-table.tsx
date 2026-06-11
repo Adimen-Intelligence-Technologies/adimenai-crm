@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, Globe, Pencil, Search, X } from "lucide-react";
+import { Check, ChevronDown, Eye, Globe, Pencil, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,17 +33,17 @@ export function ClientTable({
   onPageChange: (page: number) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white">
+    <div className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm shadow-zinc-900/[0.02]">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-zinc-100 bg-zinc-50/40 text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
+        <thead className="border-b border-zinc-200/80 bg-zinc-50/70">
           <tr>
-            <th className="px-4 py-2.5">Nombre</th>
-            <th className="hidden px-4 py-2.5 sm:table-cell">Línea</th>
-            <th className="hidden px-4 py-2.5 md:table-cell">Tipo</th>
-            <th className="px-4 py-2.5">Ciudad</th>
-            <th className="hidden px-4 py-2.5 md:table-cell">Teléfono</th>
-            <th className="hidden px-4 py-2.5 lg:table-cell">Socials</th>
-            <th className="px-4 py-2.5 text-right">Acciones</th>
+            <th className="px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700">Nombre</th>
+            <th className="hidden px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700 sm:table-cell">Línea</th>
+            <th className="hidden px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700 md:table-cell">Tipo</th>
+            <th className="px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700">Ciudad</th>
+            <th className="hidden px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700 md:table-cell">Teléfono</th>
+            <th className="hidden px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700 lg:table-cell">Socials</th>
+            <th className="px-5 py-3.5 text-right text-[13px] font-bold tracking-tight text-zinc-700">Acciones</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
@@ -51,7 +51,7 @@ export function ClientTable({
             <tr>
               <td
                 colSpan={7}
-                className="px-4 py-16 text-center text-sm text-zinc-500"
+                className="px-5 py-20 text-center text-sm text-zinc-500"
               >
                 No hay contactos para mostrar.
               </td>
@@ -64,7 +64,7 @@ export function ClientTable({
         </tbody>
       </table>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-zinc-100 px-4 py-3">
+        <div className="flex items-center justify-between border-t border-zinc-100 px-5 py-3.5">
           <span className="text-[12px] text-zinc-500">
             Página {page} de {totalPages}
           </span>
@@ -123,24 +123,24 @@ function ClientRow({ client }: { client: Client }) {
   const isHerrikonekt = client.businessLine === "herrikonekt";
 
   return (
-    <tr className="transition-colors duration-100 hover:bg-zinc-50/50">
-      <td className="px-4 py-3">
+    <tr className={cn("transition-colors duration-150", theme.row)}>
+      <td className="px-5 py-3.5">
         <Link
           href={`/admin/clients/${client._id}`}
-          className="font-medium text-zinc-900 transition-colors hover:text-[#3B1E8A]"
+          className="font-semibold text-zinc-900 transition-colors hover:text-[#3B1E8A]"
         >
           {client.name}
         </Link>
       </td>
-      <td className="hidden px-4 py-3 sm:table-cell">
+      <td className="hidden px-5 py-3.5 sm:table-cell">
         <Badge
           variant="outline"
-          className={cn("rounded-[2px]", theme.badge)}
+          className={cn("rounded-md px-2 py-0.5 text-[11px] font-semibold", theme.badge)}
         >
           {businessLineLabels[client.businessLine]}
         </Badge>
       </td>
-      <td className="hidden px-4 py-3 md:table-cell">
+      <td className="hidden px-5 py-3.5 md:table-cell">
         {isHerrikonekt && client.type ? (
           <InlineTypeSelect
             clientId={client._id}
@@ -148,16 +148,16 @@ function ClientRow({ client }: { client: Client }) {
             customTypeIcon={client.customTypeIcon}
           />
         ) : (
-          <span className="text-zinc-600">—</span>
+          <span className="text-zinc-400">—</span>
         )}
       </td>
-      <td className="px-4 py-3 text-zinc-600">
-        {primaryAddress?.city || "—"}
+      <td className="px-5 py-3.5 text-zinc-700">
+        {primaryAddress?.city || <span className="text-zinc-400">—</span>}
       </td>
-      <td className="hidden px-4 py-3 text-zinc-600 md:table-cell">
-        {primaryPhone || "—"}
+      <td className="hidden px-5 py-3.5 text-zinc-700 md:table-cell">
+        {primaryPhone || <span className="text-zinc-400">—</span>}
       </td>
-      <td className="hidden px-4 py-3 lg:table-cell">
+      <td className="hidden px-5 py-3.5 lg:table-cell">
         <div className="flex items-center gap-3">
           <Globe className={cn("size-4", client.website ? "text-[#3B1E8A]" : "text-zinc-200")} />
           <svg viewBox="0 0 24 24" className={cn("size-4 fill-current", client.social?.instagram ? "text-[#3B1E8A]" : "text-zinc-200")}>
@@ -168,14 +168,25 @@ function ClientRow({ client }: { client: Client }) {
           </svg>
         </div>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-5 py-3.5">
         <div className="flex items-center justify-end gap-1">
           <Button
             asChild
             variant="ghost"
             size="icon-sm"
+            aria-label="Ver detalles del cliente"
+            className="text-zinc-500 hover:bg-[#3B1E8A]/10 hover:text-[#3B1E8A]"
+          >
+            <Link href={`/admin/clients/${client._id}`}>
+              <Eye />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            size="icon-sm"
             aria-label="Editar cliente"
-            className="text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+            className="text-zinc-500 hover:bg-[#3B1E8A]/10 hover:text-[#3B1E8A]"
           >
             <Link href={`/admin/clients/${client._id}/edit`}>
               <Pencil />

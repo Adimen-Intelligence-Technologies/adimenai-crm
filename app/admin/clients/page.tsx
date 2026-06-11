@@ -19,7 +19,7 @@ export default async function ClientsPage({
   }
 
   const page = parseInt(pageStr ?? "1", 10) || 1;
-  const result = await listClients({ businessLine, q, page, pageSize: 25 });
+  const result = await listClients({ businessLine, q, page, pageSize: 7 });
 
   return (
     <Suspense fallback={null}>

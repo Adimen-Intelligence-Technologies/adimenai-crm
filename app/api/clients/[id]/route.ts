@@ -39,7 +39,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         { status: 400 }
       );
     }
-    const client = await updateClient(id, parsed.data);
+    // Only apply fields that were actually sent (Zod partial + defaults injects
+    // default values for every field, which would reset the document).
+    const patchData: Record<string, unknown> = {};
+    for (const key of Object.keys(body)) {
+      const val = parsed.data[key as keyof typeof parsed.data];
+      if (val !== undefined) patchData[key] = val;
+    }
+    const client = await updateClient(id, patchData);
     if (!client) {
       return NextResponse.json(
         { error: "Cliente no encontrado" },

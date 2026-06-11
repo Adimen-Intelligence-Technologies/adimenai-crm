@@ -6,7 +6,6 @@ import type {
   ClientSocialLinks,
   CreateHerrikonektInput,
   OpeningHours,
-  UpdateHerrikonektInput,
 } from "@/lib/schemas/client";
 
 export type Client = {
@@ -110,7 +109,7 @@ export async function createClient(
 
 export async function updateClient(
   id: string,
-  data: UpdateHerrikonektInput
+  data: Record<string, unknown>
 ): Promise<Client | null> {
   if (!ObjectId.isValid(id)) return null;
   const collection = await getClientsCollection();

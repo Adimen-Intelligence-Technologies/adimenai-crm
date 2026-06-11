@@ -24,6 +24,11 @@ export const serviceSchema = z.object({
     .number({ invalid_type_error: "Precio no válido" })
     .nonnegative("El precio no puede ser negativo"),
   billing: serviceBillingEnum.default("one_time"),
+  profitMargin: z
+    .number({ invalid_type_error: "Margen no válido" })
+    .min(0, "El margen no puede ser negativo")
+    .max(1000, "El margen no puede superar 1000%")
+    .optional(),
 });
 
 export type Service = {
@@ -33,6 +38,7 @@ export type Service = {
   description: string;
   price: number;
   billing: ServiceBilling;
+  profitMargin?: number;
   createdAt: string;
   updatedAt: string;
 };

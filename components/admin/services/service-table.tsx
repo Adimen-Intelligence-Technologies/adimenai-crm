@@ -130,13 +130,26 @@ function ServiceRow({ service }: { service: Service }) {
         </span>
       </td>
       <td className="px-5 py-3.5 text-right">
-        <span className="font-mono text-sm font-bold tabular-nums text-zinc-900">
-          {formatEUR(service.price)}
-        </span>
-        {service.billing !== "one_time" && (
-          <span className="ml-1 text-[11px] text-zinc-500">
-            {serviceBillingShort[service.billing]}
-          </span>
+        {service.profitMargin && service.profitMargin > 0 ? (
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="font-mono text-sm font-bold tabular-nums text-zinc-950">
+              {formatEUR(service.price + service.price * (service.profitMargin / 100))}
+            </span>
+            <span className="text-[10px] text-zinc-500">
+              coste {formatEUR(service.price)} · +{service.profitMargin}%
+            </span>
+          </div>
+        ) : (
+          <>
+            <span className="font-mono text-sm font-bold tabular-nums text-zinc-900">
+              {formatEUR(service.price)}
+            </span>
+            {service.billing !== "one_time" && (
+              <span className="ml-1 text-[11px] text-zinc-500">
+                {serviceBillingShort[service.billing]}
+              </span>
+            )}
+          </>
         )}
       </td>
       <td className="px-5 py-3.5">

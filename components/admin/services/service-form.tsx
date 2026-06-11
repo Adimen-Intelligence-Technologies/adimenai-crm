@@ -47,6 +47,15 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
   const [billing, setBilling] = useState<ServiceBilling>(
     initial?.billing ?? "one_time"
   );
+  const isHiopos = businessLine === "hiopos";
+  const [profitMarginEnabled, setProfitMarginEnabled] = useState<boolean>(
+    initial?.profitMargin !== undefined ? initial.profitMargin > 0 : isHiopos
+  );
+  const [profitMarginStr, setProfitMarginStr] = useState<string>(
+    initial?.profitMargin !== undefined
+      ? String(initial.profitMargin).replace(".", ",")
+      : "30"
+  );
 
   // Restaurar borrador (solo create sin línea prefijada)
   useEffect(() => {
@@ -60,6 +69,8 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
         priceStr: string;
         businessLine: BusinessLine;
         billing: ServiceBilling;
+        profitMarginEnabled?: boolean;
+        profitMarginStr?: string;
       };
       if (parsed && typeof parsed === "object") {
         setName(parsed.name ?? "");
@@ -67,6 +78,12 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
         setPriceStr(parsed.priceStr ?? "");
         setBusinessLine(parsed.businessLine ?? "adimenai");
         setBilling(parsed.billing ?? "one_time");
+        if (typeof parsed.profitMarginEnabled === "boolean") {
+          setProfitMarginEnabled(parsed.profitMarginEnabled);
+        }
+        if (typeof parsed.profitMarginStr === "string") {
+          setProfitMarginStr(parsed.profitMarginStr);
+        }
       }
     } catch {
       // noop
@@ -78,11 +95,29 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
     const t = window.setTimeout(() => {
       window.localStorage.setItem(
         `${DRAFT_KEY_PREFIX}new`,
-        JSON.stringify({ name, description, priceStr, businessLine, billing })
+        JSON.stringify({
+          name,
+          description,
+          priceStr,
+          businessLine,
+          billing,
+          profitMarginEnabled,
+          profitMarginStr,
+        })
       );
     }, 400);
     return () => window.clearTimeout(t);
-  }, [mode, fixedBusinessLine, name, description, priceStr, businessLine, billing]);
+  }, [
+    mode,
+    fixedBusinessLine,
+    name,
+    description,
+    priceStr,
+    businessLine,
+    billing,
+    profitMarginEnabled,
+    profitMarginStr,
+  ]);
 
   function clearDraft() {
     if (typeof window === "undefined") return;
@@ -101,16 +136,21 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canSubmit, name, description, priceStr, businessLine, billing]);
+  }, [canSubmit, name, description, priceStr, businessLine, billing, profitMarginEnabled, profitMarginStr]);
 
   async function handleSubmit() {
     setError(null);
+    const profitMargin =
+      isHiopos && profitMarginEnabled
+        ? Math.max(0, Math.min(1000, eurosInput(profitMarginStr)))
+        : undefined;
     const payload = {
       businessLine,
       name: name.trim(),
       description: description.trim(),
       price: eurosInput(priceStr),
       billing,
+      profitMargin,
     };
 
     startTransition(async () => {
@@ -138,6 +178,29 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
   const completedRequired = [name.trim(), priceStr.trim()].filter(Boolean).length;
   const totalRequired = 2;
   const progress = (completedRequired / totalRequired) * 100;
+
+  const basePrice = eurosInput(priceStr);
+  const marginPct =
+    isHiopos && profitMarginEnabled
+      ? Math.max(0, Math.min(1000, eurosInput(profitMarginStr)))
+      : 0;
+  const benefit = basePrice * (marginPct / 100);
+  const priceWithMargin = basePrice + benefit;
+  const EUR_FMT = new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const formatEURWithMargin = () => EUR_FMT.format(priceWithMargin);
+  const formatEURBenefit = () => EUR_FMT.format(benefit);
+  const formatBase = (n: number) =>
+    new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(n);
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -227,6 +290,74 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
                   <SelectBilling value={billing} onChange={setBilling} />
                 </Field>
               </div>
+
+              {isHiopos && (
+                <div className="rounded-lg border border-zinc-200 bg-zinc-50/40 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-zinc-900">
+                        Aplicar margen de beneficio
+                      </p>
+                      <p className="text-[12px] text-zinc-900">
+                        Se calcula un precio final con el % indicado sobre el precio sin IVA.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={profitMarginEnabled}
+                      onClick={() => setProfitMarginEnabled(!profitMarginEnabled)}
+                      className={cn(
+                        "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors",
+                        profitMarginEnabled ? "bg-emerald-500" : "bg-zinc-300"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "size-4 rounded-full bg-white shadow-sm transition-transform",
+                          profitMarginEnabled ? "translate-x-4" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </div>
+                  {profitMarginEnabled && (
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <Field label="Margen">
+                        <div className="relative">
+                          <Input
+                            inputMode="decimal"
+                            value={profitMarginStr}
+                            onChange={(e) => setProfitMarginStr(e.target.value)}
+                            placeholder="30"
+                            className="pr-7"
+                          />
+                          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-900">
+                            %
+                          </span>
+                        </div>
+                      </Field>
+                      <div className="sm:col-span-2 flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-50/60 px-3 py-2">
+                        <div>
+                          <p className="text-[11px] font-semibold tracking-wide text-zinc-900 uppercase">
+                            Precio con margen
+                          </p>
+                          <p className="font-mono text-base font-bold tabular-nums text-zinc-950">
+                            {formatEURWithMargin()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[11px] font-semibold tracking-wide text-zinc-900 uppercase">
+                            Beneficio
+                          </p>
+                          <p className="font-mono text-sm font-bold tabular-nums text-emerald-700">
+                            +{formatEURBenefit()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </Section>
         </div>
@@ -241,10 +372,17 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
                 ok={!!description.trim()}
               />
               <SummaryRow
-                label="Precio"
+                label="Precio sin IVA"
                 value={priceStr ? `${priceStr.replace(".", ",")} €` : "—"}
                 ok={!!priceStr.trim()}
               />
+              {isHiopos && profitMarginEnabled && basePrice > 0 && (
+                <SummaryRow
+                  label="Precio con margen"
+                  value={formatBase(priceWithMargin)}
+                  ok
+                />
+              )}
               <SummaryRow
                 label="Facturación"
                 value={serviceBillingLabels[billing]}
@@ -284,12 +422,30 @@ export function ServiceForm({ mode, initial, fixedBusinessLine }: Props) {
                   {description}
                 </p>
               )}
-              <p className="mt-2 font-mono text-lg font-bold tabular-nums text-zinc-950">
-                {priceStr ? priceStr.replace(".", ",") : "0,00"} <span className="text-sm">€</span>
-                <span className="ml-1 font-sans text-[12px] font-normal text-zinc-900">
-                  {serviceBillingShort[billing]}
-                </span>
-              </p>
+              {isHiopos && profitMarginEnabled && basePrice > 0 ? (
+                <>
+                  <p className="mt-2 font-mono text-lg font-bold tabular-nums text-zinc-950">
+                    {formatBase(priceWithMargin)}{" "}
+                    <span className="font-sans text-[12px] font-normal text-zinc-900">
+                      {serviceBillingShort[billing]}
+                    </span>
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-zinc-900">
+                    Sin IVA:{" "}
+                    <span className="line-through">{formatBase(basePrice)}</span>
+                    <span className="ml-1 rounded bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700">
+                      +{marginPct}%
+                    </span>
+                  </p>
+                </>
+              ) : (
+                <p className="mt-2 font-mono text-lg font-bold tabular-nums text-zinc-950">
+                  {priceStr ? priceStr.replace(".", ",") : "0,00"} <span className="text-sm">€</span>
+                  <span className="ml-1 font-sans text-[12px] font-normal text-zinc-900">
+                    {serviceBillingShort[billing]}
+                  </span>
+                </p>
+              )}
             </div>
           </Section>
         </div>

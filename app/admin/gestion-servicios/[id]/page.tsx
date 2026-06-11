@@ -27,8 +27,11 @@ export default async function ServiceDetailPage({
   if (!service) notFound();
 
   const theme = businessLineTheme[service.businessLine];
-  const iva = service.price * 0.21;
-  const total = service.price + iva;
+  const profitMargin = service.profitMargin ?? 0;
+  const benefit = service.price * (profitMargin / 100);
+  const finalPrice = service.price + benefit;
+  const iva = finalPrice * 0.21;
+  const total = finalPrice + iva;
 
   return (
     <div className="flex animate-fade-in flex-col gap-5">
@@ -87,17 +90,38 @@ export default async function ServiceDetailPage({
               )}
             </div>
             <div className="rounded-xl bg-white/15 px-4 py-3 text-white backdrop-blur-sm">
-              <p className="text-[10px] font-semibold tracking-wide text-white/80 uppercase">
-                Precio sin IVA
-              </p>
-              <p className="mt-0.5 font-mono text-2xl font-bold tabular-nums">
-                {formatEUR(service.price)}
-                {service.billing !== "one_time" && (
-                  <span className="ml-1 text-sm font-normal text-white/80">
-                    {serviceBillingShort[service.billing]}
-                  </span>
-                )}
-              </p>
+              {profitMargin > 0 ? (
+                <>
+                  <p className="text-[10px] font-semibold tracking-wide text-white/80 uppercase">
+                    Precio de venta (sin IVA)
+                  </p>
+                  <p className="mt-0.5 font-mono text-2xl font-bold tabular-nums">
+                    {formatEUR(finalPrice)}
+                    {service.billing !== "one_time" && (
+                      <span className="ml-1 text-sm font-normal text-white/80">
+                        {serviceBillingShort[service.billing]}
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-white/70">
+                    Coste {formatEUR(service.price)} + {profitMargin}% margen
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[10px] font-semibold tracking-wide text-white/80 uppercase">
+                    Precio sin IVA
+                  </p>
+                  <p className="mt-0.5 font-mono text-2xl font-bold tabular-nums">
+                    {formatEUR(service.price)}
+                    {service.billing !== "one_time" && (
+                      <span className="ml-1 text-sm font-normal text-white/80">
+                        {serviceBillingShort[service.billing]}
+                      </span>
+                    )}
+                  </p>
+                </>
+              )}
             </div>
           </div>
       </div>
@@ -120,7 +144,20 @@ export default async function ServiceDetailPage({
                 value={service.description || "—"}
                 block
               />
-              <DetailRow label="Precio sin IVA" value={formatEUR(service.price)} mono />
+              <DetailRow label="Coste sin IVA" value={formatEUR(service.price)} mono />
+              {profitMargin > 0 && (
+                <DetailRow
+                  label="Margen de beneficio"
+                  value={`${profitMargin}% · ${formatEUR(benefit)}`}
+                  mono
+                />
+              )}
+              <DetailRow
+                label="Precio de venta (sin IVA)"
+                value={formatEUR(finalPrice)}
+                mono
+                highlight={profitMargin > 0}
+              />
               <DetailRow label="IVA (21%)" value={formatEUR(iva)} mono />
               <DetailRow
                 label="Precio con IVA"
@@ -171,14 +208,17 @@ export default async function ServiceDetailPage({
                 ok={!!service.description}
               />
               <SummaryRow
-                label="Precio"
-                value={
-                  service.billing === "one_time"
-                    ? formatEUR(service.price)
-                    : `${formatEUR(service.price)} ${serviceBillingShort[service.billing]}`
-                }
+                label="Coste"
+                value={formatEUR(service.price)}
                 ok
               />
+              {profitMargin > 0 && (
+                <SummaryRow
+                  label="Venta (sin IVA)"
+                  value={formatEUR(finalPrice)}
+                  ok
+                />
+              )}
             </ul>
           </section>
         </div>

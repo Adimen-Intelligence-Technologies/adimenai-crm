@@ -435,24 +435,31 @@ function Card({
   count,
   children,
 }: {
-  title: string;
+  title?: string;
   subtitle?: string;
   count?: number;
   children: React.ReactNode;
 }) {
+  const hasHeader = !!title || typeof count === "number";
   return (
     <section className="rounded-xl border border-zinc-200/80 bg-white px-5 py-5 sm:px-6 sm:py-6">
-      <header className="mb-4 flex items-baseline justify-between gap-3">
-        <div>
-          <h2 className="text-[15px] font-bold tracking-tight text-zinc-950">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-[12px] text-zinc-500">{subtitle}</p>}
-        </div>
-        {typeof count === "number" && (
-          <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-600">
-            {count}
-          </span>
-        )}
-      </header>
+      {hasHeader && (
+        <header className="mb-4 flex items-baseline justify-between gap-3">
+          {title ? (
+            <div>
+              <h2 className="text-[15px] font-bold tracking-tight text-zinc-950">{title}</h2>
+              {subtitle && <p className="mt-0.5 text-[12px] text-zinc-500">{subtitle}</p>}
+            </div>
+          ) : (
+            <span />
+          )}
+          {typeof count === "number" && (
+            <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-600">
+              {count}
+            </span>
+          )}
+        </header>
+      )}
       {children}
     </section>
   );

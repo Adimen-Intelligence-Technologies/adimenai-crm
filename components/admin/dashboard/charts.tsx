@@ -65,7 +65,7 @@ export function ChartMonthlyAmount({
             boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
             fontSize: 12,
           }}
-          formatter={(value: number) => [formatEURFull(value), "Importe"]}
+          formatter={(value) => [formatEURFull(Number(value) || 0), "Importe"]}
         />
         <Area
           type="monotone"
@@ -108,7 +108,7 @@ export function ChartMonthlyCount({
             boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
             fontSize: 12,
           }}
-          formatter={(value: number) => [formatCount(value), "Presupuestos"]}
+          formatter={(value) => [formatCount(Number(value) || 0), "Presupuestos"]}
         />
         <Bar dataKey="count" name="Presupuestos" fill={ACCENT} radius={[6, 6, 0, 0]} />
       </BarChart>
@@ -165,8 +165,8 @@ export function ChartBusinessLines({
               boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
               fontSize: 12,
             }}
-            formatter={(value: number) => [
-              `${value} contacto${value === 1 ? "" : "s"}`,
+            formatter={(value) => [
+              `${value} contacto${Number(value) === 1 ? "" : "s"}`,
               "Total",
             ]}
           />

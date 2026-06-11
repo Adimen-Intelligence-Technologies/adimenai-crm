@@ -7,9 +7,9 @@ export function TasksView() {
   return (
     <div className="flex animate-fade-in flex-col gap-6">
       <PageHeader
-        eyebrow="4 · Comité administrativo"
+
         title="Gestión administrativa"
-        description="Hoja de cálculo del comité administrativo con la operativa diaria del equipo."
+        
         actions={
           <a
             href="https://docs.google.com/spreadsheets/d/1jX5yB2zOckIuU9x9l-dK5q2Q2dwPMzgq/edit"

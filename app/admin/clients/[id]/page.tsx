@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteClientButton } from "@/components/admin/clients/delete-client-button";
 import { ClientDetailTabs } from "@/components/admin/clients/client-detail-tabs";
@@ -16,20 +16,33 @@ export default async function ClientDetailPage({
   if (!client) notFound();
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="mb-4 flex items-center justify-end gap-2">
+    <div className="flex flex-col">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <Button
           asChild
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="rounded-full"
+          className="text-zinc-700 hover:bg-[#3B1E8A]/10 hover:text-[#3B1E8A]"
         >
-          <Link href={`/admin/clients/${client._id}/edit`}>
-            <Pencil />
-            Editar
+          <Link href="/admin/clients">
+            <ArrowLeft />
+            Volver a Contactos
           </Link>
         </Button>
-        <DeleteClientButton id={client._id} name={client.name} />
+        <div className="flex items-center gap-2">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+          >
+            <Link href={`/admin/clients/${client._id}/edit`}>
+              <Pencil />
+              Editar
+            </Link>
+          </Button>
+          <DeleteClientButton id={client._id} name={client.name} />
+        </div>
       </div>
       <ClientDetailTabs client={client} />
     </div>

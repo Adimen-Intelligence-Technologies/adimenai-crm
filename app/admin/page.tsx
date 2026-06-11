@@ -36,15 +36,13 @@ export default async function AdminDashboardPage() {
   return (
     <div className="flex animate-fade-in flex-col gap-8">
       <header className="flex flex-col gap-1.5">
-        <p className="text-[13px] font-medium text-zinc-500 capitalize">
+        <p className="text-xl font-medium capitalize">
           {now}
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">
-          Buenos días, AdimenAi
+          Buenos días, AdimenAi 👋
         </h1>
-        <p className="max-w-2xl text-sm text-zinc-500">
-          Vista general de la actividad en tus líneas de negocio, presupuestos y tareas pendientes.
-        </p>
+        
       </header>
 
       <section aria-labelledby="kpi-heading" className="flex flex-col gap-4">

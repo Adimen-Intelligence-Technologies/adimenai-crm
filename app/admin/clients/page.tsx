@@ -3,14 +3,14 @@ import { listClients } from "@/lib/repositories/clients";
 import { businessLineEnum } from "@/lib/schemas/client";
 import { ClientsView } from "@/components/admin/clients/clients-view";
 
-type SearchParams = Promise<{ line?: string; q?: string; page?: string }>;
+type SearchParams = Promise<{ line?: string; q?: string; type?: string; page?: string }>;
 
 export default async function ClientsPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const { line, q, page: pageStr } = await searchParams;
+  const { line, q, type, page: pageStr } = await searchParams;
 
   let businessLine;
   if (line) {
@@ -19,7 +19,7 @@ export default async function ClientsPage({
   }
 
   const page = parseInt(pageStr ?? "1", 10) || 1;
-  const result = await listClients({ businessLine, q, page, pageSize: 7 });
+  const result = await listClients({ businessLine, q, type, page, pageSize: 7 });
 
   return (
     <Suspense fallback={null}>

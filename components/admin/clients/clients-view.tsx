@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { cn } from "@/lib/utils";
 import { businessLineLabels, type BusinessLine } from "@/lib/schemas/client";
 import { ClientTable } from "./client-table";
+import { TypeCombobox } from "./type-combobox";
 import type { PaginatedResult, Client } from "@/lib/repositories/clients";
 
 type Filter = "all" | BusinessLine;
@@ -25,12 +26,14 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
   const searchParams = useSearchParams();
   const activeFilter = (searchParams.get("line") ?? "all") as Filter;
   const q = searchParams.get("q") ?? "";
+  const type = searchParams.get("type") ?? "";
   const currentPage = parseInt(searchParams.get("page") ?? "1", 10) || 1;
 
   function setFilter(next: Filter) {
     const params = new URLSearchParams(searchParams.toString());
     if (next === "all") params.delete("line");
     else params.set("line", next);
+    if (next !== "herrikonekt") params.delete("type");
     params.delete("page");
     router.replace(`/admin/clients?${params.toString()}`);
   }
@@ -43,6 +46,14 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
     router.replace(`/admin/clients?${params.toString()}`);
   }
 
+  function setType(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("type", value);
+    else params.delete("type");
+    params.delete("page");
+    router.replace(`/admin/clients?${params.toString()}`);
+  }
+
   function goToPage(page: number) {
     const params = new URLSearchParams(searchParams.toString());
     if (page <= 1) params.delete("page");
@@ -50,12 +61,26 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
     router.replace(`/admin/clients?${params.toString()}`);
   }
 
+  const showTypeFilter = activeFilter === "herrikonekt";
+
   return (
     <div className="flex animate-fade-in flex-col gap-6">
       <PageHeader
         title="Contactos"
         search={
           <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2">
+            {showTypeFilter && (
+              <div className="w-full sm:w-64">
+                <TypeCombobox
+                  value={type}
+                  onChange={(v) => setType(v)}
+                  onClear={() => setType("")}
+                  clearable
+                  clearLabel="Todas las categorías"
+                  placeholder="Categoría (escribe para buscar)"
+                />
+              </div>
+            )}
             <div className="group relative w-full sm:w-80">
               <Search
                 className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-[#3B1E8A]"
@@ -65,7 +90,7 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
                 type="search"
                 defaultValue={q}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar por nombre, ciudad o teléfono"
+                placeholder="Buscar por nombre, ciudad, teléfono o categoría"
                 className="h-9 pl-9 text-[13px] focus-visible:border-[#3B1E8A] focus-visible:ring-[#3B1E8A]/20"
               />
             </div>
@@ -80,12 +105,10 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
                     key={f.id}
                     type="button"
                     onClick={() => setFilter(f.id)}
-                  className={cn(
-                    "rounded-[5px] px-3 py-1.5 text-[13px] font-medium transition-colors duration-150",
-                    isActive
-                      ? f.active
-                      : "text-zinc-500 hover:text-zinc-900"
-                  )}
+                    className={cn(
+                      "rounded-[5px] px-3 py-1.5 text-[13px] font-medium transition-colors duration-150",
+                      isActive ? f.active : "text-zinc-500 hover:text-zinc-900"
+                    )}
                   >
                     {f.label}
                   </button>
@@ -114,3 +137,4 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
     </div>
   );
 }
+

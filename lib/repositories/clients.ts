@@ -1,11 +1,13 @@
 import { ObjectId } from "mongodb";
 import { getClientsCollection } from "@/lib/db";
-import type {
-  BusinessLine,
-  ClientBilling,
-  ClientSocialLinks,
-  CreateHerrikonektInput,
-  OpeningHours,
+import {
+  herrikonektTypeLabels,
+  type BusinessLine,
+  type ClientBilling,
+  type ClientSocialLinks,
+  type CreateHerrikonektInput,
+  type HerrikonektType,
+  type OpeningHours,
 } from "@/lib/schemas/client";
 
 export type Client = {
@@ -52,19 +54,30 @@ export type PaginatedResult<T> = {
 export async function listClients(filter: {
   businessLine?: BusinessLine;
   q?: string;
+  type?: string;
   page?: number;
   pageSize?: number;
 } = {}): Promise<PaginatedResult<Client>> {
   const collection = await getClientsCollection();
   const query: Record<string, unknown> = {};
   if (filter.businessLine) query.businessLine = filter.businessLine;
+  if (filter.type && filter.type.trim()) query.type = filter.type.trim();
   if (filter.q && filter.q.trim()) {
-    const rx = new RegExp(escapeRegex(filter.q.trim()), "i");
-    query.$or = [
+    const term = filter.q.trim();
+    const rx = new RegExp(escapeRegex(term), "i");
+    const categorySlugs = (Object.keys(herrikonektTypeLabels) as HerrikonektType[]).filter(
+      (slug) => herrikonektTypeLabels[slug].toLowerCase().includes(term.toLowerCase())
+    );
+    const orClauses: Record<string, unknown>[] = [
       { name: rx },
       { "addresses.city": rx },
       { phones: rx },
+      { type: rx },
     ];
+    if (categorySlugs.length > 0) {
+      orClauses.push({ type: { $in: categorySlugs } });
+    }
+    query.$or = orClauses;
   }
   const page = filter.page ?? 1;
   const pageSize = filter.pageSize ?? 7;

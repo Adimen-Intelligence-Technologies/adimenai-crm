@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import * as LucideIcons from "lucide-react";
-import { Check, ChevronDown, Search, X } from "lucide-react";
+import { Check, ChevronDown, Search, X, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,9 +23,12 @@ type Props = {
   placeholder?: string;
   id?: string;
   customTypes?: CustomType[];
+  clearable?: boolean;
+  clearLabel?: string;
+  onClear?: () => void;
 };
 
-export function TypeCombobox({ value, onChange, placeholder, id, customTypes = [] }: Props) {
+export function TypeCombobox({ value, onChange, placeholder, id, customTypes = [], clearable = false, clearLabel = "Todas las categorías", onClear }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,12 +118,28 @@ export function TypeCombobox({ value, onChange, placeholder, id, customTypes = [
               <span>{placeholder ?? "Selecciona…"}</span>
             )}
           </span>
-          <ChevronDown
-            className={cn(
-              "size-4 shrink-0 text-zinc-400 transition-transform",
-              open && "rotate-180"
+          <span className="flex items-center gap-0.5">
+            {clearable && selected && (
+              <span
+                role="button"
+                tabIndex={-1}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClear?.();
+                }}
+                aria-label="Limpiar categoría"
+                className="flex size-5 items-center justify-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+              >
+                <X className="size-3.5" />
+              </span>
             )}
-          />
+            <ChevronDown
+              className={cn(
+                "size-4 shrink-0 text-zinc-400 transition-transform",
+                open && "rotate-180"
+              )}
+            />
+          </span>
         </button>
       </div>
 
@@ -162,6 +181,39 @@ export function TypeCombobox({ value, onChange, placeholder, id, customTypes = [
           </div>
 
           <ul className="max-h-64 overflow-y-auto p-1">
+            {clearable && (
+              <li>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={!selected}
+                  onClick={() => {
+                    onClear?.();
+                    setOpen(false);
+                    setQuery("");
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left text-sm transition-colors",
+                    !selected
+                      ? "bg-[#3B1E8A]/10 text-[#3B1E8A]"
+                      : "text-zinc-700 hover:bg-zinc-50"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-md border",
+                      !selected
+                        ? "border-[#3B1E8A]/20 bg-white text-[#3B1E8A]"
+                        : "border-zinc-200 bg-zinc-50 text-zinc-500"
+                    )}
+                  >
+                    <Layers className="size-3.5" />
+                  </span>
+                  <span className="flex-1 truncate">{clearLabel}</span>
+                  {!selected && <Check className="size-3.5 shrink-0 text-[#3B1E8A]" />}
+                </button>
+              </li>
+            )}
             {filtered.length === 0 ? (
               <li className="px-3 py-6 text-center text-sm text-zinc-500">
                 Sin resultados para «{query}».

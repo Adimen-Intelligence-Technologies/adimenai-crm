@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const rawLine = searchParams.get("businessLine");
     const q = searchParams.get("q") ?? undefined;
+    const type = searchParams.get("type") ?? undefined;
     const page = parseInt(searchParams.get("page") ?? "1", 10) || 1;
     const pageSize = parseInt(searchParams.get("pageSize") ?? "7", 10) || 7;
 
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
       businessLine = parsed.data;
     }
 
-    const result = await listClients({ businessLine, q, page, pageSize });
+    const result = await listClients({ businessLine, q, type, page, pageSize });
     return NextResponse.json(result);
   } catch (err) {
     console.error("GET /api/clients", err);

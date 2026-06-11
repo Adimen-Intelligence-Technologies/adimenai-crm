@@ -21,7 +21,7 @@ export function SidebarFooter() {
     <button
       type="button"
       className={cn(
-        "group flex w-full items-center gap-2.5 rounded-md p-2 text-left transition-colors hover:bg-zinc-100",
+        "group flex w-full items-center gap-2.5 rounded-lg p-2 text-left transition-all duration-200 hover:bg-[#3B1E8A]/10",
         !open && "justify-center"
       )}
     >
@@ -37,7 +37,7 @@ export function SidebarFooter() {
         </div>
       )}
       {open && (
-        <MoreHorizontal className="size-3.5 shrink-0 text-zinc-300 group-hover:text-zinc-500" />
+        <MoreHorizontal className="size-3.5 shrink-0 text-zinc-500 transition-colors group-hover:text-[#3B1E8A]" />
       )}
     </button>
   );

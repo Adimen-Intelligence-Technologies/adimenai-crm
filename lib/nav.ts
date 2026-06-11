@@ -15,7 +15,7 @@ export type NavGroup = {
 
 export const navGroups: NavGroup[] = [
   {
-    label: "4. Comité administrativo",
+    label: "Tareas",
     folder: true,
     folderIcon: Folder,
     items: [
@@ -30,20 +30,14 @@ export const navGroups: NavGroup[] = [
       { label: "Presupuestos", href: "/admin/presupuestos", icon: DollarSign },
     ],
   },
-  {
-    label: "6. Marketing",
-    items: [{ label: "6. Marketing", href: "/admin/marketing", icon: Megaphone }],
-  },
-  {
-    label: "Contactos",
-    items: [{ label: "Contactos", href: "/admin/clients", icon: Users }],
-  },
+  
   {
     label: "Gestión BBDD",
     folder: true,
     folderIcon: Database,
     items: [
       { label: "Gestión Servicios", href: "/admin/gestion-servicios", icon: Server },
+      { label: "Contactos", href: "/admin/clients", icon: Users },
     ],
   },
 ];

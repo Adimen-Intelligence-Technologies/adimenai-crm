@@ -108,10 +108,6 @@ export function ClientsView({ result }: { result: PaginatedResult<Client> }) {
         </div>
       </div>
 
-      <div className="text-[12px] text-zinc-500">
-        {result.total.toLocaleString("es-ES")} {result.total === 1 ? "contacto" : "contactos"}
-      </div>
-
       <ClientTable
         clients={result.items}
         page={result.page}

@@ -34,21 +34,19 @@ function RenderGroup({
           type="button"
           onClick={() => onToggle(group.label)}
           className={cn(
-            "group flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors duration-150",
-            "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+            "group flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[12px] font-semibold tracking-[0.06em] uppercase transition-all duration-200",
+            "text-zinc-900 hover:text-[#3B1E8A]"
           )}
-          style={{ paddingLeft: `${10 + depth * 12}px` }}
+          style={{ paddingLeft: `${10 + depth * 14}px` }}
         >
           {group.folderIcon && (
-            <group.folderIcon className="size-3.5 shrink-0 text-zinc-400 transition-colors group-hover:text-zinc-600" />
+            <group.folderIcon className="size-3.5 shrink-0 text-zinc-500 transition-colors duration-200 group-hover:text-[#3B1E8A]" />
           )}
-          <span className="flex-1 truncate text-left text-[11px] font-semibold tracking-[0.04em] uppercase">
-            {group.label}
-          </span>
+          <span className="flex-1 truncate text-left">{group.label}</span>
           <ChevronDown
             className={cn(
-              "size-3 text-zinc-300 transition-transform duration-200",
-              expandedGroups[group.label] && "rotate-180"
+              "size-3 shrink-0 text-zinc-400 transition-all duration-300 group-hover:text-[#3B1E8A]",
+              expandedGroups[group.label] && "rotate-180 text-[#3B1E8A]"
             )}
           />
         </button>
@@ -92,8 +90,8 @@ export function SidebarNav() {
   }
 
   return (
-    <ScrollArea className="flex-1 px-2.5 py-4">
-      <nav aria-label="Navegación principal" className="flex flex-col gap-5">
+    <ScrollArea className="flex-1 px-3 py-5">
+      <nav aria-label="Navegación principal" className="flex flex-col gap-6">
         {navGroups.map((group) => (
           <RenderGroup
             key={group.label}

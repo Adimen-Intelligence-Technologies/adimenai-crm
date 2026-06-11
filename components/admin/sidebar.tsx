@@ -13,7 +13,7 @@ export function Sidebar() {
     <aside
       aria-label="Menú lateral"
       className={cn(
-        "relative hidden h-screen shrink-0 flex-col border-r border-zinc-200/80 bg-white text-zinc-900 transition-[width] duration-200 ease-out md:flex",
+        "relative hidden h-screen shrink-0 flex-col border-r border-[#3B1E8A]/10 bg-gradient-to-b from-white via-white to-[#3B1E8A]/[0.03] text-zinc-900 transition-[width] duration-200 ease-out md:flex",
         open ? "w-64" : "w-[68px]"
       )}
     >

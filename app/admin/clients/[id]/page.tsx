@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { DeleteClientButton } from "@/components/admin/clients/delete-client-button";
 import { ClientDetailTabs } from "@/components/admin/clients/client-detail-tabs";
 import { getClient } from "@/lib/repositories/clients";
-import { listSalesAgents } from "@/lib/repositories/sales-agents";
-import { listActivitiesByClient } from "@/lib/repositories/activities";
 
 export default async function ClientDetailPage({
   params,
@@ -14,11 +12,7 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [client, salesAgents, activities] = await Promise.all([
-    getClient(id),
-    listSalesAgents(),
-    listActivitiesByClient(id, 50),
-  ]);
+  const client = await getClient(id);
   if (!client) notFound();
 
   return (
@@ -50,11 +44,7 @@ export default async function ClientDetailPage({
           <DeleteClientButton id={client._id} name={client.name} />
         </div>
       </div>
-      <ClientDetailTabs
-        client={client}
-        salesAgents={salesAgents}
-        activities={activities}
-      />
+      <ClientDetailTabs client={client} />
     </div>
   );
 }

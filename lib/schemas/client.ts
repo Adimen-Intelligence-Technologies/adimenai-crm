@@ -256,11 +256,6 @@ export const createHerrikonektSchema = z.object({
   social: socialLinksSchema.optional().default({ instagram: "", facebook: "" }),
   billing: billingSchema.optional(),
   openingHours: openingHoursSchema.optional().default(emptyOpeningHours()),
-  assignedSalesAgentId: z
-    .string()
-    .refine((v) => !v || /^[a-f\d]{24}$/i.test(v), "Comercial no válido")
-    .optional()
-    .default(""),
 });
 export type CreateHerrikonektInput = z.infer<typeof createHerrikonektSchema>;
 

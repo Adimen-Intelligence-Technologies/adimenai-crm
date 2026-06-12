@@ -13,6 +13,7 @@ export type Presupuesto = {
   number: string;
   businessLine: BusinessLine;
   clientId: string;
+  salesAgentId?: string;
   clientSnapshot: {
     name: string;
     nif?: string;
@@ -33,6 +34,7 @@ export type Presupuesto = {
   total: number;
   notes: string;
   status: PresupuestoStatus;
+  sourceActivityId?: string;
   pdfDriveFileId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -136,6 +138,9 @@ export async function createPresupuesto(
     number,
     businessLine: data.businessLine,
     clientId: data.clientId,
+    salesAgentId: data.salesAgentId
+      ? new ObjectId(data.salesAgentId).toString()
+      : undefined,
     clientSnapshot: data.clientSnapshot,
     introduction: data.introduction ?? "",
     items,
@@ -145,6 +150,9 @@ export async function createPresupuesto(
     total,
     notes: data.notes ?? "",
     status: "draft",
+    sourceActivityId: data.sourceActivityId
+      ? new ObjectId(data.sourceActivityId).toString()
+      : undefined,
     pdfDriveFileId: null,
     createdAt: now,
     updatedAt: now,
@@ -170,6 +178,17 @@ export async function updatePresupuesto(
   if (data.introduction !== undefined) setFields.introduction = data.introduction;
   if (data.notes !== undefined) setFields.notes = data.notes;
   if (data.taxRate !== undefined) setFields.taxRate = data.taxRate;
+  if (data.status !== undefined) setFields.status = data.status;
+  if (data.sourceActivityId !== undefined) {
+    setFields.sourceActivityId = data.sourceActivityId
+      ? new ObjectId(data.sourceActivityId).toString()
+      : null;
+  }
+  if (data.salesAgentId !== undefined) {
+    setFields.salesAgentId = data.salesAgentId
+      ? new ObjectId(data.salesAgentId).toString()
+      : null;
+  }
 
   if (data.items) {
     const items = data.items.map((item) => ({

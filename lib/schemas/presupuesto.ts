@@ -43,6 +43,10 @@ export function calculateItemTotal(item: { quantity: number; unitPrice: number }
   return Math.round(item.quantity * item.unitPrice * 100) / 100;
 }
 
+const objectIdLike = z
+  .string()
+  .refine((v) => !v || /^[a-f\d]{24}$/i.test(v), "Identificador no válido");
+
 export const createPresupuestoSchema = z.object({
   businessLine: businessLineEnum,
   clientId: z.string().min(1, "El cliente es obligatorio"),
@@ -51,10 +55,14 @@ export const createPresupuestoSchema = z.object({
   items: z.array(lineItemSchema).min(1, "Debe haber al menos una línea"),
   taxRate: z.number().min(0).max(100).default(21),
   notes: z.string().optional().default(""),
+  sourceActivityId: objectIdLike.optional().default(""),
+  salesAgentId: objectIdLike.optional().default(""),
 });
 export type CreatePresupuestoInput = z.infer<typeof createPresupuestoSchema>;
 
-export const updatePresupuestoSchema = createPresupuestoSchema.partial();
+export const updatePresupuestoSchema = createPresupuestoSchema.partial().extend({
+  status: presupuestoStatusEnum.optional(),
+});
 export type UpdatePresupuestoInput = z.infer<typeof updatePresupuestoSchema>;
 
 export const businessLinePrefix: Record<string, string> = {

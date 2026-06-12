@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Plus, X } from "lucide-react";
+import { ChevronLeft, Plus, X, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createPresupuestoSchema, calculateItemTotal, businessLinePrefix, businessLineLabels } from "@/lib/schemas/presupuesto";
@@ -21,13 +21,22 @@ type LineItem = {
 type Props = {
   mode: "create" | "edit";
   initial?: Presupuesto & { _id: string };
+  defaultClientId?: string;
+  defaultSalesAgentId?: string;
+  defaultSourceActivityId?: string;
 };
 
 type ClientOption = Pick<Client, "_id" | "name" | "email" | "phones" | "addresses" | "billing"> & {
   businessLine: string;
 };
 
-export function PresupuestoForm({ mode, initial }: Props) {
+export function PresupuestoForm({
+  mode,
+  initial,
+  defaultClientId,
+  defaultSalesAgentId,
+  defaultSourceActivityId,
+}: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +68,9 @@ export function PresupuestoForm({ mode, initial }: Props) {
   );
   const [taxRate, setTaxRate] = useState(initial?.taxRate ?? 21);
   const [notes, setNotes] = useState(initial?.notes ?? "");
+
+  // Preseleccionar cliente cuando viene desde la ficha o desde una visita
+  const sourceActivityId = initial?.sourceActivityId ?? defaultSourceActivityId ?? "";
 
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const taxAmount = Math.round(subtotal * (taxRate / 100) * 100) / 100;
@@ -109,6 +121,37 @@ export function PresupuestoForm({ mode, initial }: Props) {
     setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
+  // Cargar cliente preseleccionado cuando viene desde ficha/visita
+  useEffect(() => {
+    if (initial || !defaultClientId) return;
+    if (selectedClient) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/clients/${defaultClientId}`);
+        if (!res.ok) return;
+        const c = (await res.json()) as Client;
+        if (cancelled) return;
+        setSelectedClient({
+          _id: c._id,
+          name: c.name,
+          email: c.email ?? "",
+          phones: c.phones ?? [],
+          addresses: c.addresses ?? [],
+          billing: c.billing,
+          businessLine: c.businessLine,
+        });
+        setBusinessLine(c.businessLine);
+      } catch {
+        // noop
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultClientId]);
+
   async function handleSubmit() {
     setError(null);
 
@@ -149,6 +192,8 @@ export function PresupuestoForm({ mode, initial }: Props) {
       })),
       taxRate,
       notes,
+      sourceActivityId: sourceActivityId || "",
+      salesAgentId: initial?.salesAgentId ?? defaultSalesAgentId ?? "",
     };
 
     const parsed = createPresupuestoSchema.safeParse(payload);
@@ -206,6 +251,16 @@ export function PresupuestoForm({ mode, initial }: Props) {
       {error && (
         <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
+        </div>
+      )}
+
+      {mode === "create" && sourceActivityId && (
+        <div className="flex items-center gap-2 rounded-md border border-[#3B1E8A]/20 bg-[#3B1E8A]/5 px-4 py-2.5 text-[12px] text-[#3B1E8A]">
+          <Link2 className="size-3.5 shrink-0" />
+          <span>
+            Este presupuesto quedará vinculado a la visita desde la que lo
+            estás creando.
+          </span>
         </div>
       )}
 

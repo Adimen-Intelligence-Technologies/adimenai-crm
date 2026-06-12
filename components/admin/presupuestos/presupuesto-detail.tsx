@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Check,
+  ExternalLink,
   FileDown,
+  Link2,
   Loader2,
   Mail,
   MapPin,
@@ -18,7 +20,9 @@ import {
   businessLineLabels,
   presupuestoStatusLabels,
 } from "@/lib/schemas/presupuesto";
+import { activityTypeLabels } from "@/lib/schemas/activity";
 import type { Presupuesto } from "@/lib/repositories/presupuestos";
+import type { Activity } from "@/lib/repositories/activities";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, { chip: string; dot: string }> = {
@@ -31,9 +35,11 @@ const statusStyles: Record<string, { chip: string; dot: string }> = {
 export function PresupuestoDetail({
   presupuesto,
   linkedDealId,
+  sourceActivity,
 }: {
   presupuesto: Presupuesto;
   linkedDealId?: string;
+  sourceActivity?: Activity | null;
 }) {
   const router = useRouter();
   const [generating, setGenerating] = useState(false);
@@ -139,6 +145,43 @@ export function PresupuestoDetail({
             style={{ backgroundColor: theme.accent }}
           >
             <Link href={`/admin/deals/${linkedDealId}`}>Ver oportunidad →</Link>
+          </Button>
+        </div>
+      )}
+
+      {sourceActivity && (
+        <div className="flex items-start gap-3 rounded-lg border border-[#3B1E8A]/20 bg-[#3B1E8A]/5 px-4 py-3 text-sm">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[#3B1E8A] text-white">
+            <Link2 className="size-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold tracking-wide text-[#3B1E8A] uppercase">
+              Visita origen
+            </p>
+            <p className="mt-0.5 font-semibold text-zinc-900">
+              {sourceActivity.subject}
+            </p>
+            <p className="text-[12px] text-zinc-500">
+              {activityTypeLabels[sourceActivity.type]} ·{" "}
+              {new Date(sourceActivity.occurredAt).toLocaleString("es-ES", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="self-start border-[#3B1E8A]/30 text-[#3B1E8A] hover:bg-[#3B1E8A]/10 sm:self-auto"
+          >
+            <Link href={`/admin/clients/${presupuesto.clientId}`}>
+              Ver ficha
+              <ExternalLink className="size-3" />
+            </Link>
           </Button>
         </div>
       )}

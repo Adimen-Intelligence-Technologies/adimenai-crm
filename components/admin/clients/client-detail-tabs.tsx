@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Building2,
   Calendar,
-  CalendarPlus,
   Clock,
   Copy,
   ExternalLink,
@@ -12,7 +11,6 @@ import {
   Mail,
   MapPin,
   Phone,
-  Plus,
   Receipt,
   Store,
 } from "lucide-react";
@@ -30,24 +28,9 @@ import {
 } from "@/lib/schemas/client";
 import { businessLineTheme } from "@/lib/theme";
 import type { Client } from "@/lib/repositories/clients";
-import type { SalesAgent } from "@/lib/repositories/sales-agents";
-import type { Activity } from "@/lib/repositories/activities";
-import { SalesAgentPicker } from "@/components/admin/sales-agents/sales-agent-picker";
-import { ActivityTimeline } from "@/components/admin/activities/activity-timeline";
-import { ActivityForm } from "@/components/admin/activities/activity-form";
 import { cn } from "@/lib/utils";
 
-type Tab = "info" | "history";
-
-export function ClientDetailTabs({
-  client,
-  salesAgents = [],
-  activities = [],
-}: {
-  client: Client;
-  salesAgents?: SalesAgent[];
-  activities?: Activity[];
-}) {
+export function ClientDetailTabs({ client }: { client: Client }) {
   const theme = businessLineTheme[client.businessLine];
   const isHerrikonekt = client.businessLine === "herrikonekt";
   const billingActive = !!client.billing?.invoicingActive;
@@ -61,13 +44,6 @@ export function ClientDetailTabs({
     .map((s) => s[0])
     .join("")
     .toUpperCase();
-
-  const [tab, setTab] = useState<Tab>("info");
-  const [activityOpen, setActivityOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const salesAgentsById: Record<string, SalesAgent> = {};
-  for (const a of salesAgents) salesAgentsById[a._id] = a;
 
   return (
     <div className="flex animate-fade-in flex-col gap-5">
@@ -109,35 +85,10 @@ export function ClientDetailTabs({
                   {client.description}
                 </p>
               )}
-
-              {/* Comercial asignado */}
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-[11px] font-semibold tracking-wide text-white/70 uppercase">
-                  Comercial
-                </span>
-                <div className="rounded-md bg-white/10 p-0.5 backdrop-blur-sm">
-                  <SalesAgentPicker
-                    clientId={client._id}
-                    currentAgentId={client.assignedSalesAgentId ?? ""}
-                    agents={salesAgents}
-                    size="sm"
-                    showLabel
-                    includeInactive
-                  />
-                </div>
-              </div>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActivityOpen(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-white px-3 text-[13px] font-bold text-zinc-900 shadow-sm transition-colors hover:bg-white/90"
-            >
-              <CalendarPlus className="size-3.5" />
-              Registrar visita
-            </button>
             {client.phones?.[0] && (
               <ActionButton href={`tel:${client.phones[0]}`} icon={Phone} label="Llamar" />
             )}
@@ -161,60 +112,11 @@ export function ClientDetailTabs({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-zinc-200">
-        <TabButton active={tab === "info"} onClick={() => setTab("info")}>
-          Información
-        </TabButton>
-        <TabButton active={tab === "history"} onClick={() => setTab("history")}>
-          Historial
-          {activities.length > 0 && (
-            <span className="ml-1.5 rounded-full bg-zinc-100 px-1.5 text-[10px] font-semibold tabular-nums text-zinc-600">
-              {activities.length}
-            </span>
-          )}
-        </TabButton>
-      </div>
-
-      {tab === "info" ? (
-        <ClientInfoGrid client={client} isHerrikonekt={isHerrikonekt} billingActive={billingActive} isOn={isOn} />
-      ) : (
-        <div key={refreshKey} className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-bold tracking-tight text-zinc-950">
-                Historial comercial
-              </h2>
-              <p className="text-[12px] text-zinc-500">
-                Visitas, llamadas, emails y notas de seguimiento.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActivityOpen(true)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
-            >
-              <Plus className="size-3.5" />
-              Nueva actividad
-            </button>
-          </div>
-          <ActivityTimeline
-            activities={activities}
-            salesAgentsById={salesAgentsById}
-            onChange={() => setRefreshKey((k) => k + 1)}
-            emptyMessage="Aún no hay actividades registradas para este cliente. Registra la primera visita o llamada."
-          />
-        </div>
-      )}
-
-      <ActivityForm
-        open={activityOpen}
-        onOpenChange={setActivityOpen}
-        clients={[client]}
-        clientId={client._id}
-        salesAgents={salesAgents}
-        defaultSalesAgentId={client.assignedSalesAgentId}
-        onSaved={() => setRefreshKey((k) => k + 1)}
+      <ClientInfoGrid
+        client={client}
+        isHerrikonekt={isHerrikonekt}
+        billingActive={billingActive}
+        isOn={isOn}
       />
     </div>
   );
@@ -523,37 +425,6 @@ function ClientInfoGrid({
         </Card>
       </div>
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative inline-flex h-9 items-center px-3 text-[13px] font-semibold transition-colors",
-        active
-          ? "text-[#3B1E8A]"
-          : "text-zinc-500 hover:text-zinc-900"
-      )}
-    >
-      {children}
-      {active && (
-        <span
-          className="absolute inset-x-0 -bottom-px h-0.5 rounded-t-full bg-[#3B1E8A]"
-          aria-hidden
-        />
-      )}
-    </button>
   );
 }
 

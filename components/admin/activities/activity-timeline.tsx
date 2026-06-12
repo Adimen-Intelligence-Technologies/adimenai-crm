@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import {
   CalendarClock,
   Check,
   CheckCircle2,
+  ExternalLink,
+  FileText,
   Mail,
   MessageSquare,
   NotebookPen,
@@ -131,6 +134,9 @@ function ActivityItem({
   const ring = OUTCOME_RING[activity.outcome] ?? "ring-zinc-100";
   const dot = OUTCOME_COLOR[activity.outcome] ?? "bg-zinc-400";
 
+  const canQuote =
+    activity.type === "visit" && !activity.linkedPresupuestoId;
+
   return (
     <li className="relative pl-10">
       <span
@@ -185,6 +191,25 @@ function ActivityItem({
                   {clientName}
                 </span>
               </p>
+            )}
+            {activity.linkedPresupuestoId && (
+              <Link
+                href={`/admin/presupuestos/${activity.linkedPresupuestoId}`}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-[#3B1E8A]/20 bg-[#3B1E8A]/5 px-2 py-1 text-[11px] font-semibold text-[#3B1E8A] transition-colors hover:bg-[#3B1E8A]/10"
+              >
+                <FileText className="size-3" />
+                Origen del presupuesto
+                <ExternalLink className="size-2.5" />
+              </Link>
+            )}
+            {canQuote && (
+              <Link
+                href={`/admin/presupuestos/nuevo?clientId=${activity.clientId}&fromActivity=${activity._id}${activity.salesAgentId ? `&salesAgentId=${activity.salesAgentId}` : ""}`}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-700 transition-colors hover:border-[#3B1E8A]/30 hover:bg-[#3B1E8A]/5 hover:text-[#3B1E8A]"
+              >
+                <FileText className="size-3" />
+                Cotizar desde esta visita
+              </Link>
             )}
             {activity.nextAction && (
               <div

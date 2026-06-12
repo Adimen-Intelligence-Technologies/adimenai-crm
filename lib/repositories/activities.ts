@@ -125,6 +125,52 @@ export async function listActivitiesByClient(
   return docs.map(toActivity);
 }
 
+export async function findActivityById(
+  id: string
+): Promise<Activity | null> {
+  if (!ObjectId.isValid(id)) return null;
+  const collection = await getActivitiesCollection();
+  const doc = (await collection.findOne({
+    _id: new ObjectId(id),
+  })) as unknown as ActivityDoc | null;
+  return doc ? toActivity(doc) : null;
+}
+
+export async function listRecentVisitsByClient(
+  clientId: string,
+  options: { salesAgentId?: string; withinHours?: number; limit?: number } = {}
+): Promise<Activity[]> {
+  if (!ObjectId.isValid(clientId)) return [];
+  const collection = await getActivitiesCollection();
+  const withinHours = options.withinHours ?? 24;
+  const since = new Date(Date.now() - withinHours * 60 * 60 * 1000);
+  const query: Record<string, unknown> = {
+    clientId: new ObjectId(clientId),
+    type: "visit",
+    occurredAt: { $gte: since.toISOString() },
+  };
+  if (options.salesAgentId && ObjectId.isValid(options.salesAgentId)) {
+    query.salesAgentId = new ObjectId(options.salesAgentId);
+  }
+  const docs = (await collection
+    .find(query)
+    .sort({ occurredAt: -1 })
+    .limit(options.limit ?? 5)
+    .toArray()) as unknown as ActivityDoc[];
+  return docs.map(toActivity);
+}
+
+export async function findVisitBySourcePresupuesto(
+  presupuestoId: string
+): Promise<Activity | null> {
+  if (!ObjectId.isValid(presupuestoId)) return null;
+  const collection = await getActivitiesCollection();
+  const doc = (await collection.findOne({
+    sourceActivityId: new ObjectId(presupuestoId),
+  })) as unknown as ActivityDoc | null;
+  return doc ? toActivity(doc) : null;
+}
+
 export async function listUpcomingNextActions(
   options: { salesAgentId?: string; limit?: number } = {}
 ): Promise<Activity[]> {

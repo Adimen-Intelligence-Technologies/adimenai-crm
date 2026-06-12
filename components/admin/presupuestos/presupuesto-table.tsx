@@ -32,7 +32,8 @@ export function PresupuestoTable({
 
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white">
-      <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[36rem] text-left text-sm">
         <thead className="border-b border-zinc-100 bg-zinc-50/40 text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
           <tr>
             <th className="px-4 py-2.5">Nº</th>
@@ -122,6 +123,7 @@ export function PresupuestoTable({
           )}
         </tbody>
       </table>
+      </div>
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-zinc-100 px-4 py-3">
           <span className="text-[12px] text-zinc-500">

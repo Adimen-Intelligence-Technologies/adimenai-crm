@@ -483,6 +483,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
                           update("phones", next);
                         }}
                         placeholder="943 12 34 56"
+                        className="min-w-0 flex-1"
                       />
                       {form.phones.length > 1 && (
                         <Button

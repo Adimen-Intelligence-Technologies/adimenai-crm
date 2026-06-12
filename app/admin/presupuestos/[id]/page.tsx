@@ -17,13 +17,13 @@ export default async function PresupuestoDetailPage({ params }: Params) {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <Button asChild variant="ghost" size="sm" className="text-zinc-500 hover:text-zinc-900">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <Button asChild variant="ghost" size="sm" className="self-start text-zinc-500 hover:text-zinc-900 sm:self-auto">
           <Link href="/admin/presupuestos">
             <ArrowLeft /> Volver
           </Link>
         </Button>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="self-start sm:self-auto">
           <Link href={`/admin/presupuestos/${presupuesto._id}/edit`}>
             <Pencil /> Editar
           </Link>

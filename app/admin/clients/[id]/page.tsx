@@ -23,12 +23,12 @@ export default async function ClientDetailPage({
 
   return (
     <div className="flex flex-col">
-      <div className="mb-4 flex items-center justify-between gap-2">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <Button
           asChild
           variant="ghost"
           size="sm"
-          className="text-zinc-700 hover:bg-[#3B1E8A]/10 hover:text-[#3B1E8A]"
+          className="self-start text-zinc-700 hover:bg-[#3B1E8A]/10 hover:text-[#3B1E8A] sm:self-auto"
         >
           <Link href="/admin/clients">
             <ArrowLeft />

@@ -35,12 +35,12 @@ export default async function ServiceDetailPage({
 
   return (
     <div className="flex animate-fade-in flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <Button
           asChild
           variant="ghost"
           size="sm"
-          className="-ml-2 text-zinc-700 hover:bg-[#3B1E8A]/10 hover:text-[#3B1E8A]"
+          className="self-start -ml-2 text-zinc-700 hover:bg-[#3B1E8A]/10 hover:text-[#3B1E8A] sm:self-auto"
         >
           <Link href="/admin/gestion-servicios">
             <ArrowLeft />

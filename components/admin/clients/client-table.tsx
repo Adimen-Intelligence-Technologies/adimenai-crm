@@ -35,7 +35,8 @@ export function ClientTable({
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm shadow-zinc-900/[0.02]">
-      <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[44rem] text-left text-sm">
         <thead className="border-b border-zinc-200/80 bg-zinc-50/70">
           <tr>
             <th className="px-5 py-3.5 text-[13px] font-bold tracking-tight text-zinc-700">Nombre</th>
@@ -64,6 +65,7 @@ export function ClientTable({
           )}
         </tbody>
       </table>
+      </div>
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-zinc-100 px-5 py-3.5">
           <span className="text-[12px] text-zinc-500">

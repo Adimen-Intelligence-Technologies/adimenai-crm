@@ -144,8 +144,8 @@ export function PresupuestoDetail({
       )}
 
       <div className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white">
-        <div className="relative border-b border-zinc-100 px-6 py-5">
-          <div className="flex items-start justify-between gap-4">
+        <div className="relative border-b border-zinc-100 px-4 py-5 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2.5">
                 <span
@@ -188,7 +188,7 @@ export function PresupuestoDetail({
                 })}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
               {!isAccepted && presupuesto.status !== "rejected" && (
                 <Button
                   onClick={handleAccept}
@@ -201,7 +201,10 @@ export function PresupuestoDetail({
                   ) : (
                     <Check className="size-4" />
                   )}
-                  {accepting ? "Aceptando…" : "Aceptar presupuesto"}
+                  <span className="hidden sm:inline">
+                    {accepting ? "Aceptando…" : "Aceptar presupuesto"}
+                  </span>
+                  <span className="sm:hidden">{accepting ? "Aceptando…" : "Aceptar"}</span>
                 </Button>
               )}
               <Button
@@ -215,13 +218,16 @@ export function PresupuestoDetail({
                 ) : (
                   <FileDown className="size-4" />
                 )}
-                {generating ? "Generando…" : "Descargar PDF"}
+                <span className="hidden sm:inline">
+                  {generating ? "Generando…" : "Descargar PDF"}
+                </span>
+                <span className="sm:hidden">{generating ? "Generando…" : "PDF"}</span>
               </Button>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-x-8 gap-y-5 px-6 py-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-5 px-4 py-5 sm:grid-cols-2 sm:px-6">
           <InfoRow
             icon={<User className="size-4" />}
             label="Cliente"
@@ -255,7 +261,7 @@ export function PresupuestoDetail({
         </div>
 
         {presupuesto.introduction && (
-          <div className="border-t border-zinc-100 px-6 py-4">
+          <div className="border-t border-zinc-100 px-4 py-4 sm:px-6">
             <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-600">
               {presupuesto.introduction}
             </p>
@@ -263,46 +269,48 @@ export function PresupuestoDetail({
         )}
 
         <div className="border-t border-zinc-100">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-zinc-100">
-                <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  Título
-                </th>
-                <th className="w-20 px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  Cant.
-                </th>
-                <th className="w-28 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  Precio ud.
-                </th>
-                <th className="w-28 px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  Total
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-50">
-              {presupuesto.items.map((item, i) => (
-                <tr key={i} className="hover:bg-zinc-50/60">
-                  <td className="px-6 py-3 font-medium text-zinc-900">
-                    {item.title}
-                  </td>
-                  <td className="px-4 py-3 text-center font-mono text-sm text-zinc-600">
-                    {item.quantity}
-                  </td>
-                  <td className="px-4 py-3 text-right font-mono text-sm text-zinc-600">
-                    {item.unitPrice.toFixed(2).replace(".", ",")} €
-                  </td>
-                  <td className="px-6 py-3 text-right font-mono text-sm font-medium text-zinc-900">
-                    {item.total.toFixed(2).replace(".", ",")} €
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[36rem] text-left text-sm">
+              <thead>
+                <tr className="border-b border-zinc-100">
+                  <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-zinc-500 sm:px-6">
+                    Título
+                  </th>
+                  <th className="w-20 px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    Cant.
+                  </th>
+                  <th className="w-28 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    Precio ud.
+                  </th>
+                  <th className="w-28 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-500 sm:px-6">
+                    Total
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-50">
+                {presupuesto.items.map((item, i) => (
+                  <tr key={i} className="hover:bg-zinc-50/60">
+                    <td className="px-4 py-3 font-medium text-zinc-900 sm:px-6">
+                      {item.title}
+                    </td>
+                    <td className="px-4 py-3 text-center font-mono text-sm text-zinc-600">
+                      {item.quantity}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-sm text-zinc-600">
+                      {item.unitPrice.toFixed(2).replace(".", ",")} €
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-sm font-medium text-zinc-900 sm:px-6">
+                      {item.total.toFixed(2).replace(".", ",")} €
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div className="flex justify-end border-t border-zinc-100 px-6 py-5">
-          <div className="w-64 space-y-2">
+        <div className="flex justify-end border-t border-zinc-100 px-4 py-5 sm:px-6">
+          <div className="w-full max-w-xs space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-zinc-500">Subtotal</span>
               <span className="font-mono text-zinc-700">
@@ -327,7 +335,7 @@ export function PresupuestoDetail({
         </div>
 
         {presupuesto.notes && (
-          <div className="border-t border-zinc-100 px-6 py-4">
+          <div className="border-t border-zinc-100 px-4 py-4 sm:px-6">
             <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">
               Notas
             </p>

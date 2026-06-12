@@ -47,7 +47,10 @@ export function ChartStatusDonut({
 
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row">
-      <div className="relative" style={{ width: height, height }}>
+      <div
+        className="relative w-full max-w-[260px] shrink-0"
+        style={{ aspectRatio: "1 / 1" }}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

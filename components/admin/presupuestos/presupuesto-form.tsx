@@ -24,6 +24,7 @@ type Props = {
   defaultClientId?: string;
   defaultSalesAgentId?: string;
   defaultSourceActivityId?: string;
+  fixedBusinessLine?: "adimenai" | "herrikonekt" | "hiopos";
 };
 
 type ClientOption = Pick<Client, "_id" | "name" | "email" | "phones" | "addresses" | "billing"> & {
@@ -36,12 +37,15 @@ export function PresupuestoForm({
   defaultClientId,
   defaultSalesAgentId,
   defaultSourceActivityId,
+  fixedBusinessLine,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const [businessLine, setBusinessLine] = useState<string>(initial?.businessLine ?? "adimenai");
+  const [businessLine, setBusinessLine] = useState<string>(
+    initial?.businessLine ?? fixedBusinessLine ?? "adimenai"
+  );
   const [clientQuery, setClientQuery] = useState("");
   const [clientResults, setClientResults] = useState<ClientOption[]>([]);
   const [searching, setSearching] = useState(false);
@@ -268,29 +272,41 @@ export function PresupuestoForm({
         <div className="grid grid-cols-1 gap-5">
           {/* Linea de negocio */}
           <Field label="Línea de negocio">
-            <div className="flex flex-wrap gap-2">
-              {(["adimenai", "herrikonekt", "hiopos"] as const).map((line) => {
-                const prefix = businessLinePrefix[line];
-                return (
-                  <button
-                    key={line}
-                    type="button"
-                    onClick={() => {
-                      setBusinessLine(line);
-                      setSelectedClient(null);
-                    }}
-                    className={cn(
-                      "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
-                      businessLine === line
-                        ? "border-[#3B1E8A] bg-[#3B1E8A] text-white"
-                        : "border-zinc-200 text-zinc-700 hover:bg-zinc-50"
-                    )}
-                  >
-                    {prefix} · {businessLineLabels[line]}
-                  </button>
-                );
-              })}
-            </div>
+            {fixedBusinessLine ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-8 items-center gap-2 rounded-md border border-[#3B1E8A] bg-[#3B1E8A] px-3 text-sm font-medium text-white">
+                  {businessLinePrefix[fixedBusinessLine]} ·{" "}
+                  {businessLineLabels[fixedBusinessLine]}
+                </span>
+                <span className="text-[12px] text-zinc-500">
+                  Línea fijada al crear el presupuesto.
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {(["adimenai", "herrikonekt", "hiopos"] as const).map((line) => {
+                  const prefix = businessLinePrefix[line];
+                  return (
+                    <button
+                      key={line}
+                      type="button"
+                      onClick={() => {
+                        setBusinessLine(line);
+                        setSelectedClient(null);
+                      }}
+                      className={cn(
+                        "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
+                        businessLine === line
+                          ? "border-[#3B1E8A] bg-[#3B1E8A] text-white"
+                          : "border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                      )}
+                    >
+                      {prefix} · {businessLineLabels[line]}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </Field>
 
           {/* Cliente */}

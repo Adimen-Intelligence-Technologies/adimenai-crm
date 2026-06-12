@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CalendarClock, Mail, MessageSquare, NotebookPen, Phone, Plus, Search, User, X } from "lucide-react";
+import {
+  CalendarClock,
+  Mail,
+  MessageSquare,
+  NotebookPen,
+  Phone,
+  Plus,
+  Search,
+  User,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PageHeader } from "@/components/admin/page-header";
 import { cn } from "@/lib/utils";
 import {
   activityOutcomeEnum,
@@ -83,7 +91,11 @@ export function ActivitiesView({
     router.replace(`/admin/activities?${params.toString()}`);
   }
 
-  // Type
+  function clearAll() {
+    router.replace("/admin/activities");
+  }
+
+  // Comboxbox items
   const typeItems: ComboboxItem[] = activityTypeEnum.options.map((t) => {
     const Icon = TYPE_ICONS[t] ?? NotebookPen;
     return {
@@ -92,21 +104,16 @@ export function ActivitiesView({
       icon: <Icon className="size-3.5 text-zinc-500" />,
     };
   });
-
-  // Outcome
   const outcomeItems: ComboboxItem[] = activityOutcomeEnum.options.map((o) => ({
     value: o,
     label: outcomeLabel(o),
     icon: <span className={cn("size-2 rounded-full", outcomeDot[o])} />,
   }));
-
-  // Sales agents
   const agentItems: ComboboxItem[] = salesAgents
     .filter((a) => a.isActive)
     .map((a) => ({
       value: a._id,
       label: a.name,
-      sublabel: a.isActive ? undefined : "inactivo",
       icon: (
         <span
           className="flex size-5 items-center justify-center rounded-full text-[9px] font-bold text-white"
@@ -116,8 +123,6 @@ export function ActivitiesView({
         </span>
       ),
     }));
-
-  // Clients (ordenados alfabéticamente)
   const clientItems: ComboboxItem[] = [...clients]
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((c) => ({
@@ -131,7 +136,6 @@ export function ActivitiesView({
   const activeAgent = filters.salesAgentId;
   const activePending = filters.pendingNextAction === "true";
   const activeClient = filters.clientId;
-
   const hasFilters =
     !!filters.q ||
     !!activeType ||
@@ -140,137 +144,180 @@ export function ActivitiesView({
     activePending ||
     !!activeClient;
 
+  // Stats rápidas
+  const total = result.total;
+  const visitsCount = result.items.filter((a) => a.type === "visit").length;
+  const pendingCount = result.items.filter(
+    (a) => a.nextAction && !a.nextAction.done
+  ).length;
+  const withQuoteCount = result.items.filter(
+    (a) => !!a.linkedPresupuestoId
+  ).length;
+
   return (
-    <div className="flex animate-fade-in flex-col gap-6">
-      <PageHeader
-        title="Actividades"
-        description="Registro de visitas, llamadas, emails, reuniones y notas comerciales."
-        actions={
+    <div className="flex animate-fade-in flex-col gap-4">
+      {/* Cabecera compacta: título + acción + stats inline */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-950">
+            Actividades
+          </h1>
+          <p className="text-[12px] text-zinc-500">
+            Registro de visitas, llamadas, emails, reuniones y notas comerciales.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <Stat label="Total" value={total} />
+          <Stat label="Visitas" value={visitsCount} accent="violet" />
+          <Stat label="Pendientes" value={pendingCount} accent="amber" />
+          <Stat label="Con presupuesto" value={withQuoteCount} accent="emerald" />
           <Button
             type="button"
             onClick={() => setOpen(true)}
-            className="bg-[#3B1E8A] text-white shadow-xs hover:bg-[#2D1666]"
+            className="h-9 bg-[#3B1E8A] text-white shadow-xs hover:bg-[#2D1666]"
           >
             <Plus className="size-4" />
             Nueva actividad
           </Button>
-        }
-        search={
-          <div className="flex w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center">
-            <div className="group relative w-full lg:w-72">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-[#3B1E8A]"
-                aria-hidden
-              />
-              <Input
-                type="search"
-                defaultValue={filters.q ?? ""}
-                onChange={(e) => setParam("q", e.target.value)}
-                placeholder="Buscar por asunto o descripción"
-                className="h-9 pl-9 pr-9 text-[13px] focus-visible:border-[#3B1E8A] focus-visible:ring-[#3B1E8A]/20"
-              />
-              {filters.q && (
-                <button
-                  type="button"
-                  onClick={() => setParam("q", "")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-                >
-                  <X className="size-3.5" />
-                </button>
-              )}
-            </div>
-            <div className="w-full lg:w-44">
-              <SearchableCombobox
-                value={activeType ?? ""}
-                onChange={(v) => setParam("type", v || null)}
-                items={typeItems}
-                placeholder="Tipo…"
-                clearLabel="Todos los tipos"
-                emptyLabel="Sin tipos"
-              />
-            </div>
-            <div className="w-full lg:w-44">
-              <SearchableCombobox
-                value={activeOutcome ?? ""}
-                onChange={(v) => setParam("outcome", v || null)}
-                items={outcomeItems}
-                placeholder="Resultado…"
-                clearLabel="Todos los resultados"
-                emptyLabel="Sin resultados"
-              />
-            </div>
-            <div className="w-full lg:w-52">
-              <SearchableCombobox
-                value={activeAgent ?? ""}
-                onChange={(v) => setParam("salesAgentId", v || null)}
-                items={agentItems}
-                placeholder="Comercial…"
-                clearLabel="Todos los comerciales"
-                emptyLabel="Sin comerciales"
-              />
-            </div>
-            <div className="w-full lg:w-64">
-              <SearchableCombobox
-                value={activeClient ?? ""}
-                onChange={(v) => setParam("clientId", v || null)}
-                items={clientItems}
-                placeholder="Cliente…"
-                clearLabel="Todos los clientes"
-                emptyLabel="Sin clientes"
-              />
-            </div>
-            <label
-              className={cn(
-                "inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 text-[12px] font-semibold transition-colors",
-                activePending
-                  ? "border-[#3B1E8A] bg-[#3B1E8A] text-white"
-                  : "border-zinc-200/80 bg-white text-zinc-700 hover:bg-zinc-50"
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={activePending}
-                onChange={(e) =>
-                  setParam("pendingNextAction", e.target.checked ? "true" : null)
-                }
-                className="size-3.5 accent-[#3B1E8A]"
-              />
-              Próximas acciones
-            </label>
-            {hasFilters && (
-              <Link
-                href="/admin/activities"
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-200/80 bg-white px-3 text-[12px] font-medium text-zinc-700 hover:bg-zinc-50"
-              >
-                <X className="size-3.5" />
-                Limpiar
-              </Link>
-            )}
-          </div>
-        }
-      />
+        </div>
+      </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-zinc-200/80 bg-white px-4 py-2.5 text-[12px] text-zinc-500">
-        <span>
-          {result.total === 0
-            ? "No hay actividades"
-            : `${result.total} ${result.total === 1 ? "actividad" : "actividades"}`}
-        </span>
+      {/* Barra de filtros compacta, una sola línea que envuelve */}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5">
+        <div className="group relative min-w-0 flex-1 basis-48">
+          <Search
+            className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-[#3B1E8A]"
+            aria-hidden
+          />
+          <Input
+            type="search"
+            defaultValue={filters.q ?? ""}
+            onChange={(e) => setParam("q", e.target.value)}
+            placeholder="Buscar por asunto o descripción"
+            className="h-8 w-full pl-8 pr-8 text-[13px] focus-visible:border-[#3B1E8A] focus-visible:ring-[#3B1E8A]/20"
+          />
+          {filters.q && (
+            <button
+              type="button"
+              onClick={() => setParam("q", "")}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
+
+        <span className="hidden h-5 w-px shrink-0 bg-zinc-200 sm:block" aria-hidden />
+
+        <div className="w-full min-w-0 sm:w-36">
+          <SearchableCombobox
+            value={activeType ?? ""}
+            onChange={(v) => setParam("type", v || null)}
+            items={typeItems}
+            placeholder="Tipo…"
+            clearLabel="Todos los tipos"
+            emptyLabel="Sin tipos"
+            className="h-8"
+          />
+        </div>
+        <div className="w-full min-w-0 sm:w-36">
+          <SearchableCombobox
+            value={activeOutcome ?? ""}
+            onChange={(v) => setParam("outcome", v || null)}
+            items={outcomeItems}
+            placeholder="Resultado…"
+            clearLabel="Todos los resultados"
+            emptyLabel="Sin resultados"
+            className="h-8"
+          />
+        </div>
+        <div className="w-full min-w-0 sm:w-44">
+          <SearchableCombobox
+            value={activeAgent ?? ""}
+            onChange={(v) => setParam("salesAgentId", v || null)}
+            items={agentItems}
+            placeholder="Comercial…"
+            clearLabel="Todos los comerciales"
+            emptyLabel="Sin comerciales"
+            className="h-8"
+          />
+        </div>
+        <div className="w-full min-w-0 sm:w-56">
+          <SearchableCombobox
+            value={activeClient ?? ""}
+            onChange={(v) => setParam("clientId", v || null)}
+            items={clientItems}
+            placeholder="Cliente…"
+            clearLabel="Todos los clientes"
+            emptyLabel="Sin clientes"
+            className="h-8"
+          />
+        </div>
+
+        <span className="hidden h-5 w-px shrink-0 bg-zinc-200 sm:block" aria-hidden />
+
+        <button
+          type="button"
+          onClick={() =>
+            setParam("pendingNextAction", activePending ? null : "true")
+          }
+          className={cn(
+            "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-semibold transition-colors",
+            activePending
+              ? "border-[#3B1E8A] bg-[#3B1E8A] text-white"
+              : "border-zinc-200/80 bg-white text-zinc-700 hover:bg-zinc-50"
+          )}
+        >
+          <span
+            className={cn(
+              "size-1.5 rounded-full",
+              activePending ? "bg-white" : "bg-amber-500"
+            )}
+          />
+          Pendientes
+        </button>
+
         {hasFilters && (
-          <span className="inline-flex items-center gap-1.5 text-zinc-400">
-            <span className="size-1.5 rounded-full bg-[#3B1E8A]" />
-            Filtrado
-          </span>
+          <button
+            type="button"
+            onClick={clearAll}
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-zinc-200/80 bg-white px-2.5 text-[12px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+          >
+            <X className="size-3" />
+            Limpiar
+          </button>
         )}
       </div>
 
-      <ActivityTimeline
-        activities={result.items}
-        salesAgentsById={salesAgentsById}
-        showClient
-        clientNameById={clientNameById}
-        onChange={() => router.refresh()}
-      />
+      {/* Timeline */}
+      {result.items.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-6 py-16 text-center">
+          <p className="text-sm font-semibold text-zinc-900">Sin actividades</p>
+          <p className="mt-1 text-[12px] text-zinc-500">
+            {hasFilters
+              ? "Ningún resultado con los filtros actuales. Prueba a limpiarlos."
+              : "Registra la primera visita o llamada con el botón superior."}
+          </p>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="mt-3 inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-[12px] font-medium text-zinc-700 hover:bg-zinc-50"
+            >
+              <X className="size-3" />
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+      ) : (
+        <ActivityTimeline
+          activities={result.items}
+          salesAgentsById={salesAgentsById}
+          showClient
+          clientNameById={clientNameById}
+          onChange={() => router.refresh()}
+        />
+      )}
 
       {result.totalPages > 1 && (
         <Pagination
@@ -286,6 +333,33 @@ export function ActivitiesView({
         clients={clients}
         salesAgents={salesAgents}
       />
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  accent = "default",
+}: {
+  label: string;
+  value: number;
+  accent?: "default" | "violet" | "amber" | "emerald";
+}) {
+  const accentMap = {
+    default: "text-zinc-700",
+    violet: "text-[#3B1E8A]",
+    amber: "text-amber-700",
+    emerald: "text-emerald-700",
+  }[accent];
+  return (
+    <div className="flex items-baseline gap-1.5 rounded-md border border-zinc-200/80 bg-zinc-50/50 px-2.5 py-1.5">
+      <span className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+        {label}
+      </span>
+      <span className={cn("font-mono text-[15px] font-bold tabular-nums", accentMap)}>
+        {value}
+      </span>
     </div>
   );
 }

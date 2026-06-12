@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  ArrowRight,
   CalendarClock,
   Check,
   CheckCircle2,
@@ -135,7 +136,7 @@ function ActivityItem({
   const dot = OUTCOME_COLOR[activity.outcome] ?? "bg-zinc-400";
 
   const canQuote =
-    activity.type === "visit" && !activity.linkedPresupuestoId;
+    activity.requestQuote && !activity.linkedPresupuestoId;
 
   return (
     <li className="relative pl-10">
@@ -154,7 +155,12 @@ function ActivityItem({
         <Icon className="size-3.5 text-zinc-600" />
       </span>
 
-      <div className="rounded-xl border border-zinc-200/80 bg-white px-4 py-3.5">
+      <div
+        className={cn(
+          "rounded-xl border bg-white px-4 py-3.5",
+          canQuote && "border-[#3B1E8A]/30 ring-1 ring-[#3B1E8A]/10"
+        )}
+      >
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -202,51 +208,6 @@ function ActivityItem({
                 <ExternalLink className="size-2.5" />
               </Link>
             )}
-            {canQuote && (
-              <Link
-                href={`/admin/presupuestos/nuevo?clientId=${activity.clientId}&fromActivity=${activity._id}${activity.salesAgentId ? `&salesAgentId=${activity.salesAgentId}` : ""}`}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-700 transition-colors hover:border-[#3B1E8A]/30 hover:bg-[#3B1E8A]/5 hover:text-[#3B1E8A]"
-              >
-                <FileText className="size-3" />
-                Cotizar desde esta visita
-              </Link>
-            )}
-            {activity.nextAction && (
-              <div
-                className={cn(
-                  "mt-2 flex flex-wrap items-center gap-2 rounded-md border px-2.5 py-1.5 text-[12px]",
-                  activity.nextAction.done
-                    ? "border-zinc-200 bg-zinc-50 text-zinc-500"
-                    : "border-emerald-200 bg-emerald-50/50 text-emerald-800"
-                )}
-              >
-                <span className="font-semibold">
-                  Siguiente: {nextActionTypeLabels[activity.nextAction.type]}
-                </span>
-                {activity.nextAction.dueDate && (
-                  <NextActionDue
-                    due={activity.nextAction.dueDate}
-                    done={activity.nextAction.done}
-                  />
-                )}
-                {activity.nextAction.notes && (
-                  <span className="text-zinc-600">
-                    · {activity.nextAction.notes}
-                  </span>
-                )}
-                {!activity.nextAction.done && (
-                  <MarkNextActionDoneButton
-                    id={activity._id}
-                    onDone={onChange}
-                  />
-                )}
-                {activity.nextAction.done && (
-                  <span className="inline-flex items-center gap-1 text-zinc-500">
-                    <Check className="size-3" /> Hecho
-                  </span>
-                )}
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-2">
             {salesAgent && (
@@ -261,6 +222,68 @@ function ActivityItem({
             <DeleteActivityButton id={activity._id} onDeleted={onChange} />
           </div>
         </div>
+
+        {canQuote && (
+          <Link
+            href={`/admin/presupuestos/nuevo?clientId=${activity.clientId}&fromActivity=${activity._id}${activity.salesAgentId ? `&salesAgentId=${activity.salesAgentId}` : ""}`}
+            className="mt-3 flex w-full items-center justify-between gap-3 rounded-lg border border-[#3B1E8A]/20 bg-gradient-to-r from-[#3B1E8A] to-[#3B1E8A]/90 px-3.5 py-2.5 text-white shadow-sm shadow-[#3B1E8A]/20 transition-all hover:from-[#2D1666] hover:to-[#2D1666]"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/15">
+                <FileText className="size-3.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[13px] font-bold tracking-tight">
+                  El comercial solicita generar un presupuesto
+                </p>
+                <p className="text-[11px] text-white/75">
+                  Visita marcada como pendiente de cotización
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-white px-2.5 text-[12px] font-bold text-[#3B1E8A] shadow-sm">
+              Generar presupuesto
+              <ArrowRight className="size-3.5" />
+            </span>
+          </Link>
+        )}
+
+        {activity.nextAction && (
+          <div
+            className={cn(
+              "mt-2 flex flex-wrap items-center gap-2 rounded-md border px-2.5 py-1.5 text-[12px]",
+              activity.nextAction.done
+                ? "border-zinc-200 bg-zinc-50 text-zinc-500"
+                : "border-emerald-200 bg-emerald-50/50 text-emerald-800"
+            )}
+          >
+            <span className="font-semibold">
+              Siguiente: {nextActionTypeLabels[activity.nextAction.type]}
+            </span>
+            {activity.nextAction.dueDate && (
+              <NextActionDue
+                due={activity.nextAction.dueDate}
+                done={activity.nextAction.done}
+              />
+            )}
+            {activity.nextAction.notes && (
+              <span className="text-zinc-600">
+                · {activity.nextAction.notes}
+              </span>
+            )}
+            {!activity.nextAction.done && (
+              <MarkNextActionDoneButton
+                id={activity._id}
+                onDone={onChange}
+              />
+            )}
+            {activity.nextAction.done && (
+              <span className="inline-flex items-center gap-1 text-zinc-500">
+                <Check className="size-3" /> Hecho
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </li>
   );

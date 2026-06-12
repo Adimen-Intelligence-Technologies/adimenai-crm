@@ -65,6 +65,7 @@ export function ActivityForm({
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [outcome, setOutcome] = useState<string>("positive");
+  const [requestQuote, setRequestQuote] = useState<boolean>(false);
   const [hasNextAction, setHasNextAction] = useState(false);
   const [nextActionType, setNextActionType] = useState<string>("callback");
   const [nextActionDueDate, setNextActionDueDate] = useState<string>("");
@@ -94,6 +95,7 @@ export function ActivityForm({
       subject: subject.trim(),
       description: description.trim(),
       outcome,
+      requestQuote,
     };
     if (hasNextAction) {
       payload.nextAction = {
@@ -244,6 +246,49 @@ export function ActivityForm({
                 </NativeSelect>
               )}
             </Field>
+
+            <div
+              className={cn(
+                "rounded-lg border p-3 transition-colors",
+                requestQuote
+                  ? "border-[#3B1E8A]/30 bg-[#3B1E8A]/5"
+                  : "border-zinc-200 bg-zinc-50/40"
+              )}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p
+                    className={cn(
+                      "text-sm font-semibold",
+                      requestQuote ? "text-[#3B1E8A]" : "text-zinc-900"
+                    )}
+                  >
+                    Generar presupuesto para esta visita
+                  </p>
+                  <p className="text-[12px] text-zinc-500">
+                    Avisa al equipo: la visita requiere que alguien prepare un
+                    presupuesto. Se mostrará un botón visible en el timeline.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={requestQuote}
+                  onClick={() => setRequestQuote(!requestQuote)}
+                  className={cn(
+                    "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors",
+                    requestQuote ? "bg-[#3B1E8A]" : "bg-zinc-300"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "size-4 rounded-full bg-white shadow-sm transition-transform",
+                      requestQuote ? "translate-x-4" : "translate-x-0"
+                    )}
+                  />
+                </button>
+              </div>
+            </div>
 
             <div className="rounded-lg border border-zinc-200 bg-zinc-50/40 p-3">
               <div className="flex items-center justify-between gap-3">

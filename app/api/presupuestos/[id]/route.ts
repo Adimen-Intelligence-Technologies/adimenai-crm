@@ -94,6 +94,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
             description: newActivityDoc.description,
             outcome: "positive",
             linkedPresupuestoId: presupuesto._id,
+            requestQuote: false,
             createdAt: now,
             updatedAt: now,
           };

@@ -26,6 +26,7 @@ export type Activity = {
   nextAction?: NextAction;
   linkedPresupuestoId?: string;
   linkedDealId?: string;
+  requestQuote: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -219,6 +220,7 @@ export async function createActivity(
     linkedDealId: data.linkedDealId
       ? new ObjectId(data.linkedDealId).toString()
       : undefined,
+    requestQuote: data.requestQuote ?? false,
     createdAt: now,
     updatedAt: now,
   };

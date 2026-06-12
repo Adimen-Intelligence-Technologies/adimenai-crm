@@ -75,6 +75,7 @@ export const createActivitySchema = z.object({
   nextAction: nextActionSchema.optional(),
   linkedPresupuestoId: objectIdSchema.optional().default(""),
   linkedDealId: objectIdSchema.optional().default(""),
+  requestQuote: z.boolean().default(false),
 });
 export type CreateActivityInput = z.infer<typeof createActivitySchema>;
 
@@ -88,5 +89,6 @@ export const updateActivitySchema = z.object({
   linkedPresupuestoId: objectIdSchema.optional(),
   linkedDealId: objectIdSchema.optional(),
   salesAgentId: objectIdSchema.optional(),
+  requestQuote: z.boolean().optional(),
 });
 export type UpdateActivityInput = z.infer<typeof updateActivitySchema>;

@@ -34,11 +34,9 @@ const statusStyles: Record<string, { chip: string; dot: string }> = {
 
 export function PresupuestoDetail({
   presupuesto,
-  linkedDealId,
   sourceActivity,
 }: {
   presupuesto: Presupuesto;
-  linkedDealId?: string;
   sourceActivity?: Activity | null;
 }) {
   const router = useRouter();
@@ -93,11 +91,6 @@ export function PresupuestoDetail({
           | null;
         throw new Error(data?.error ?? "No se pudo aceptar el presupuesto");
       }
-      const data = (await res.json()) as { deal?: { _id: string } };
-      if (data.deal?._id) {
-        router.push(`/admin/deals/${data.deal._id}`);
-        return;
-      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -114,38 +107,26 @@ export function PresupuestoDetail({
         </div>
       )}
 
-      {isAccepted && linkedDealId && (
+      {isAccepted && (
         <div
-          className="flex flex-col gap-3 rounded-lg border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+          className="flex items-center gap-2 rounded-lg border px-4 py-3 text-sm"
           style={{
             background: `linear-gradient(135deg, ${theme.accent}10, transparent)`,
             borderColor: theme.accent + "40",
           }}
         >
-          <div className="flex items-center gap-2">
-            <span
-              className="flex size-7 shrink-0 items-center justify-center rounded-md text-white"
-              style={{ backgroundColor: theme.accent }}
-            >
-              <Check className="size-4" />
-            </span>
-            <div>
-              <p className="font-semibold text-zinc-900">
-                Presupuesto aceptado
-              </p>
-              <p className="text-[12px] text-zinc-500">
-                Se generó una oportunidad en el pipeline.
-              </p>
-            </div>
-          </div>
-          <Button
-            asChild
-            size="sm"
-            className="self-start text-white sm:self-auto"
+          <span
+            className="flex size-7 shrink-0 items-center justify-center rounded-md text-white"
             style={{ backgroundColor: theme.accent }}
           >
-            <Link href={`/admin/deals/${linkedDealId}`}>Ver oportunidad →</Link>
-          </Button>
+            <Check className="size-4" />
+          </span>
+          <div>
+            <p className="font-semibold text-zinc-900">Presupuesto aceptado</p>
+            <p className="text-[12px] text-zinc-500">
+              El presupuesto fue marcado como aceptado por el cliente.
+            </p>
+          </div>
         </div>
       )}
 

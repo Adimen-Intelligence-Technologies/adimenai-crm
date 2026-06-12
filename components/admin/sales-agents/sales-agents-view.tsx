@@ -11,7 +11,7 @@ export function SalesAgentsView({ agents }: { agents: SalesAgent[] }) {
     <div className="flex animate-fade-in flex-col gap-6">
       <PageHeader
         title="Comerciales"
-        description="Personas que dan seguimiento a los clientes y registran las actividades del pipeline."
+        description="Personas que registran actividades y firman presupuestos."
         search={
           <div className="flex w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center">
             <div className="group relative w-full lg:w-72">

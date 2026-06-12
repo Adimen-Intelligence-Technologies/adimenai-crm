@@ -1,31 +1,30 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   createTaskSchema,
-  taskAssigneeEnum,
   taskColumnEnum,
 } from "@/lib/schemas/task";
+import { ObjectId } from "mongodb";
 import { createTask, listTasks } from "@/lib/repositories/tasks";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const scope = searchParams.get("scope");
-    const assignee = searchParams.get("assignee");
+    const salesAgentId = searchParams.get("salesAgentId");
     const column = searchParams.get("column");
 
     const filter: Parameters<typeof listTasks>[0] = {};
     if (scope) {
       filter.scope = scope;
     }
-    if (assignee) {
-      const parsed = taskAssigneeEnum.safeParse(assignee);
-      if (!parsed.success) {
+    if (salesAgentId) {
+      if (!ObjectId.isValid(salesAgentId)) {
         return NextResponse.json(
-          { error: "assignee inválido" },
+          { error: "salesAgentId inválido" },
           { status: 400 }
         );
       }
-      filter.assignee = parsed.data;
+      filter.salesAgentId = salesAgentId;
     }
     if (column) {
       const parsed = taskColumnEnum.safeParse(column);

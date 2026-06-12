@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Building2,
   Calendar,
+  CalendarPlus,
   Clock,
   Copy,
   ExternalLink,
@@ -11,6 +12,7 @@ import {
   Mail,
   MapPin,
   Phone,
+  Plus,
   Receipt,
   Store,
 } from "lucide-react";
@@ -28,9 +30,24 @@ import {
 } from "@/lib/schemas/client";
 import { businessLineTheme } from "@/lib/theme";
 import type { Client } from "@/lib/repositories/clients";
+import type { SalesAgent } from "@/lib/repositories/sales-agents";
+import type { Activity } from "@/lib/repositories/activities";
+import { SalesAgentPicker } from "@/components/admin/sales-agents/sales-agent-picker";
+import { ActivityTimeline } from "@/components/admin/activities/activity-timeline";
+import { ActivityForm } from "@/components/admin/activities/activity-form";
 import { cn } from "@/lib/utils";
 
-export function ClientDetailTabs({ client }: { client: Client }) {
+type Tab = "info" | "history";
+
+export function ClientDetailTabs({
+  client,
+  salesAgents = [],
+  activities = [],
+}: {
+  client: Client;
+  salesAgents?: SalesAgent[];
+  activities?: Activity[];
+}) {
   const theme = businessLineTheme[client.businessLine];
   const isHerrikonekt = client.businessLine === "herrikonekt";
   const billingActive = !!client.billing?.invoicingActive;
@@ -44,6 +61,13 @@ export function ClientDetailTabs({ client }: { client: Client }) {
     .map((s) => s[0])
     .join("")
     .toUpperCase();
+
+  const [tab, setTab] = useState<Tab>("info");
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const salesAgentsById: Record<string, SalesAgent> = {};
+  for (const a of salesAgents) salesAgentsById[a._id] = a;
 
   return (
     <div className="flex animate-fade-in flex-col gap-5">
@@ -85,10 +109,35 @@ export function ClientDetailTabs({ client }: { client: Client }) {
                   {client.description}
                 </p>
               )}
+
+              {/* Comercial asignado */}
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-[11px] font-semibold tracking-wide text-white/70 uppercase">
+                  Comercial
+                </span>
+                <div className="rounded-md bg-white/10 p-0.5 backdrop-blur-sm">
+                  <SalesAgentPicker
+                    clientId={client._id}
+                    currentAgentId={client.assignedSalesAgentId ?? ""}
+                    agents={salesAgents}
+                    size="sm"
+                    showLabel
+                    includeInactive
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActivityOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-white px-3 text-[13px] font-bold text-zinc-900 shadow-sm transition-colors hover:bg-white/90"
+            >
+              <CalendarPlus className="size-3.5" />
+              Registrar visita
+            </button>
             {client.phones?.[0] && (
               <ActionButton href={`tel:${client.phones[0]}`} icon={Phone} label="Llamar" />
             )}
@@ -112,318 +161,399 @@ export function ClientDetailTabs({ client }: { client: Client }) {
         </div>
       </div>
 
-      {/* Cuerpo en grid */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {/* Columna principal */}
-        <div className="flex flex-col gap-5 lg:col-span-2">
-          {/* Tarjeta unificada de contacto (estilo Apple) */}
-          <Card>
-            <div className="divide-y divide-zinc-100">
-              {/* Web */}
-              {client.website && (
-                <ContactRow
-                  icon={Globe}
-                  label="Web"
-                  value={client.website.replace(/^https?:\/\//, "")}
-                  href={client.website}
-                  external
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-zinc-200">
+        <TabButton active={tab === "info"} onClick={() => setTab("info")}>
+          Información
+        </TabButton>
+        <TabButton active={tab === "history"} onClick={() => setTab("history")}>
+          Historial
+          {activities.length > 0 && (
+            <span className="ml-1.5 rounded-full bg-zinc-100 px-1.5 text-[10px] font-semibold tabular-nums text-zinc-600">
+              {activities.length}
+            </span>
+          )}
+        </TabButton>
+      </div>
+
+      {tab === "info" ? (
+        <ClientInfoGrid client={client} isHerrikonekt={isHerrikonekt} billingActive={billingActive} isOn={isOn} />
+      ) : (
+        <div key={refreshKey} className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold tracking-tight text-zinc-950">
+                Historial comercial
+              </h2>
+              <p className="text-[12px] text-zinc-500">
+                Visitas, llamadas, emails y notas de seguimiento.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActivityOpen(true)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+            >
+              <Plus className="size-3.5" />
+              Nueva actividad
+            </button>
+          </div>
+          <ActivityTimeline
+            activities={activities}
+            salesAgentsById={salesAgentsById}
+            onChange={() => setRefreshKey((k) => k + 1)}
+            emptyMessage="Aún no hay actividades registradas para este cliente. Registra la primera visita o llamada."
+          />
+        </div>
+      )}
+
+      <ActivityForm
+        open={activityOpen}
+        onOpenChange={setActivityOpen}
+        clients={[client]}
+        clientId={client._id}
+        salesAgents={salesAgents}
+        defaultSalesAgentId={client.assignedSalesAgentId}
+        onSaved={() => setRefreshKey((k) => k + 1)}
+      />
+    </div>
+  );
+}
+
+function ClientInfoGrid({
+  client,
+  isHerrikonekt,
+  billingActive,
+  isOn,
+}: {
+  client: Client;
+  isHerrikonekt: boolean;
+  billingActive: boolean;
+  isOn: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div className="flex flex-col gap-5 lg:col-span-2">
+        <Card>
+          <div className="divide-y divide-zinc-100">
+            {client.website && (
+              <ContactRow
+                icon={Globe}
+                label="Web"
+                value={client.website.replace(/^https?:\/\//, "")}
+                href={client.website}
+                external
+              />
+            )}
+            {client.email && (
+              <ContactRow
+                icon={Mail}
+                label="Email"
+                value={client.email}
+                href={`mailto:${client.email}`}
+              />
+            )}
+            {client.social?.instagram && (
+              <ContactRow
+                icon={Instagram}
+                label="Instagram"
+                value={
+                  client.social.instagram.startsWith("http")
+                    ? client.social.instagram.split("/").pop() ?? "Instagram"
+                    : client.social.instagram.replace(/^@/, "")
+                }
+                href={
+                  client.social.instagram.startsWith("http")
+                    ? client.social.instagram
+                    : `https://instagram.com/${client.social.instagram.replace(/^@/, "")}`
+                }
+                external
+              />
+            )}
+            {client.social?.facebook && (
+              <ContactRow
+                icon={Facebook}
+                label="Facebook"
+                value={
+                  client.social.facebook.includes("/")
+                    ? client.social.facebook.split("/").pop() ?? "Facebook"
+                    : client.social.facebook
+                }
+                href={client.social.facebook}
+                external
+              />
+            )}
+            {client.phones && client.phones.length > 0 && (
+              <ContactRow
+                icon={Phone}
+                label={client.phones.length > 1 ? `Teléfonos (${client.phones.length})` : "Teléfono"}
+                value={client.phones.join(" · ")}
+                mono
+                action={<CopyButton value={client.phones[0]} label="Copiar" />}
+              />
+            )}
+            {client.addresses && client.addresses.length > 0 && (
+              <ContactRow
+                icon={MapPin}
+                label={client.addresses.length > 1 ? `Direcciones (${client.addresses.length})` : "Dirección"}
+                value={
+                  client.addresses
+                    .map((a) => {
+                      const parts = [a.line1, a.zip, a.city].filter(Boolean);
+                      return a.isPrimary ? parts.join(", ") : null;
+                    })
+                    .filter(Boolean)
+                    .join(" · ") ||
+                  [client.addresses[0].line1, client.addresses[0].zip, client.addresses[0].city]
+                    .filter(Boolean)
+                    .join(", ")
+                }
+                mono
+                action={
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      (() => {
+                        const a = client.addresses.find((x) => x.isPrimary) ?? client.addresses[0];
+                        return [a.line1, a.line2, a.zip, a.city, a.country].filter(Boolean).join(", ");
+                      })()
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Abrir en Google Maps"
+                    className="flex size-8 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-[#3B1E8A]"
+                  >
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                }
+              />
+            )}
+          </div>
+        </Card>
+
+        {client.openingHours && (
+          <Card title="Horario de apertura" subtitle="Apertura semanal del comercio">
+            <HoursGrid hours={client.openingHours} />
+          </Card>
+        )}
+
+        {billingActive && client.billing && (
+          <Card title="Facturación">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {client.billing.legalName && (
+                <BillingItem
+                  icon={Building2}
+                  label="Razón social"
+                  value={client.billing.legalName}
                 />
               )}
-              {/* Email */}
-              {client.email && (
-                <ContactRow
+              <BillingItem
+                icon={Receipt}
+                label="Identificador fiscal"
+                value={client.billing.taxId ?? "—"}
+                sub={
+                  taxIdTypeLabels[client.billing.taxIdType as TaxIdType] ??
+                  client.billing.taxIdType
+                }
+              />
+              {client.billing.billingEmail && (
+                <BillingItem
                   icon={Mail}
-                  label="Email"
-                  value={client.email}
-                  href={`mailto:${client.email}`}
+                  label="Email facturación"
+                  value={client.billing.billingEmail}
+                  href={`mailto:${client.billing.billingEmail}`}
                 />
               )}
-              {/* Instagram */}
-              {client.social?.instagram && (
-                <ContactRow
-                  icon={Instagram}
-                  label="Instagram"
-                  value={
-                    client.social.instagram.startsWith("http")
-                      ? client.social.instagram.split("/").pop() ?? "Instagram"
-                      : client.social.instagram.replace(/^@/, "")
-                  }
-                  href={
-                    client.social.instagram.startsWith("http")
-                      ? client.social.instagram
-                      : `https://instagram.com/${client.social.instagram.replace(/^@/, "")}`
-                  }
-                  external
-                />
-              )}
-              {/* Facebook */}
-              {client.social?.facebook && (
-                <ContactRow
-                  icon={Facebook}
-                  label="Facebook"
-                  value={
-                    client.social.facebook.includes("/")
-                      ? client.social.facebook.split("/").pop() ?? "Facebook"
-                      : client.social.facebook
-                  }
-                  href={client.social.facebook}
-                  external
-                />
-              )}
-              {/* Teléfonos */}
-              {client.phones && client.phones.length > 0 && (
-                <ContactRow
+              {client.billing.billingPhone && (
+                <BillingItem
                   icon={Phone}
-                  label={client.phones.length > 1 ? `Teléfonos (${client.phones.length})` : "Teléfono"}
-                  value={client.phones.join(" · ")}
+                  label="Teléfono facturación"
+                  value={client.billing.billingPhone}
+                  href={`tel:${client.billing.billingPhone}`}
                   mono
-                  action={
-                    <CopyButton
-                      value={client.phones[0]}
-                      label="Copiar"
-                    />
-                  }
                 />
               )}
-              {/* Direcciones */}
-              {client.addresses && client.addresses.length > 0 && (
-                <ContactRow
-                  icon={MapPin}
-                  label={client.addresses.length > 1 ? `Direcciones (${client.addresses.length})` : "Dirección"}
-                  value={
-                    client.addresses
-                      .map((a) => {
-                        const parts = [a.line1, a.zip, a.city].filter(Boolean);
-                        return a.isPrimary ? parts.join(", ") : null;
-                      })
-                      .filter(Boolean)
-                      .join(" · ") ||
-                    [client.addresses[0].line1, client.addresses[0].zip, client.addresses[0].city]
-                      .filter(Boolean)
-                      .join(", ")
-                  }
-                  mono
-                  action={
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        client.addresses
-                          .find((a) => a.isPrimary) ?? client.addresses[0]
-                        ? (() => {
-                            const a = client.addresses.find((x) => x.isPrimary) ?? client.addresses[0];
-                            return [a.line1, a.line2, a.zip, a.city, a.country].filter(Boolean).join(", ");
-                          })()
-                        : ""
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label="Abrir en Google Maps"
-                      className="flex size-8 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-[#3B1E8A]"
-                    >
-                      <ExternalLink className="size-3.5" />
-                    </a>
-                  }
+              <BillingItem
+                icon={Receipt}
+                label="Método de pago"
+                value={
+                  paymentMethodLabels[client.billing.paymentMethod as PaymentMethod] ??
+                  client.billing.paymentMethod
+                }
+              />
+              {client.billing.paymentTerms && (
+                <BillingItem
+                  icon={Clock}
+                  label="Condiciones"
+                  value={client.billing.paymentTerms}
                 />
+              )}
+              {client.billing.address?.line1 && (
+                <div className="sm:col-span-2">
+                  <BillingItem
+                    icon={MapPin}
+                    label="Dirección fiscal"
+                    value={`${client.billing.address.line1}${client.billing.address.line2 ? `, ${client.billing.address.line2}` : ""}`}
+                    sub={[client.billing.address.zip, client.billing.address.city]
+                      .filter(Boolean)
+                      .join(" ")}
+                  />
+                </div>
+              )}
+              {client.billing.internalNotes && (
+                <div className="sm:col-span-2">
+                  <p className="text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
+                    Notas internas
+                  </p>
+                  <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-zinc-700">
+                    {client.billing.internalNotes}
+                  </p>
+                </div>
               )}
             </div>
           </Card>
+        )}
+      </div>
 
-          {/* Horario */}
-          {client.openingHours && (
-            <Card title="Horario de apertura" subtitle="Apertura semanal del comercio">
-              <HoursGrid hours={client.openingHours} />
-            </Card>
-          )}
-
-          {/* Facturación */}
-          {billingActive && client.billing && (
-            <Card title="Facturación">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {client.billing.legalName && (
-                  <BillingItem
-                    icon={Building2}
-                    label="Razón social"
-                    value={client.billing.legalName}
-                  />
-                )}
-                <BillingItem
-                  icon={Receipt}
-                  label="Identificador fiscal"
-                  value={client.billing.taxId ?? "—"}
-                  sub={
-                    taxIdTypeLabels[client.billing.taxIdType as TaxIdType] ??
-                    client.billing.taxIdType
-                  }
-                />
-                {client.billing.billingEmail && (
-                  <BillingItem
-                    icon={Mail}
-                    label="Email facturación"
-                    value={client.billing.billingEmail}
-                    href={`mailto:${client.billing.billingEmail}`}
-                  />
-                )}
-                {client.billing.billingPhone && (
-                  <BillingItem
-                    icon={Phone}
-                    label="Teléfono facturación"
-                    value={client.billing.billingPhone}
-                    href={`tel:${client.billing.billingPhone}`}
-                    mono
-                  />
-                )}
-                <BillingItem
-                  icon={Receipt}
-                  label="Método de pago"
-                  value={
-                    paymentMethodLabels[client.billing.paymentMethod as PaymentMethod] ??
-                    client.billing.paymentMethod
-                  }
-                />
-                {client.billing.paymentTerms && (
-                  <BillingItem
-                    icon={Clock}
-                    label="Condiciones"
-                    value={client.billing.paymentTerms}
-                  />
-                )}
-                {client.billing.address?.line1 && (
-                  <div className="sm:col-span-2">
-                    <BillingItem
-                      icon={MapPin}
-                      label="Dirección fiscal"
-                      value={`${client.billing.address.line1}${client.billing.address.line2 ? `, ${client.billing.address.line2}` : ""}`}
-                      sub={[client.billing.address.zip, client.billing.address.city]
-                        .filter(Boolean)
-                        .join(" ")}
-                    />
-                  </div>
-                )}
-                {client.billing.internalNotes && (
-                  <div className="sm:col-span-2">
-                    <p className="text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
-                      Notas internas
-                    </p>
-                    <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-zinc-700">
-                      {client.billing.internalNotes}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
-        </div>
-
-        {/* Columna lateral */}
-        <div className="flex flex-col gap-5">
-          {isHerrikonekt && (
-            <Card title="Sincronización" subtitle="Herrikonekt">
-              <div
-                className={cn(
-                  "relative overflow-hidden rounded-lg border p-4 transition-colors",
-                  isOn
-                    ? "border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white"
-                    : "border-zinc-200 bg-gradient-to-br from-zinc-50 via-white to-white"
-                )}
-              >
-                <div className="flex items-center gap-4">
-                  <div
+      <div className="flex flex-col gap-5">
+        {isHerrikonekt && (
+          <Card title="Sincronización" subtitle="Herrikonekt">
+            <div
+              className={cn(
+                "relative overflow-hidden rounded-lg border p-4 transition-colors",
+                isOn
+                  ? "border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white"
+                  : "border-zinc-200 bg-gradient-to-br from-zinc-50 via-white to-white"
+              )}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className={cn(
+                    "flex size-12 shrink-0 items-center justify-center rounded-xl shadow-sm",
+                    isOn
+                      ? "bg-emerald-500 text-white"
+                      : "bg-zinc-200 text-zinc-500"
+                  )}
+                >
+                  <Store className="size-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
                     className={cn(
-                      "flex size-12 shrink-0 items-center justify-center rounded-xl shadow-sm",
-                      isOn
-                        ? "bg-emerald-500 text-white"
-                        : "bg-zinc-200 text-zinc-500"
+                      "text-sm font-bold tracking-tight",
+                      isOn ? "text-emerald-900" : "text-zinc-700"
                     )}
                   >
-                    <Store className="size-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className={cn(
-                        "text-sm font-bold tracking-tight",
-                        isOn ? "text-emerald-900" : "text-zinc-700"
-                      )}
-                    >
-                      {isOn ? "Sincronizado" : "Sin sincronizar"}
-                    </p>
-                    <p
-                      className={cn(
-                        "text-[12px]",
-                        isOn ? "text-emerald-700/80" : "text-zinc-500"
-                      )}
-                    >
-                      {isOn
-                        ? "Visible en la app móvil"
-                        : "No aparece en la app móvil"}
-                    </p>
-                  </div>
-                  <div
+                    {isOn ? "Sincronizado" : "Sin sincronizar"}
+                  </p>
+                  <p
                     className={cn(
-                      "relative flex h-7 w-12 shrink-0 items-center rounded-full p-0.5 transition-colors",
-                      isOn ? "bg-emerald-500" : "bg-zinc-300"
+                      "text-[12px]",
+                      isOn ? "text-emerald-700/80" : "text-zinc-500"
                     )}
-                    aria-hidden
                   >
-                    <span
-                      className={cn(
-                        "size-6 rounded-full bg-white shadow-sm transition-transform",
-                        isOn ? "translate-x-5" : "translate-x-0"
-                      )}
-                    />
-                  </div>
+                    {isOn
+                      ? "Visible en la app móvil"
+                      : "No aparece en la app móvil"}
+                  </p>
                 </div>
                 <div
                   className={cn(
-                    "absolute -right-6 -top-6 size-20 rounded-full opacity-20 blur-2xl",
-                    isOn ? "bg-emerald-400" : "bg-zinc-400"
+                    "relative flex h-7 w-12 shrink-0 items-center rounded-full p-0.5 transition-colors",
+                    isOn ? "bg-emerald-500" : "bg-zinc-300"
                   )}
                   aria-hidden
-                />
+                >
+                  <span
+                    className={cn(
+                      "size-6 rounded-full bg-white shadow-sm transition-transform",
+                      isOn ? "translate-x-5" : "translate-x-0"
+                    )}
+                  />
+                </div>
               </div>
-              <p className="mt-3 text-[12px] text-zinc-500">
-                {isOn
-                  ? "Este comercio está habilitado para aparecer en Herrikonekt."
-                  : "Activa la sincronización desde la edición del cliente."}
-              </p>
-            </Card>
-          )}
+              <div
+                className={cn(
+                  "absolute -right-6 -top-6 size-20 rounded-full opacity-20 blur-2xl",
+                  isOn ? "bg-emerald-400" : "bg-zinc-400"
+                )}
+                aria-hidden
+              />
+            </div>
+            <p className="mt-3 text-[12px] text-zinc-500">
+              {isOn
+                ? "Este comercio está habilitado para aparecer en Herrikonekt."
+                : "Activa la sincronización desde la edición del cliente."}
+            </p>
+          </Card>
+        )}
 
-          <Card title="Fechas">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <Calendar className="size-4 text-zinc-400" />
-                <div>
-                  <p className="text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
-                    Creado
-                  </p>
-                  <p className="text-sm font-medium text-zinc-900">
-                    {new Date(client.createdAt).toLocaleDateString("es-ES", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Clock className="size-4 text-zinc-400" />
-                <div>
-                  <p className="text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
-                    Actualizado
-                  </p>
-                  <p className="text-sm font-medium text-zinc-900">
-                    {new Date(client.updatedAt).toLocaleDateString("es-ES", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
+        <Card title="Fechas">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <Calendar className="size-4 text-zinc-400" />
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
+                  Creado
+                </p>
+                <p className="text-sm font-medium text-zinc-900">
+                  {new Date(client.createdAt).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
             </div>
-          </Card>
-        </div>
+            <div className="flex items-center gap-3">
+              <Clock className="size-4 text-zinc-400" />
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.04em] text-zinc-500 uppercase">
+                  Actualizado
+                </p>
+                <p className="text-sm font-medium text-zinc-900">
+                  {new Date(client.updatedAt).toLocaleDateString("es-ES", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative inline-flex h-9 items-center px-3 text-[13px] font-semibold transition-colors",
+        active
+          ? "text-[#3B1E8A]"
+          : "text-zinc-500 hover:text-zinc-900"
+      )}
+    >
+      {children}
+      {active && (
+        <span
+          className="absolute inset-x-0 -bottom-px h-0.5 rounded-t-full bg-[#3B1E8A]"
+          aria-hidden
+        />
+      )}
+    </button>
   );
 }
 

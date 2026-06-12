@@ -14,15 +14,13 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   suggestedScopes,
-  taskAssigneeEnum,
-  taskAssigneeLabels,
   taskColumnEnum,
   taskColumnLabels,
-  type TaskAssignee,
   type TaskColumn,
 } from "@/lib/schemas/task";
 import { businessLineTheme } from "@/lib/theme";
 import type { Task } from "@/lib/repositories/tasks";
+import type { SalesAgent } from "@/lib/repositories/sales-agents";
 import { AssigneeAvatar } from "./assignee-avatar";
 
 type InitialTask = Partial<Task> & { _id?: string };
@@ -31,6 +29,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial?: InitialTask;
+  salesAgents: SalesAgent[];
   onSaved: (task: Task) => void;
 };
 
@@ -39,7 +38,7 @@ type FormValues = {
   description: string;
   scope: string;
   column: TaskColumn;
-  assignee: TaskAssignee;
+  salesAgentId: string;
   dueDate: string;
 };
 
@@ -49,12 +48,18 @@ function defaultValues(initial?: InitialTask): FormValues {
     description: initial?.description ?? "",
     scope: initial?.scope ?? "General",
     column: (initial?.column as TaskColumn) ?? "backlog",
-    assignee: (initial?.assignee as TaskAssignee) ?? "andrea",
+    salesAgentId: initial?.salesAgentId ?? "",
     dueDate: initial?.dueDate ?? "",
   };
 }
 
-export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
+export function TaskForm({
+  open,
+  onOpenChange,
+  initial,
+  salesAgents,
+  onSaved,
+}: Props) {
   const [values, setValues] = useState<FormValues>(() => defaultValues(initial));
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +67,6 @@ export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
   const mode: "create" | "edit" = initial?._id ? "edit" : "create";
   const initialRef = useRef(initial);
 
-  // Re-sincronizar solo cuando cambia la referencia de `initial` (al abrir una tarea distinta)
   useEffect(() => {
     if (initial !== initialRef.current) {
       initialRef.current = initial;
@@ -71,7 +75,6 @@ export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
     }
   }, [initial]);
 
-  // Reset al abrir el Sheet (open pasa de false a true)
   const prevOpen = useRef(open);
   useEffect(() => {
     if (open && !prevOpen.current) {
@@ -94,7 +97,7 @@ export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
       description: values.description.trim(),
       scope: values.scope,
       column: values.column,
-      assignee: values.assignee,
+      salesAgentId: values.salesAgentId,
       dueDate: values.dueDate.trim(),
     };
 
@@ -124,6 +127,8 @@ export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
     });
   }
 
+  const activeAgents = salesAgents.filter((a) => a.isActive);
+
   return (
     <Sheet
       open={open}
@@ -143,7 +148,7 @@ export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
             </SheetTitle>
             <SheetDescription>
               {mode === "create"
-                ? "Crea una tarea y asígnala a un miembro del equipo."
+                ? "Crea una tarea y asígnala a un comercial."
                 : "Modifica los datos de la tarea."}
             </SheetDescription>
           </SheetHeader>
@@ -217,27 +222,41 @@ export function TaskForm({ open, onOpenChange, initial, onSaved }: Props) {
               </NativeSelect>
             </Field>
 
-            <Field label="Responsable" required>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {taskAssigneeEnum.options.map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => set("assignee", a)}
-                    className={cn(
-                      "flex flex-col items-center gap-1.5 rounded-md border px-2.5 py-2 transition-colors",
-                      values.assignee === a
-                        ? "border-[#3B1E8A] bg-[#3B1E8A]/5"
-                        : "border-zinc-200 bg-white hover:bg-zinc-50"
-                    )}
+            <Field label="Responsable">
+              {activeAgents.length === 0 ? (
+                <p className="text-xs text-zinc-500">
+                  No hay comerciales activos. Crea uno en{" "}
+                  <a
+                    href="/admin/sales-agents"
+                    className="font-semibold text-[#3B1E8A] underline"
                   >
-                    <AssigneeAvatar assignee={a} size="md" />
-                    <span className="text-xs text-zinc-700">
-                      {taskAssigneeLabels[a]}
-                    </span>
-                  </button>
-                ))}
-              </div>
+                    Comerciales
+                  </a>
+                  .
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {activeAgents.map((a) => (
+                    <button
+                      key={a._id}
+                      type="button"
+                      onClick={() => set("salesAgentId", a._id)}
+                      className={cn(
+                        "flex flex-col items-center gap-1.5 rounded-md border px-2.5 py-2 transition-colors",
+                        values.salesAgentId === a._id
+                          ? "border-[#3B1E8A] bg-[#3B1E8A]/5"
+                          : "border-zinc-200 bg-white hover:bg-zinc-50"
+                      )}
+                    >
+                      <AssigneeAvatar
+                        assignee={{ name: a.name, color: a.color }}
+                        size="md"
+                      />
+                      <span className="text-xs text-zinc-700">{a.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </Field>
 
             <Field label="Fecha límite">

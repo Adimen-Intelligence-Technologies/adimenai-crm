@@ -55,3 +55,18 @@ export async function getServicesCollection() {
   const db = await getDb();
   return db.collection("services");
 }
+
+export async function getSalesAgentsCollection() {
+  const db = await getDb();
+  return db.collection("salesAgents");
+}
+
+export async function getActivitiesCollection() {
+  const db = await getDb();
+  return db.collection("activities");
+}
+
+export async function getDealsCollection() {
+  const db = await getDb();
+  return db.collection("deals");
+}

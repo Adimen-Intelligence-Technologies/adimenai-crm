@@ -1,4 +1,4 @@
-import { Database, DollarSign, Folder, LayoutDashboard, ListChecks, Megaphone, Server, Users, type LucideIcon } from "lucide-react";
+import { Activity, Briefcase, Database, DollarSign, Folder, Kanban, LayoutDashboard, ListChecks, Megaphone, Server, Users, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -26,6 +26,16 @@ export const navGroups: NavGroup[] = [
     folderIcon: Folder,
     items: [
       { label: "Gestión administrativa", href: "/admin/tasks", icon: ListChecks },
+    ],
+  },
+  {
+    label: "Comercial",
+    folder: true,
+    folderIcon: Folder,
+    items: [
+      { label: "Pipeline", href: "/admin/pipeline", icon: Kanban },
+      { label: "Actividades", href: "/admin/activities", icon: Activity },
+      { label: "Comerciales", href: "/admin/sales-agents", icon: Briefcase },
     ],
   },
   {

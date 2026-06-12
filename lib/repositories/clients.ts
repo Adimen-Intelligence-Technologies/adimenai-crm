@@ -32,6 +32,7 @@ export type Client = {
   social?: ClientSocialLinks;
   billing?: ClientBilling;
   openingHours?: OpeningHours;
+  assignedSalesAgentId?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -55,6 +56,7 @@ export async function listClients(filter: {
   businessLine?: BusinessLine;
   q?: string;
   type?: string;
+  assignedSalesAgentId?: string;
   page?: number;
   pageSize?: number;
 } = {}): Promise<PaginatedResult<Client>> {
@@ -62,6 +64,9 @@ export async function listClients(filter: {
   const query: Record<string, unknown> = {};
   if (filter.businessLine) query.businessLine = filter.businessLine;
   if (filter.type && filter.type.trim()) query.type = filter.type.trim();
+  if (filter.assignedSalesAgentId && filter.assignedSalesAgentId.trim()) {
+    query.assignedSalesAgentId = filter.assignedSalesAgentId.trim();
+  }
   if (filter.q && filter.q.trim()) {
     const term = filter.q.trim();
     const rx = new RegExp(escapeRegex(term), "i");

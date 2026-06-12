@@ -32,29 +32,9 @@ export const taskColumnLabels: Record<TaskColumn, string> = {
 
 export const taskColumnOrder: TaskColumn[] = ["backlog", "in_progress", "done"];
 
-export const taskAssigneeEnum = z.enum(["andrea", "asier", "joseba", "inaki"]);
-export type TaskAssignee = z.infer<typeof taskAssigneeEnum>;
-
-export const taskAssigneeLabels: Record<TaskAssignee, string> = {
-  andrea: "Andrea",
-  asier: "Asier",
-  joseba: "Joseba",
-  inaki: "Iñaki",
-};
-
-export const taskAssigneeInitials: Record<TaskAssignee, string> = {
-  andrea: "AN",
-  asier: "AS",
-  joseba: "JB",
-  inaki: "IK",
-};
-
-export const taskAssigneeColors: Record<TaskAssignee, string> = {
-  andrea: "#EC4899", // pink
-  asier: "#3B82F6", // blue
-  joseba: "#10B981", // emerald
-  inaki: "#F59E0B", // amber
-};
+const objectIdSchema = z
+  .string()
+  .refine((v) => /^[a-f\d]{24}$/i.test(v), "Identificador no válido");
 
 export const createTaskSchema = z.object({
   title: z.string().trim().min(1, "El título es obligatorio"),
@@ -65,7 +45,7 @@ export const createTaskSchema = z.object({
     .min(1, "El ámbito es obligatorio")
     .default("General"),
   column: taskColumnEnum.default("backlog"),
-  assignee: taskAssigneeEnum,
+  salesAgentId: objectIdSchema.optional().default(""),
   dueDate: z.string().optional().default(""),
 });
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;

@@ -841,7 +841,7 @@ export function ClientFormHerrikonekt({ mode, initial }: Props) {
 
       {/* Footer sticky compacto */}
       <footer className="fixed bottom-0 left-0 right-0 z-10 border-t border-zinc-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:-mx-6 sm:px-6 md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
           <div className="hidden truncate text-xs text-zinc-900 sm:block">
             <span className="font-semibold">{form.name || "Sin nombre"}</span>
             {form.type && <span className="text-zinc-900"> · {form.type}</span>}

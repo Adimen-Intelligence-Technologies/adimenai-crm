@@ -4,17 +4,16 @@ import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  taskAssigneeLabels,
   taskColumnLabels,
-  type TaskAssignee,
   type TaskColumn,
 } from "@/lib/schemas/task";
 import type { Task } from "@/lib/repositories/tasks";
-import { AssigneeAvatar } from "./assignee-avatar";
+import { AssigneeAvatar, type AssigneeLike } from "./assignee-avatar";
 import { ScopeBadge } from "./scope-badge";
 
 type Props = {
   tasks: Task[];
+  salesAgentsById?: Record<string, AssigneeLike>;
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
 };
@@ -29,7 +28,7 @@ function formatDueDate(dueDate: string): string | null {
   });
 }
 
-export function TaskList({ tasks, onEdit, onDelete }: Props) {
+export function TaskList({ tasks, salesAgentsById, onEdit, onDelete }: Props) {
   if (tasks.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-zinc-200 bg-white px-4 py-12 text-center text-sm text-zinc-500">
@@ -57,6 +56,7 @@ export function TaskList({ tasks, onEdit, onDelete }: Props) {
               key={task._id}
               task={task}
               order={i + 1}
+              salesAgentsById={salesAgentsById}
               onEdit={onEdit}
               onDelete={onDelete}
             />
@@ -70,16 +70,22 @@ export function TaskList({ tasks, onEdit, onDelete }: Props) {
 function Row({
   task,
   order,
+  salesAgentsById,
   onEdit,
   onDelete,
 }: {
   task: Task;
   order: number;
+  salesAgentsById?: Record<string, AssigneeLike>;
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
 }) {
   const isDone = task.column === "done";
   const due = formatDueDate(task.dueDate ?? "");
+  const assignee = task.salesAgentId
+    ? salesAgentsById?.[task.salesAgentId] ?? null
+    : null;
+  const assigneeName = assignee?.name ?? "Sin asignar";
 
   return (
     <tr
@@ -112,7 +118,7 @@ function Row({
         </div>
       </td>
       <td className="px-4 py-3">
-        <AssigneeAvatar assignee={task.assignee} size="sm" showName />
+        <AssigneeAvatar assignee={assignee} size="sm" showName />
       </td>
       <td className="hidden px-4 py-3 text-zinc-600 md:table-cell">
         {taskColumnLabels[task.column as TaskColumn]}
@@ -134,7 +140,7 @@ function Row({
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label={`Editar ${taskAssigneeLabels[task.assignee as TaskAssignee]}`}
+              aria-label={`Editar ${assigneeName}`}
               className="text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
               onClick={() => onEdit(task)}
             >

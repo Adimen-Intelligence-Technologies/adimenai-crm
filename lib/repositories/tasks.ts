@@ -2,7 +2,6 @@ import { ObjectId } from "mongodb";
 import { getTasksCollection } from "@/lib/db";
 import type {
   CreateTaskInput,
-  TaskAssignee,
   TaskColumn,
   TaskScope,
   UpdateTaskInput,
@@ -15,28 +14,40 @@ export type Task = {
   scope: TaskScope;
   column: TaskColumn;
   order: number;
-  assignee: TaskAssignee;
+  salesAgentId?: string;
   dueDate?: string;
   createdAt: string;
   updatedAt: string;
 };
 
-type TaskDoc = Omit<Task, "_id"> & { _id: ObjectId };
+type TaskDoc = Omit<Task, "_id" | "salesAgentId"> & {
+  _id: ObjectId;
+  salesAgentId?: ObjectId | string;
+};
 
 function toTask(doc: TaskDoc): Task {
-  const { _id, ...rest } = doc;
-  return { _id: _id.toString(), ...rest };
+  const { _id, salesAgentId, ...rest } = doc;
+  const result: Task = { _id: _id.toString(), ...rest };
+  if (salesAgentId) {
+    result.salesAgentId =
+      salesAgentId instanceof ObjectId
+        ? salesAgentId.toString()
+        : String(salesAgentId);
+  }
+  return result;
 }
 
 export async function listTasks(filter: {
   scope?: TaskScope;
-  assignee?: TaskAssignee;
+  salesAgentId?: string;
   column?: TaskColumn;
 } = {}): Promise<Task[]> {
   const collection = await getTasksCollection();
   const query: Record<string, unknown> = {};
   if (filter.scope) query.scope = filter.scope;
-  if (filter.assignee) query.assignee = filter.assignee;
+  if (filter.salesAgentId && ObjectId.isValid(filter.salesAgentId)) {
+    query.salesAgentId = new ObjectId(filter.salesAgentId);
+  }
   if (filter.column) query.column = filter.column;
   const docs = (await collection
     .find(query)
@@ -69,13 +80,16 @@ export async function createTask(data: CreateTaskInput): Promise<Task> {
     scope: data.scope,
     column: data.column,
     order,
-    assignee: data.assignee,
+    salesAgentId:
+      data.salesAgentId && ObjectId.isValid(data.salesAgentId)
+        ? new ObjectId(data.salesAgentId)
+        : undefined,
     dueDate: data.dueDate ?? "",
     createdAt: now,
     updatedAt: now,
   };
   const result = await collection.insertOne(doc as unknown as TaskDoc);
-  return { _id: result.insertedId.toString(), ...doc };
+  return toTask({ _id: result.insertedId, ...doc });
 }
 
 export async function updateTask(
@@ -84,9 +98,22 @@ export async function updateTask(
 ): Promise<Task | null> {
   if (!ObjectId.isValid(id)) return null;
   const collection = await getTasksCollection();
+  const setData: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  for (const [key, value] of Object.entries(data)) {
+    if (value === undefined) continue;
+    if (key === "salesAgentId") {
+      if (value && ObjectId.isValid(String(value))) {
+        setData.salesAgentId = new ObjectId(String(value));
+      } else {
+        setData.salesAgentId = null;
+      }
+      continue;
+    }
+    setData[key] = value;
+  }
   const result = await collection.findOneAndUpdate(
     { _id: new ObjectId(id) },
-    { $set: { ...data, updatedAt: new Date().toISOString() } },
+    { $set: setData },
     { returnDocument: "after" }
   );
   if (!result) return null;

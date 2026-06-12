@@ -213,7 +213,7 @@ export function PresupuestoForm({ mode, initial }: Props) {
         <div className="grid grid-cols-1 gap-5">
           {/* Linea de negocio */}
           <Field label="Línea de negocio">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {(["adimenai", "herrikonekt", "hiopos"] as const).map((line) => {
                 const prefix = businessLinePrefix[line];
                 return (
@@ -309,81 +309,83 @@ export function PresupuestoForm({ mode, initial }: Props) {
 
           {/* Lineas de pedido */}
           <div>
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-zinc-900">Líneas de pedido</h3>
               <Button type="button" variant="ghost" size="sm" onClick={addItem} className="text-[#3B1E8A] hover:bg-[#3B1E8A]/10">
                 <Plus /> Añadir línea
               </Button>
             </div>
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 text-xs font-medium text-zinc-500">
-                  <th className="py-2 pr-2">Título</th>
-                  <th className="w-20 px-2 py-2">Cant.</th>
-                  <th className="w-28 px-2 py-2">Precio ud.</th>
-                  <th className="w-28 px-2 py-2 text-right">Total</th>
-                  <th className="w-10 py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, i) => (
-                  <tr key={i} className="border-b border-zinc-100">
-                    <td className="py-1 pr-2">
-                      <Input
-                        value={item.title}
-                        onChange={(e) => updateItem(i, { title: e.target.value })}
-                        placeholder="Ej. Página web"
-                        className="h-8"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min={1}
-                        value={item.quantity}
-                        onChange={(e) => updateItem(i, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
-                        className="h-8 text-center"
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        value={item.unitPrice}
-                        onChange={(e) => updateItem(i, { unitPrice: Math.max(0, parseFloat(e.target.value) || 0) })}
-                        className="h-8 text-right"
-                      />
-                    </td>
-                    <td className="px-2 py-1 text-right font-mono text-sm text-zinc-900">
-                      {item.total.toFixed(2).replace(".", ",")} €
-                    </td>
-                    <td className="py-1">
-                      {items.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => removeItem(i)}
-                          className="text-zinc-400 hover:text-rose-600"
-                        >
-                          <X />
-                        </Button>
-                      )}
-                    </td>
+            <div className="overflow-x-auto rounded-md border border-zinc-200">
+              <table className="w-full min-w-[36rem] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 text-xs font-medium text-zinc-500">
+                    <th className="py-2 pr-2">Título</th>
+                    <th className="w-20 px-2 py-2">Cant.</th>
+                    <th className="w-28 px-2 py-2">Precio ud.</th>
+                    <th className="w-28 px-2 py-2 text-right">Total</th>
+                    <th className="w-10 py-2" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {items.map((item, i) => (
+                    <tr key={i} className="border-b border-zinc-100">
+                      <td className="py-1 pr-2">
+                        <Input
+                          value={item.title}
+                          onChange={(e) => updateItem(i, { title: e.target.value })}
+                          placeholder="Ej. Página web"
+                          className="h-8"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min={1}
+                          value={item.quantity}
+                          onChange={(e) => updateItem(i, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                          className="h-8 text-center"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          value={item.unitPrice}
+                          onChange={(e) => updateItem(i, { unitPrice: Math.max(0, parseFloat(e.target.value) || 0) })}
+                          className="h-8 text-right"
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-right font-mono text-sm text-zinc-900">
+                        {item.total.toFixed(2).replace(".", ",")} €
+                      </td>
+                      <td className="py-1">
+                        {items.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => removeItem(i)}
+                            className="text-zinc-400 hover:text-rose-600"
+                          >
+                            <X />
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Totales */}
-          <div className="ml-auto w-64 space-y-1 border-t border-zinc-200 pt-3">
+          <div className="ml-auto w-full max-w-xs space-y-1 border-t border-zinc-200 pt-3">
             <div className="flex justify-between text-sm">
               <span className="text-zinc-600">Subtotal</span>
               <span className="font-mono text-zinc-900">{subtotal.toFixed(2).replace(".", ",")} €</span>
             </div>
-            <div className="flex items-center justify-between gap-2 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <span className="text-zinc-600">IVA</span>
               <div className="flex items-center gap-1">
                 <Input
@@ -395,8 +397,8 @@ export function PresupuestoForm({ mode, initial }: Props) {
                   className="h-7 w-16 text-right"
                 />
                 <span className="text-zinc-500">%</span>
+                <span className="font-mono text-zinc-900">{taxAmount.toFixed(2).replace(".", ",")} €</span>
               </div>
-              <span className="font-mono text-zinc-900">{taxAmount.toFixed(2).replace(".", ",")} €</span>
             </div>
             <div className="flex justify-between border-t border-zinc-200 pt-1 text-sm font-semibold">
               <span className="text-zinc-900">Total</span>

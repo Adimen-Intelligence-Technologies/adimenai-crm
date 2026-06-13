@@ -353,19 +353,6 @@ export function PresupuestoPDF(props: PresupuestoPDFProps) {
           </View>
         </View>
 
-        <View style={styles.termsWrap}>
-          <Text style={styles.termsTitle}>Términos y condiciones</Text>
-          <Text style={styles.termsText}>
-            Los términos de pago y las tarifas se establecerán en el contrato o acuerdo previo al inicio del proyecto.
-            Se requerirá un depósito inicial antes de comenzar cualquier trabajo de diseño. Nos reservamos el derecho
-            de suspender o detener el trabajo en caso de impago.
-          </Text>
-        </View>
-
-        <Text style={styles.refText}>
-          Por favor, utilice <Text style={styles.refNormal}>{props.number}</Text> como número de referencia.
-        </Text>
-
         {props.notes ? <Text style={styles.notes}>{props.notes}</Text> : null}
       </Page>
     </Document>

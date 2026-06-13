@@ -25,6 +25,7 @@ type Props = {
   defaultClientId?: string;
   defaultSalesAgentId?: string;
   defaultSourceActivityId?: string;
+  defaultBusinessLine?: string;
 };
 
 type ClientOption = Pick<Client, "_id" | "name" | "email" | "phones" | "addresses" | "billing">;
@@ -161,13 +162,14 @@ export function PresupuestoForm({
   defaultClientId,
   defaultSalesAgentId,
   defaultSourceActivityId,
+  defaultBusinessLine,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const [businessLines, setBusinessLines] = useState<string[]>(
-    initial?.businessLines ?? ["adimenai"]
+    initial?.businessLines ?? (defaultBusinessLine ? [defaultBusinessLine] : ["adimenai"])
   );
   const [clientQuery, setClientQuery] = useState("");
   const [clientResults, setClientResults] = useState<ClientOption[]>([]);
@@ -605,22 +607,6 @@ export function PresupuestoForm({
             </div>
           </div>
         </div>
-
-        {/* ===== TERMS ===== */}
-        <div className="border-b border-zinc-200 px-10 py-5">
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.06em] text-zinc-500">
-            Términos y condiciones
-          </p>
-          <p className="text-[11px] leading-relaxed text-zinc-500">
-            Los términos de pago y las tarifas se establecerán en el contrato o acuerdo previo al inicio del proyecto.
-            Se requerirá un depósito inicial antes de comenzar cualquier trabajo de diseño. Nos reservamos el derecho
-            de suspender o detener el trabajo en caso de impago.
-          </p>
-          <p className="mt-3 text-[11px] text-zinc-600">
-            Por favor, utilice <span className="font-bold">{presupuestoNumber}</span> como número de referencia.
-          </p>
-        </div>
-
 
       </div>
 

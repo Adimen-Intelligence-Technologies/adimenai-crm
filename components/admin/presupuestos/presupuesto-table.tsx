@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, FileText, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Eye, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { businessLineTheme } from "@/lib/theme";
 import { businessLineLabels, presupuestoStatusLabels, type PresupuestoStatus } from "@/lib/schemas/presupuesto";
 import type { Presupuesto } from "@/lib/repositories/presupuestos";
-import type { Activity } from "@/lib/repositories/activities";
+import type { PendingPresupuestoLine } from "@/app/admin/presupuestos/page";
 import { cn } from "@/lib/utils";
 
 export function PresupuestoTable({
@@ -15,17 +16,39 @@ export function PresupuestoTable({
   page,
   totalPages,
   onPageChange,
-  pendingActivities = [],
+  pendingLines = [],
   clientNameMap = {},
 }: {
   presupuestos: Presupuesto[];
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  pendingActivities?: Activity[];
+  pendingLines?: PendingPresupuestoLine[];
   clientNameMap?: Record<string, string>;
 }) {
   const router = useRouter();
+  const [creating, setCreating] = useState<string | null>(null);
+
+  async function handleCreate(activityId: string, businessLine: string) {
+    setCreating(`${activityId}-${businessLine}`);
+    try {
+      const res = await fetch("/api/presupuestos/from-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activityId, businessLine }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Error al crear presupuesto");
+      }
+      const data = await res.json();
+      if (data.presupuesto?._id) {
+        router.push(`/admin/presupuestos/${data.presupuesto._id}/edit`);
+      }
+    } catch {
+      setCreating(null);
+    }
+  }
 
   async function handleDelete(id: string, e: React.MouseEvent) {
     e.preventDefault();
@@ -50,58 +73,53 @@ export function PresupuestoTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
-          {pendingActivities.map((a) => (
-            <tr
-              key={`pending-${a._id}`}
-              className="bg-amber-50/40 transition-colors duration-100 hover:bg-amber-50/70"
-            >
-              <td className="max-w-[12rem] truncate px-4 py-3 text-[12px] font-medium text-zinc-900">
-                {a.subject}
-              </td>
-              <td className="px-4 py-3 font-medium text-zinc-900">
-                {clientNameMap[a.clientId] ?? "—"}
-              </td>
-              <td className="hidden px-4 py-3 sm:table-cell">
-                <div className="flex flex-wrap gap-1">
-                  {(a.requestedBusinessLines ?? []).map((line) => {
-                    const key = line as keyof typeof businessLineTheme;
-                    const theme = businessLineTheme[key] ?? businessLineTheme.adimenai;
-                    return (
-                      <span
-                        key={line}
-                        className={cn(
-                          "rounded px-1.5 py-0.5 text-[10px] font-semibold",
-                          theme.badge
-                        )}
-                      >
-                        {businessLineLabels[line] ?? line}
-                      </span>
-                    );
-                  })}
-                </div>
-              </td>
-              <td className="px-4 py-3 font-mono text-[12px] text-zinc-400">—</td>
-              <td className="hidden px-4 py-3 md:table-cell">
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
-                  <span className="size-1.5 rounded-full bg-amber-500" />
-                  Pendiente
-                </span>
-              </td>
-              <td className="px-4 py-3 text-right">
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-amber-600 hover:text-amber-800"
-                >
-                  <Link href={`/admin/activities#${a._id}`} aria-label="Ver actividad">
-                    <FileText className="size-4" />
-                  </Link>
-                </Button>
-              </td>
-            </tr>
-          ))}
-          {pendingActivities.length > 0 && presupuestos.length > 0 && (
+          {pendingLines.map((pl) => {
+            const theme = businessLineTheme[pl.businessLine] ?? businessLineTheme.adimenai;
+            const creatingKey = `${pl.activityId}-${pl.businessLine}`;
+            const isCreating = creating === creatingKey;
+            return (
+              <tr
+                key={creatingKey}
+                className="bg-amber-50/40 transition-colors duration-100 hover:bg-amber-50/70"
+              >
+                <td className="max-w-[12rem] truncate px-4 py-3 text-[12px] font-medium text-zinc-900">
+                  {pl.activitySubject}
+                </td>
+                <td className="px-4 py-3 font-medium text-zinc-900">
+                  {clientNameMap[pl.clientId] ?? "—"}
+                </td>
+                <td className="hidden px-4 py-3 sm:table-cell">
+                  <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", theme.badge)}>
+                    {businessLineLabels[pl.businessLine] ?? pl.businessLine}
+                  </span>
+                </td>
+                <td className="px-4 py-3 font-mono text-[12px] text-zinc-400">—</td>
+                <td className="hidden px-4 py-3 md:table-cell">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                    <span className="size-1.5 rounded-full bg-amber-500" />
+                    Pendiente
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={isCreating}
+                    onClick={() => handleCreate(pl.activityId, pl.businessLine)}
+                    className="text-amber-600 hover:text-amber-800"
+                    aria-label="Crear presupuesto"
+                  >
+                    {isCreating ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Plus className="size-4" />
+                    )}
+                  </Button>
+                </td>
+              </tr>
+            );
+          })}
+          {pendingLines.length > 0 && presupuestos.length > 0 && (
             <tr className="bg-zinc-50/60">
               <td
                 colSpan={6}
@@ -111,7 +129,7 @@ export function PresupuestoTable({
               </td>
             </tr>
           )}
-          {presupuestos.length === 0 && pendingActivities.length === 0 ? (
+          {presupuestos.length === 0 && pendingLines.length === 0 ? (
             <tr>
               <td colSpan={6} className="px-4 py-16 text-center text-sm text-zinc-500">
                 No hay presupuestos para mostrar.

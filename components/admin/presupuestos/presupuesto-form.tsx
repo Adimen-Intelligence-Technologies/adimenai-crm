@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Plus, X, Link2, Search, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createPresupuestoSchema, calculateItemTotal, businessLineLabels, businessLineEnum } from "@/lib/schemas/presupuesto";
+import { createPresupuestoSchema, calculateItemTotal, businessLineLabels } from "@/lib/schemas/presupuesto";
 import type { Client } from "@/lib/repositories/clients";
 import type { Presupuesto } from "@/lib/repositories/presupuestos";
 import type { Service } from "@/lib/schemas/service";
@@ -384,31 +384,9 @@ export function PresupuestoForm({
                 <span className="mx-1.5 text-zinc-300">|</span>
                 <span>PRESUPUESTO</span>
               </p>
-              <div className="mt-1.5 flex justify-end gap-1.5">
-                {businessLineEnum.options.map((line) => {
-                  const active = businessLines.includes(line);
-                  const label = businessLineLabels[line as keyof typeof businessLineLabels] ?? line;
-                  return (
-                    <button
-                      key={line}
-                      type="button"
-                      onClick={() => {
-                        setBusinessLines((prev) =>
-                          active ? prev.filter((l) => l !== line) : [...prev, line]
-                        );
-                      }}
-                      className={cn(
-                        "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors",
-                        active
-                          ? "bg-[#3B1E8A] text-white"
-                          : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200"
-                      )}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+              <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-400">
+                {businessLineLabels[businessLines[0] as keyof typeof businessLineLabels] ?? businessLines[0]}
+              </p>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { businessLineEnum } from "./client";
 
 export const activityTypeEnum = z.enum([
   "visit",
@@ -74,8 +75,10 @@ export const createActivitySchema = z.object({
   outcome: activityOutcomeEnum.default("pending"),
   nextAction: nextActionSchema.optional(),
   linkedPresupuestoId: objectIdSchema.optional().default(""),
+  linkedPresupuestoIds: z.array(objectIdSchema).optional().default([]),
   linkedDealId: objectIdSchema.optional().default(""),
   requestQuote: z.boolean().default(false),
+  requestedBusinessLines: z.array(businessLineEnum).optional(),
 });
 export type CreateActivityInput = z.infer<typeof createActivitySchema>;
 
@@ -87,9 +90,11 @@ export const updateActivitySchema = z.object({
   outcome: activityOutcomeEnum.optional(),
   nextAction: nextActionSchema.optional(),
   linkedPresupuestoId: objectIdSchema.optional(),
+  linkedPresupuestoIds: z.array(objectIdSchema).optional(),
   linkedDealId: objectIdSchema.optional(),
   salesAgentId: objectIdSchema.optional(),
   requestQuote: z.boolean().optional(),
+  requestedBusinessLines: z.array(businessLineEnum).optional(),
   quoteInProgress: z.boolean().optional(),
 });
 export type UpdateActivityInput = z.infer<typeof updateActivitySchema>;

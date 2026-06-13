@@ -228,6 +228,52 @@ export async function deletePresupuesto(id: string): Promise<boolean> {
   return result.deletedCount === 1;
 }
 
+export async function createPresupuestoFromActivity(
+  activityId: string,
+  businessLine: string
+): Promise<Presupuesto> {
+  const { getActivity, updateActivity } = await import("@/lib/repositories/activities");
+  const { getClient } = await import("@/lib/repositories/clients");
+
+  const activity = await getActivity(activityId);
+  if (!activity) throw new Error("Actividad no encontrada");
+
+  const client = await getClient(activity.clientId);
+  if (!client) throw new Error("Cliente no encontrado");
+
+  const primaryAddr = client.addresses?.find((a) => a.isPrimary) ?? client.addresses?.[0];
+  const addressStr = primaryAddr
+    ? `${primaryAddr.line1}${primaryAddr.line2 ? `, ${primaryAddr.line2}` : ""}${primaryAddr.city ? `, ${primaryAddr.city}` : ""}`
+    : "";
+
+  const presupuesto = await createPresupuesto({
+    businessLines: [businessLine as "adimenai" | "herrikonekt" | "hiopos"],
+    clientId: activity.clientId,
+    clientSnapshot: {
+      name: client.name,
+      nif: client.billing?.taxId ?? "",
+      address: addressStr,
+      email: client.email ?? "",
+      phone: client.phones?.[0] ?? "",
+    },
+    introduction: "",
+    items: [{ title: "(Pendiente)", quantity: 1, unitPrice: 0, total: 0 }],
+    taxRate: 21,
+    notes: "",
+    sourceActivityId: activityId,
+    salesAgentId: activity.salesAgentId ?? "",
+  });
+
+  const allIds = [...new Set([...(activity.linkedPresupuestoIds ?? []), presupuesto._id])];
+  await updateActivity(activityId, {
+    linkedPresupuestoId: presupuesto._id,
+    linkedPresupuestoIds: allIds,
+    quoteInProgress: false,
+  });
+
+  return presupuesto;
+}
+
 export async function setPdfDriveFileId(
   id: string,
   pdfDriveFileId: string

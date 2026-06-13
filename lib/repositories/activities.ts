@@ -6,6 +6,7 @@ import type {
   ActivityOutcome,
   ActivityType,
 } from "@/lib/schemas/activity";
+import type { BusinessLine } from "@/lib/schemas/client";
 
 export type NextAction = {
   type: NextActionType;
@@ -25,8 +26,10 @@ export type Activity = {
   outcome: ActivityOutcome;
   nextAction?: NextAction;
   linkedPresupuestoId?: string;
+  linkedPresupuestoIds?: string[];
   linkedDealId?: string;
   requestQuote: boolean;
+  requestedBusinessLines?: BusinessLine[];
   quoteInProgress: boolean;
   createdAt: string;
   updatedAt: string;
@@ -225,10 +228,14 @@ export async function createActivity(
     linkedPresupuestoId: data.linkedPresupuestoId
       ? new ObjectId(data.linkedPresupuestoId).toString()
       : undefined,
+    linkedPresupuestoIds: data.linkedPresupuestoIds
+      ? data.linkedPresupuestoIds.map((id: string) => new ObjectId(id).toString())
+      : undefined,
     linkedDealId: data.linkedDealId
       ? new ObjectId(data.linkedDealId).toString()
       : undefined,
     requestQuote: data.requestQuote ?? false,
+    requestedBusinessLines: data.requestedBusinessLines ?? undefined,
     quoteInProgress: false,
     createdAt: now,
     updatedAt: now,
@@ -285,6 +292,22 @@ export async function markNextActionDone(
   );
   if (!result) return null;
   return toActivity(result as unknown as ActivityDoc);
+}
+
+export async function getActivitiesPendingQuote(): Promise<Activity[]> {
+  const collection = await getActivitiesCollection();
+  const docs = (await collection
+    .find({ requestQuote: true })
+    .sort({ occurredAt: -1 })
+    .toArray()) as unknown as ActivityDoc[];
+
+  const all = docs.map(toActivity);
+
+  return all.filter((a) => {
+    const needed = a.requestedBusinessLines?.length ?? 0;
+    const done = a.linkedPresupuestoIds?.length ?? 0;
+    return done < needed;
+  });
 }
 
 export async function deleteActivity(id: string): Promise<boolean> {

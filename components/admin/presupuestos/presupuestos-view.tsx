@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/admin/page-header";
 import { businessLineLabels } from "@/lib/schemas/presupuesto";
 import type { PaginatedResult, Presupuesto } from "@/lib/repositories/presupuestos";
+import type { Activity } from "@/lib/repositories/activities";
 import { cn } from "@/lib/utils";
 import { PresupuestoTable } from "./presupuesto-table";
 
@@ -20,8 +21,12 @@ const lines = [
 
 export function PresupuestosView({
   result,
+  pendingActivities,
+  clientNameMap,
 }: {
   result: PaginatedResult<Presupuesto>;
+  pendingActivities: Activity[];
+  clientNameMap: Record<string, string>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -95,6 +100,8 @@ export function PresupuestosView({
         page={result.page}
         totalPages={result.totalPages}
         onPageChange={onPageChange}
+        pendingActivities={pendingActivities}
+        clientNameMap={clientNameMap}
       />
     </div>
   );

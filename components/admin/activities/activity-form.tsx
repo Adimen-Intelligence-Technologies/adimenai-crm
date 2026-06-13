@@ -67,6 +67,7 @@ export function ActivityForm({
   const [description, setDescription] = useState("");
   const [outcome, setOutcome] = useState<string>("positive");
   const [requestQuote, setRequestQuote] = useState<boolean>(false);
+  const [requestedBusinessLines, setRequestedBusinessLines] = useState<string[]>(["adimenai", "herrikonekt", "hiopos"]);
   const [hasNextAction, setHasNextAction] = useState(false);
   const [nextActionType, setNextActionType] = useState<string>("callback");
   const [nextActionDueDate, setNextActionDueDate] = useState<string>("");
@@ -96,6 +97,7 @@ export function ActivityForm({
       description: description.trim(),
       outcome,
       requestQuote,
+      requestedBusinessLines: requestQuote ? requestedBusinessLines : undefined,
     };
     if (hasNextAction) {
       payload.nextAction = {
@@ -292,8 +294,34 @@ export function ActivityForm({
                       requestQuote ? "translate-x-4" : "translate-x-0"
                     )}
                   />
-                </button>
-              </div>
+                  </button>
+                </div>
+              {requestQuote && (
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-[#3B1E8A]/10 pt-3">
+                  {["adimenai", "herrikonekt", "hiopos"].map((line) => {
+                    const active = requestedBusinessLines.includes(line);
+                    return (
+                      <button
+                        key={line}
+                        type="button"
+                        onClick={() =>
+                          setRequestedBusinessLines((prev) =>
+                            active ? prev.filter((l) => l !== line) : [...prev, line]
+                          )
+                        }
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+                          active
+                            ? "bg-[#3B1E8A] text-white"
+                            : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                        )}
+                      >
+                        {line === "adimenai" ? "AdimenAi" : line === "herrikonekt" ? "Herrikonekt" : "Hiopos"}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="rounded-lg border border-zinc-200 bg-zinc-50/40 p-3">

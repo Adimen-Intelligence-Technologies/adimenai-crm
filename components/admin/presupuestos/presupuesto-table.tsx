@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, FileText, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { businessLineTheme } from "@/lib/theme";
 import { businessLineLabels, presupuestoStatusLabels, type PresupuestoStatus } from "@/lib/schemas/presupuesto";
 import type { Presupuesto } from "@/lib/repositories/presupuestos";
+import type { Activity } from "@/lib/repositories/activities";
 import { cn } from "@/lib/utils";
 
 export function PresupuestoTable({
@@ -14,11 +15,15 @@ export function PresupuestoTable({
   page,
   totalPages,
   onPageChange,
+  pendingActivities = [],
+  clientNameMap = {},
 }: {
   presupuestos: Presupuesto[];
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  pendingActivities?: Activity[];
+  clientNameMap?: Record<string, string>;
 }) {
   const router = useRouter();
 
@@ -45,7 +50,68 @@ export function PresupuestoTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
-          {presupuestos.length === 0 ? (
+          {pendingActivities.map((a) => (
+            <tr
+              key={`pending-${a._id}`}
+              className="bg-amber-50/40 transition-colors duration-100 hover:bg-amber-50/70"
+            >
+              <td className="max-w-[12rem] truncate px-4 py-3 text-[12px] font-medium text-zinc-900">
+                {a.subject}
+              </td>
+              <td className="px-4 py-3 font-medium text-zinc-900">
+                {clientNameMap[a.clientId] ?? "—"}
+              </td>
+              <td className="hidden px-4 py-3 sm:table-cell">
+                <div className="flex flex-wrap gap-1">
+                  {(a.requestedBusinessLines ?? []).map((line) => {
+                    const key = line as keyof typeof businessLineTheme;
+                    const theme = businessLineTheme[key] ?? businessLineTheme.adimenai;
+                    return (
+                      <span
+                        key={line}
+                        className={cn(
+                          "rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                          theme.badge
+                        )}
+                      >
+                        {businessLineLabels[line] ?? line}
+                      </span>
+                    );
+                  })}
+                </div>
+              </td>
+              <td className="px-4 py-3 font-mono text-[12px] text-zinc-400">—</td>
+              <td className="hidden px-4 py-3 md:table-cell">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                  <span className="size-1.5 rounded-full bg-amber-500" />
+                  Pendiente
+                </span>
+              </td>
+              <td className="px-4 py-3 text-right">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-amber-600 hover:text-amber-800"
+                >
+                  <Link href={`/admin/activities#${a._id}`} aria-label="Ver actividad">
+                    <FileText className="size-4" />
+                  </Link>
+                </Button>
+              </td>
+            </tr>
+          ))}
+          {pendingActivities.length > 0 && presupuestos.length > 0 && (
+            <tr className="bg-zinc-50/60">
+              <td
+                colSpan={6}
+                className="px-4 py-2 text-[11px] font-semibold tracking-wide text-zinc-400 uppercase"
+              >
+                Presupuestos generados
+              </td>
+            </tr>
+          )}
+          {presupuestos.length === 0 && pendingActivities.length === 0 ? (
             <tr>
               <td colSpan={6} className="px-4 py-16 text-center text-sm text-zinc-500">
                 No hay presupuestos para mostrar.

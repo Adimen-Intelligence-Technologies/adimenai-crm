@@ -41,18 +41,16 @@ export async function POST(request: NextRequest) {
     }
     const presupuesto = await createPresupuesto(parsed.data);
 
-    // Si el presupuesto nace de una actividad, la vinculamos para que la
-    // timeline muestre el chip "Origen del presupuesto" y oculte el CTA
-    // "Generar presupuesto" (que ya no aplica).
+    // Si el presupuesto nace de una actividad, la vinculamos.
     if (presupuesto.sourceActivityId) {
       try {
         await updateActivity(presupuesto.sourceActivityId, {
           linkedPresupuestoId: presupuesto._id,
+          linkedPresupuestoIds: [presupuesto._id],
           quoteInProgress: false,
         });
       } catch (e) {
         console.error("No se pudo vincular la actividad origen:", e);
-        // No fallamos el POST: el presupuesto se guardó OK.
       }
     }
 

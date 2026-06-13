@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -136,12 +137,19 @@ function ActivityItem({
   const ring = OUTCOME_RING[activity.outcome] ?? "ring-zinc-100";
   const dot = OUTCOME_COLOR[activity.outcome] ?? "bg-zinc-400";
 
-  const canQuote =
-    activity.requestQuote && !activity.linkedPresupuestoId;
-  const inProgress =
-    activity.requestQuote &&
-    !activity.linkedPresupuestoId &&
-    activity.quoteInProgress;
+  const [generatingLine, setGeneratingLine] = useState<string | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [localLinks, setLocalLinks] = useState<Array<{ line: string; id: string }>>([]);
+
+  const allLinkedIds = activity.linkedPresupuestoIds ?? (activity.linkedPresupuestoId ? [activity.linkedPresupuestoId] : []);
+  const allLinks = [
+    ...allLinkedIds.map((id) => ({ line: "", id })),
+    ...localLinks,
+  ];
+  // deduplicate by id
+  const linkMap = new Map<string, { line: string; id: string }>();
+  for (const link of allLinks) linkMap.set(link.id, link);
+  const uniqueLinks = [...linkMap.values()];
 
   return (
     <li className="relative pl-10">
@@ -160,13 +168,7 @@ function ActivityItem({
         <Icon className="size-3.5 text-zinc-600" />
       </span>
 
-      <div
-        className={cn(
-          "rounded-xl border bg-white px-4 py-3.5",
-          (canQuote || inProgress) &&
-            "border-[#3B1E8A]/30 ring-1 ring-[#3B1E8A]/10"
-        )}
-      >
+      <div className="rounded-xl border bg-white px-4 py-3.5">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -204,15 +206,24 @@ function ActivityItem({
                 </span>
               </p>
             )}
-            {activity.linkedPresupuestoId && (
-              <Link
-                href={`/admin/presupuestos/${activity.linkedPresupuestoId}`}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-[#3B1E8A]/20 bg-[#3B1E8A]/5 px-2 py-1 text-[11px] font-semibold text-[#3B1E8A] transition-colors hover:bg-[#3B1E8A]/10"
-              >
-                <FileText className="size-3" />
-                Origen del presupuesto
-                <ExternalLink className="size-2.5" />
-              </Link>
+            {(activity.linkedPresupuestoIds?.length ?? activity.linkedPresupuestoId ? 1 : 0) > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {uniqueLinks.map((link) => (
+                  <Link
+                    key={link.id}
+                    href={`/admin/presupuestos/${link.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-[#3B1E8A]/20 bg-[#3B1E8A]/5 px-2 py-1 text-[11px] font-semibold text-[#3B1E8A] transition-colors hover:bg-[#3B1E8A]/10"
+                  >
+                    <FileText className="size-3" />
+                    {link.line ? (
+                      <span className="capitalize">{link.line}</span>
+                    ) : (
+                      "Origen del presupuesto"
+                    )}
+                    <ExternalLink className="size-2.5" />
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -229,67 +240,107 @@ function ActivityItem({
           </div>
         </div>
 
-        {canQuote && (
-          <Link
-            href={`/admin/presupuestos/nuevo?clientId=${activity.clientId}&fromActivity=${activity._id}${activity.salesAgentId ? `&salesAgentId=${activity.salesAgentId}` : ""}`}
-            onClick={() => {
-              // Marcamos la actividad como "presupuesto en curso" para que
-              // visualmente deje de mostrar el CTA si el comercial vuelve atrás.
-              fetch(`/api/activities/${activity._id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ quoteInProgress: true }),
-                keepalive: true,
-              }).catch(() => {
-                // best-effort: si falla, el CTA seguirá visible; no es bloqueante
-              });
-            }}
-            className="mt-3 flex w-full items-center justify-between gap-3 rounded-lg border border-[#3B1E8A]/20 bg-gradient-to-r from-[#3B1E8A] to-[#3B1E8A]/90 px-3.5 py-2.5 text-white shadow-sm shadow-[#3B1E8A]/20 transition-all hover:from-[#2D1666] hover:to-[#2D1666]"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/15">
-                <FileText className="size-3.5" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[13px] font-bold tracking-tight">
-                  El comercial solicita generar un presupuesto
-                </p>
-                <p className="text-[11px] text-white/75">
-                  Visita marcada como pendiente de cotización
-                </p>
-              </div>
-            </div>
-            <span className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-white px-2.5 text-[12px] font-bold text-[#3B1E8A] shadow-sm">
-              Generar presupuesto
-              <ArrowRight className="size-3.5" />
-            </span>
-          </Link>
-        )}
-
-        {inProgress && (
-          <div
-            aria-disabled
-            className="mt-3 flex w-full cursor-not-allowed items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-100/80 px-3.5 py-2.5 text-zinc-500"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-zinc-200 text-zinc-500">
-                <FileText className="size-3.5" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[13px] font-bold tracking-tight">
-                  Presupuesto en curso
-                </p>
-                <p className="text-[11px] text-zinc-500">
-                  Alguien está rellenando el presupuesto. Se desactivará al guardar.
-                </p>
-              </div>
-            </div>
-            <span className="inline-flex h-7 shrink-0 cursor-not-allowed items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-[12px] font-semibold text-zinc-400">
-              <Loader2 className="size-3 animate-spin" />
-              En curso
-            </span>
+        {genError && (
+          <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs text-rose-700">
+            {genError}
           </div>
         )}
+
+        {uniqueLinks.length > 0 ? (
+          <div className="mt-3 flex flex-col gap-2 rounded-lg border border-emerald-200 bg-emerald-50/50 px-3.5 py-3">
+            <p className="text-[12px] font-semibold text-emerald-800">
+              {uniqueLinks.length} presupuesto{uniqueLinks.length !== 1 ? "s" : ""} creado{uniqueLinks.length !== 1 ? "s" : ""}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {uniqueLinks.map((link) => (
+                <Link
+                  key={link.id}
+                  href={`/admin/presupuestos/${link.id}`}
+                  className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-white px-2 py-1 text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-50"
+                >
+                  <FileText className="size-3" />
+                  {link.line ? (
+                    <span className="capitalize">{link.line}</span>
+                  ) : (
+                    "Ver presupuesto"
+                  )}
+                  <ExternalLink className="size-2.5" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : activity.requestQuote && activity.requestedBusinessLines?.length ? (
+          <div className="mt-3 flex flex-col gap-2">
+            {activity.requestedBusinessLines.map((line) => {
+              const isGenerating = generatingLine === line;
+              const alreadyGenerated = localLinks.some((l) => l.line === line);
+              return (
+                <div key={line}>
+                  {alreadyGenerated ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50/50 px-3.5 py-2 text-xs text-emerald-700">
+                      <Check className="size-3.5 shrink-0" />
+                      <span className="font-medium capitalize">{line}</span>
+                      <span className="text-emerald-500">— Creado</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isGenerating}
+                      onClick={async () => {
+                        setGeneratingLine(line);
+                        setGenError(null);
+                        try {
+                          const res = await fetch("/api/presupuestos/from-activity", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ activityId: activity._id, businessLine: line }),
+                          });
+                          if (!res.ok) {
+                            const data = await res.json().catch(() => null);
+                            throw new Error(data?.error ?? "Error al crear presupuesto");
+                          }
+                          const data = await res.json();
+                          if (data.presupuesto?._id) {
+                            setLocalLinks((prev) => [
+                              ...prev,
+                              { line, id: data.presupuesto._id },
+                            ]);
+                          }
+                          onChange?.();
+                        } catch (err) {
+                          setGenError(err instanceof Error ? err.message : "Error desconocido");
+                        }
+                        setGeneratingLine(null);
+                      }}
+                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-[#3B1E8A]/20 bg-gradient-to-r from-[#3B1E8A] to-[#3B1E8A]/90 px-3.5 py-2.5 text-white shadow-sm shadow-[#3B1E8A]/20 transition-all hover:from-[#2D1666] hover:to-[#2D1666]"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/15">
+                          {isGenerating ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <FileText className="size-3.5" />
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-bold tracking-tight">
+                            {isGenerating ? "Creando presupuesto…" : `Generar presupuesto ${line}`}
+                          </p>
+                        </div>
+                      </div>
+                      {!isGenerating && (
+                        <span className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md bg-white px-2.5 text-[12px] font-bold text-[#3B1E8A] shadow-sm">
+                          Generar
+                          <ArrowRight className="size-3.5" />
+                        </span>
+                      )}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
 
         {activity.nextAction && (
           <div

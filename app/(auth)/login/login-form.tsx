@@ -38,7 +38,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleEmailLogin} className="flex flex-col gap-5">
       <div>
-        <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-zinc-700">
+        <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-zinc-700">
           Correo electrónico
         </label>
         <input
@@ -46,15 +46,15 @@ export function LoginForm() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="correo@ejemplo.com"
+          placeholder="nombre@empresa.com"
           required
           autoComplete="email"
-          className="w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-all placeholder:text-zinc-400 focus:border-[#3B1E8A] focus:ring-2 focus:ring-[#3B1E8A]/15"
+          className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition-all placeholder:text-zinc-400 focus:border-[#3B1E8A] focus:ring-2 focus:ring-[#3B1E8A]/15"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-zinc-700">
+        <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-zinc-700">
           Contraseña
         </label>
         <div className="relative">
@@ -66,12 +66,12 @@ export function LoginForm() {
             placeholder="••••••••"
             required
             autoComplete="current-password"
-            className="w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 pr-10 text-sm text-zinc-900 outline-none transition-all placeholder:text-zinc-400 focus:border-[#3B1E8A] focus:ring-2 focus:ring-[#3B1E8A]/15"
+            className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 pr-11 text-sm text-zinc-900 outline-none transition-all placeholder:text-zinc-400 focus:border-[#3B1E8A] focus:ring-2 focus:ring-[#3B1E8A]/15"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 transition-colors hover:text-zinc-600"
             tabIndex={-1}
           >
             {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -80,16 +80,16 @@ export function LoginForm() {
       </div>
 
       {error && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
-          <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
-          {error}
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       <Button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg bg-[#3B1E8A] py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#2D1666] disabled:opacity-60"
+        className="mt-1 h-11 w-full rounded-xl bg-[#3B1E8A] text-sm font-medium text-white shadow-sm transition-all hover:bg-[#2D1666] disabled:opacity-60"
       >
         {loading ? (
           <span className="flex items-center gap-2">

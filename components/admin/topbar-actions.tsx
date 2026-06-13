@@ -84,6 +84,12 @@ export function TopbarActions() {
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
+            <a href="/admin/profile" className="flex items-center gap-2">
+              <UserRound />
+              Perfil
+            </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <a href="/admin/settings/users" className="flex items-center gap-2">
               <Settings />
               Usuarios

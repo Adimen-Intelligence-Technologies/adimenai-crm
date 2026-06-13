@@ -125,8 +125,21 @@ function ServiceSearchInput({
             <div className="px-3 py-3 text-center text-xs text-zinc-400">Buscando…</div>
           )}
           {!searching && query.trim() && results.length === 0 && (
-            <div className="px-3 py-3 text-center text-xs text-zinc-400">
-              Sin resultados. Puedes escribir un servicio personalizado.
+            <div>
+              <div className="px-3 py-3 text-center text-xs text-zinc-400">
+                Sin resultados.
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(query);
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-2.5 border-t border-zinc-100 px-3 py-2 text-left text-xs font-medium text-[#3B1E8A] transition-colors hover:bg-zinc-50"
+              >
+                <Package className="size-3.5 shrink-0 text-[#3B1E8A]" />
+                Usar «{query}»
+              </button>
             </div>
           )}
           {results.map((s) => (

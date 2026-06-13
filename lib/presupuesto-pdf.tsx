@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   totalIva: { color: "#7252FF" },
   totalRowFinal: { backgroundColor: "#3B1E8A" },
   totalLabelFinal: { color: "#FFFFFF" },
-  totalAmountFinal: { color: "#FFFFFF", fontSize: 11, fontWeight: 700 },
+  totalAmountFinal: { color: "#FFFFFF", fontSize: 8, fontWeight: 700 },
 
   footerWrap: {
     position: "absolute",

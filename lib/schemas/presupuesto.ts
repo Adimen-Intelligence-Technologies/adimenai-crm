@@ -48,7 +48,7 @@ const objectIdLike = z
   .refine((v) => !v || /^[a-f\d]{24}$/i.test(v), "Identificador no válido");
 
 export const createPresupuestoSchema = z.object({
-  businessLine: businessLineEnum,
+  businessLines: z.array(businessLineEnum).min(1, "Selecciona al menos una línea de negocio"),
   clientId: z.string().min(1, "El cliente es obligatorio"),
   clientSnapshot: clientSnapshotSchema,
   introduction: z.string().optional().default(""),

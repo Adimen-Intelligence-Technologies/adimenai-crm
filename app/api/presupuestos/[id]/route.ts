@@ -95,6 +95,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
             outcome: "positive",
             linkedPresupuestoId: presupuesto._id,
             requestQuote: false,
+            quoteInProgress: false,
             createdAt: now,
             updatedAt: now,
           };

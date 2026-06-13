@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SearchableCombobox } from "@/components/ui/searchable-combobox";
 import { cn } from "@/lib/utils";
 import {
   activityOutcomeEnum,
@@ -74,7 +75,6 @@ export function ActivityForm({
   const resetKey = open ? "open" : "closed";
 
   const activeAgents = salesAgents.filter((a) => a.isActive);
-  const clientOptions = clients;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -151,10 +151,16 @@ export function ActivityForm({
             )}
 
             <Field label="Cliente" required>
-              <ClientSelect
+              <SearchableCombobox
                 value={selectedClientId}
                 onChange={setSelectedClientId}
-                clients={clientOptions}
+                items={clients.map((c) => ({
+                  value: c._id,
+                  label: c.name,
+                  sublabel: c.billing?.taxId ? `NIF: ${c.billing.taxId}` : undefined,
+                }))}
+                placeholder="Buscar cliente…"
+                clearable={false}
                 disabled={!!clientId}
               />
             </Field>
@@ -424,29 +430,4 @@ function NativeSelect(
   );
 }
 
-function ClientSelect({
-  value,
-  onChange,
-  clients,
-  disabled,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  clients: Client[];
-  disabled?: boolean;
-}) {
-  return (
-    <NativeSelect
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-    >
-      <option value="">Seleccionar cliente…</option>
-      {clients.map((c) => (
-        <option key={c._id} value={c._id}>
-          {c.name}
-        </option>
-      ))}
-    </NativeSelect>
-  );
-}
+

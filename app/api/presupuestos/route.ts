@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { businessLineEnum, createPresupuestoSchema } from "@/lib/schemas/presupuesto";
 import { createPresupuesto, listPresupuestos } from "@/lib/repositories/presupuestos";
+import { updateActivity } from "@/lib/repositories/activities";
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,6 +40,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: detail, issues: parsed.error.flatten() }, { status: 400 });
     }
     const presupuesto = await createPresupuesto(parsed.data);
+
+    // Si el presupuesto nace de una actividad, la vinculamos para que la
+    // timeline muestre el chip "Origen del presupuesto" y oculte el CTA
+    // "Generar presupuesto" (que ya no aplica).
+    if (presupuesto.sourceActivityId) {
+      try {
+        await updateActivity(presupuesto.sourceActivityId, {
+          linkedPresupuestoId: presupuesto._id,
+          quoteInProgress: false,
+        });
+      } catch (e) {
+        console.error("No se pudo vincular la actividad origen:", e);
+        // No fallamos el POST: el presupuesto se guardó OK.
+      }
+    }
+
     return NextResponse.json(presupuesto, { status: 201 });
   } catch (err) {
     console.error("POST /api/presupuestos", err);

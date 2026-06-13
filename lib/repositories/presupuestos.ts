@@ -11,7 +11,7 @@ import type {
 export type Presupuesto = {
   _id: string;
   number: string;
-  businessLine: BusinessLine;
+  businessLines: BusinessLine[];
   clientId: string;
   salesAgentId?: string;
   clientSnapshot: {
@@ -42,9 +42,16 @@ export type Presupuesto = {
 
 type PresupuestoDoc = Omit<Presupuesto, "_id"> & { _id: ObjectId };
 
-function toPublic(doc: PresupuestoDoc): Presupuesto {
-  const { _id, ...rest } = doc;
-  return { _id: _id.toString(), ...rest };
+function toPublic(doc: Record<string, unknown>): Presupuesto {
+  const plain: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(doc)) {
+    if (value instanceof ObjectId) {
+      plain[key] = value.toString();
+    } else {
+      plain[key] = value;
+    }
+  }
+  return plain as unknown as Presupuesto;
 }
 
 export type PaginatedResult<T> = {
@@ -55,9 +62,9 @@ export type PaginatedResult<T> = {
   totalPages: number;
 };
 
-async function getNextNumber(businessLine: BusinessLine): Promise<string> {
+async function getNextNumber(): Promise<string> {
   const collection = await getPresupuestosCollection();
-  const prefix = businessLinePrefix[businessLine];
+  const prefix = "A";
 
   const last = (await collection
     .find({ number: { $regex: `^${escapeRegex(prefix)}-` } })
@@ -83,7 +90,7 @@ export async function listPresupuestos(filter: {
 } = {}): Promise<PaginatedResult<Presupuesto>> {
   const collection = await getPresupuestosCollection();
   const query: Record<string, unknown> = {};
-  if (filter.businessLine) query.businessLine = filter.businessLine;
+  if (filter.businessLine) query.businessLines = filter.businessLine;
   if (filter.q && filter.q.trim()) {
     const rx = new RegExp(escapeRegex(filter.q.trim()), "i");
     query.$or = [
@@ -122,7 +129,7 @@ export async function createPresupuesto(
   data: CreatePresupuestoInput
 ): Promise<Presupuesto> {
   const collection = await getPresupuestosCollection();
-  const number = await getNextNumber(data.businessLine);
+  const number = await getNextNumber();
   const now = new Date().toISOString();
 
   const items = data.items.map((item) => ({
@@ -136,7 +143,7 @@ export async function createPresupuesto(
 
   const doc: Omit<PresupuestoDoc, "_id"> = {
     number,
-    businessLine: data.businessLine,
+    businessLines: data.businessLines,
     clientId: data.clientId,
     salesAgentId: data.salesAgentId
       ? new ObjectId(data.salesAgentId).toString()
@@ -172,7 +179,7 @@ export async function updatePresupuesto(
 
   const setFields: Record<string, unknown> = { updatedAt: now };
 
-  if (data.businessLine !== undefined) setFields.businessLine = data.businessLine;
+  if (data.businessLines !== undefined) setFields.businessLines = data.businessLines;
   if (data.clientId !== undefined) setFields.clientId = data.clientId;
   if (data.clientSnapshot !== undefined) setFields.clientSnapshot = data.clientSnapshot;
   if (data.introduction !== undefined) setFields.introduction = data.introduction;

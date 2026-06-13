@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ExternalLink,
   FileText,
+  Loader2,
   Mail,
   MessageSquare,
   NotebookPen,
@@ -137,6 +138,10 @@ function ActivityItem({
 
   const canQuote =
     activity.requestQuote && !activity.linkedPresupuestoId;
+  const inProgress =
+    activity.requestQuote &&
+    !activity.linkedPresupuestoId &&
+    activity.quoteInProgress;
 
   return (
     <li className="relative pl-10">
@@ -158,7 +163,8 @@ function ActivityItem({
       <div
         className={cn(
           "rounded-xl border bg-white px-4 py-3.5",
-          canQuote && "border-[#3B1E8A]/30 ring-1 ring-[#3B1E8A]/10"
+          (canQuote || inProgress) &&
+            "border-[#3B1E8A]/30 ring-1 ring-[#3B1E8A]/10"
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -226,6 +232,18 @@ function ActivityItem({
         {canQuote && (
           <Link
             href={`/admin/presupuestos/nuevo?clientId=${activity.clientId}&fromActivity=${activity._id}${activity.salesAgentId ? `&salesAgentId=${activity.salesAgentId}` : ""}`}
+            onClick={() => {
+              // Marcamos la actividad como "presupuesto en curso" para que
+              // visualmente deje de mostrar el CTA si el comercial vuelve atrás.
+              fetch(`/api/activities/${activity._id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ quoteInProgress: true }),
+                keepalive: true,
+              }).catch(() => {
+                // best-effort: si falla, el CTA seguirá visible; no es bloqueante
+              });
+            }}
             className="mt-3 flex w-full items-center justify-between gap-3 rounded-lg border border-[#3B1E8A]/20 bg-gradient-to-r from-[#3B1E8A] to-[#3B1E8A]/90 px-3.5 py-2.5 text-white shadow-sm shadow-[#3B1E8A]/20 transition-all hover:from-[#2D1666] hover:to-[#2D1666]"
           >
             <div className="flex items-center gap-2.5">
@@ -246,6 +264,31 @@ function ActivityItem({
               <ArrowRight className="size-3.5" />
             </span>
           </Link>
+        )}
+
+        {inProgress && (
+          <div
+            aria-disabled
+            className="mt-3 flex w-full cursor-not-allowed items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-100/80 px-3.5 py-2.5 text-zinc-500"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-zinc-200 text-zinc-500">
+                <FileText className="size-3.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[13px] font-bold tracking-tight">
+                  Presupuesto en curso
+                </p>
+                <p className="text-[11px] text-zinc-500">
+                  Alguien está rellenando el presupuesto. Se desactivará al guardar.
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex h-7 shrink-0 cursor-not-allowed items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-[12px] font-semibold text-zinc-400">
+              <Loader2 className="size-3 animate-spin" />
+              En curso
+            </span>
+          </div>
         )}
 
         {activity.nextAction && (

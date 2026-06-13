@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Plus, X, Link2 } from "lucide-react";
+import { ArrowLeft, Plus, X, Link2, Search, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createPresupuestoSchema, calculateItemTotal, businessLinePrefix, businessLineLabels } from "@/lib/schemas/presupuesto";
+import { createPresupuestoSchema, calculateItemTotal, businessLineLabels, businessLineEnum } from "@/lib/schemas/presupuesto";
 import type { Client } from "@/lib/repositories/clients";
 import type { Presupuesto } from "@/lib/repositories/presupuestos";
+import type { Service } from "@/lib/schemas/service";
 import { cn } from "@/lib/utils";
 
 type LineItem = {
@@ -24,12 +25,135 @@ type Props = {
   defaultClientId?: string;
   defaultSalesAgentId?: string;
   defaultSourceActivityId?: string;
-  fixedBusinessLine?: "adimenai" | "herrikonekt" | "hiopos";
 };
 
-type ClientOption = Pick<Client, "_id" | "name" | "email" | "phones" | "addresses" | "billing"> & {
-  businessLine: string;
-};
+type ClientOption = Pick<Client, "_id" | "name" | "email" | "phones" | "addresses" | "billing">;
+
+function formatPrice(n: number): string {
+  const f = n.toFixed(2).replace(".", ",");
+  const [int, dec] = f.split(",");
+  const sep = int.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${sep},${dec} €`;
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function ServiceSearchInput({
+  value,
+  onChange,
+  businessLines,
+  onServicePick,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  businessLines: string[];
+  onServicePick: (service: { name: string; price: number }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Service[]>([]);
+  const [searching, setSearching] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const internalValue = open ? query : value;
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      setResults([]);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const q = query.trim();
+    if (!q) { setResults([]); return; }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const line = businessLines[0] ?? "adimenai";
+        const res = await fetch(`/api/services?businessLine=${line}&q=${encodeURIComponent(q)}&pageSize=8`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.items ?? []);
+        }
+      } catch { /* noop */ }
+      setSearching(false);
+    }, 250);
+  }, [query, open, businessLines]);
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-2 top-1/2 size-3 -translate-y-1/2 text-zinc-300" />
+        <input
+          value={internalValue}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (!open) setOpen(true);
+            if (open) setQuery(v);
+            else onChange(v);
+          }}
+          onFocus={() => { if (!open && value) { setQuery(value); setOpen(true); } }}
+          placeholder="Buscar servicio o escribir uno nuevo…"
+          className="w-full border-0 bg-transparent py-1 pl-6 text-xs text-zinc-900 outline-none placeholder:text-zinc-400"
+        />
+      </div>
+      {open && (
+        <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-auto rounded-md border border-zinc-200 bg-white shadow-lg">
+          {searching && (
+            <div className="px-3 py-3 text-center text-xs text-zinc-400">Buscando…</div>
+          )}
+          {!searching && query.trim() && results.length === 0 && (
+            <div className="px-3 py-3 text-center text-xs text-zinc-400">
+              Sin resultados. Puedes escribir un servicio personalizado.
+            </div>
+          )}
+          {results.map((s) => (
+            <button
+              key={s._id}
+              type="button"
+              onClick={() => {
+                onServicePick({ name: s.name, price: s.price });
+                onChange(s.name);
+                setOpen(false);
+              }}
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-zinc-50"
+            >
+              <Package className="size-3.5 shrink-0 text-zinc-400" />
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-medium text-zinc-800 truncate">{s.name}</span>
+                <span className="ml-1.5 text-[10px] text-zinc-400">
+                  {s.price.toFixed(2).replace(".", ",")} €
+                  {s.billing === "monthly" ? " /mes" : s.billing === "yearly" ? " /año" : ""}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function PresupuestoForm({
   mode,
@@ -37,18 +161,17 @@ export function PresupuestoForm({
   defaultClientId,
   defaultSalesAgentId,
   defaultSourceActivityId,
-  fixedBusinessLine,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const [businessLine, setBusinessLine] = useState<string>(
-    initial?.businessLine ?? fixedBusinessLine ?? "adimenai"
+  const [businessLines, setBusinessLines] = useState<string[]>(
+    initial?.businessLines ?? ["adimenai"]
   );
   const [clientQuery, setClientQuery] = useState("");
   const [clientResults, setClientResults] = useState<ClientOption[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [searchingClient, setSearchingClient] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(
     initial
       ? {
@@ -60,7 +183,6 @@ export function PresupuestoForm({
             ? [{ line1: initial.clientSnapshot.address, city: "", isPrimary: true }]
             : [],
           billing: undefined,
-          businessLine: initial.businessLine,
         }
       : null
   );
@@ -72,32 +194,32 @@ export function PresupuestoForm({
   );
   const [taxRate, setTaxRate] = useState(initial?.taxRate ?? 21);
   const [notes, setNotes] = useState(initial?.notes ?? "");
+  const clientSearchRef = useRef<HTMLDivElement>(null);
+  const clientDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Preseleccionar cliente cuando viene desde la ficha o desde una visita
   const sourceActivityId = initial?.sourceActivityId ?? defaultSourceActivityId ?? "";
+  const presupuestoNumber = initial?.number ?? "A-0000";
 
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const taxAmount = Math.round(subtotal * (taxRate / 100) * 100) / 100;
   const total = Math.round((subtotal + taxAmount) * 100) / 100;
 
-  async function searchClients(q: string) {
+  const searchClients = useCallback((q: string) => {
     setClientQuery(q);
-    if (!q.trim()) {
-      setClientResults([]);
-      return;
-    }
-    setSearching(true);
-    try {
-      const res = await fetch(`/api/clients?businessLine=${businessLine}&q=${encodeURIComponent(q)}&pageSize=10`);
-      if (res.ok) {
-        const data = await res.json();
-        setClientResults(data.items ?? []);
-      }
-    } catch {
-      // ignore
-    }
-    setSearching(false);
-  }
+    if (!q.trim()) { setClientResults([]); return; }
+    if (clientDebounceRef.current) clearTimeout(clientDebounceRef.current);
+    clientDebounceRef.current = setTimeout(async () => {
+      setSearchingClient(true);
+      try {
+        const res = await fetch(`/api/clients?q=${encodeURIComponent(q)}&pageSize=10`);
+        if (res.ok) {
+          const data = await res.json();
+          setClientResults(data.items ?? []);
+        }
+      } catch { /* noop */ }
+      setSearchingClient(false);
+    }, 250);
+  }, []);
 
   function selectClient(client: ClientOption) {
     setSelectedClient(client);
@@ -125,10 +247,8 @@ export function PresupuestoForm({
     setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
-  // Cargar cliente preseleccionado cuando viene desde ficha/visita
   useEffect(() => {
-    if (initial || !defaultClientId) return;
-    if (selectedClient) return;
+    if (initial || !defaultClientId || selectedClient) return;
     let cancelled = false;
     (async () => {
       try {
@@ -137,40 +257,30 @@ export function PresupuestoForm({
         const c = (await res.json()) as Client;
         if (cancelled) return;
         setSelectedClient({
-          _id: c._id,
-          name: c.name,
-          email: c.email ?? "",
-          phones: c.phones ?? [],
-          addresses: c.addresses ?? [],
+          _id: c._id, name: c.name, email: c.email ?? "",
+          phones: c.phones ?? [], addresses: c.addresses ?? [],
           billing: c.billing,
-          businessLine: c.businessLine,
         });
-        setBusinessLine(c.businessLine);
-      } catch {
-        // noop
-      }
+      } catch { /* noop */ }
     })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultClientId]);
+    return () => { cancelled = true; };
+  }, [defaultClientId, initial, selectedClient]);
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (clientSearchRef.current && !clientSearchRef.current.contains(e.target as Node)) {
+        setClientResults([]);
+      }
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
 
   async function handleSubmit() {
     setError(null);
-
-    if (!selectedClient) {
-      setError("Selecciona un cliente");
-      return;
-    }
-    if (items.length === 0 || items.every((i) => !i.title.trim())) {
-      setError("Añade al menos una línea de pedido");
-      return;
-    }
-    if (items.some((i) => !i.title.trim())) {
-      setError("Todas las líneas deben tener un título");
-      return;
-    }
+    if (!selectedClient) { setError("Selecciona un cliente"); return; }
+    if (items.length === 0 || items.every((i) => !i.title.trim())) { setError("Añade al menos una línea de pedido"); return; }
+    if (items.some((i) => !i.title.trim())) { setError("Todas las líneas deben tener un título"); return; }
 
     const primaryAddr = selectedClient.addresses?.find((a) => a.isPrimary) ?? selectedClient.addresses?.[0];
     const addressStr = primaryAddr
@@ -178,7 +288,7 @@ export function PresupuestoForm({
       : "";
 
     const payload = {
-      businessLine: businessLine as "adimenai" | "herrikonekt" | "hiopos",
+      businessLines: businessLines as ("adimenai" | "herrikonekt" | "hiopos")[],
       clientId: selectedClient._id,
       clientSnapshot: {
         name: selectedClient.name,
@@ -188,12 +298,7 @@ export function PresupuestoForm({
         phone: selectedClient.phones?.[0] ?? "",
       },
       introduction,
-      items: items.map((i) => ({
-        title: i.title.trim(),
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-        total: i.total,
-      })),
+      items: items.map((i) => ({ title: i.title.trim(), quantity: i.quantity, unitPrice: i.unitPrice, total: i.total })),
       taxRate,
       notes,
       sourceActivityId: sourceActivityId || "",
@@ -211,16 +316,18 @@ export function PresupuestoForm({
       try {
         const url = mode === "create" ? "/api/presupuestos" : `/api/presupuestos/${initial!._id}`;
         const method = mode === "create" ? "POST" : "PATCH";
-        const res = await fetch(url, {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         if (!res.ok) {
           const data = await res.json().catch(() => null);
           throw new Error(data?.error ?? "No se pudo guardar el presupuesto");
         }
-        router.push("/admin/presupuestos");
+        if (sourceActivityId) {
+          fetch(`/api/activities/${sourceActivityId}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quoteInProgress: false }), keepalive: true,
+          }).catch(() => {});
+        }
+        router.push(sourceActivityId ? "/admin/activities" : "/admin/presupuestos");
         router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error desconocido");
@@ -228,273 +335,319 @@ export function PresupuestoForm({
     });
   }
 
+  const todayFormatted = formatDate(new Date().toISOString());
+
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex items-center gap-3">
-        <Button
-          asChild
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Volver"
-          className="text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-        >
-          <Link href="/admin/presupuestos">
-            <ChevronLeft />
-          </Link>
+    <div className="flex flex-col gap-4 pb-28">
+      {/* Navigation header */}
+      <div className="flex items-center gap-3">
+        <Button asChild variant="ghost" size="icon-sm" className="text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900">
+          <Link href="/admin/presupuestos"><ArrowLeft /></Link>
         </Button>
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900">
+          <h1 className="text-base font-semibold text-zinc-900">
             {mode === "create" ? "Nuevo presupuesto" : "Editar presupuesto"}
           </h1>
-          <p className="text-sm text-zinc-500">
-            {businessLineLabels[businessLine as keyof typeof businessLineLabels] ?? businessLine}
-          </p>
         </div>
-      </header>
+      </div>
 
       {error && (
-        <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {error}
-        </div>
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
       )}
 
       {mode === "create" && sourceActivityId && (
-        <div className="flex items-center gap-2 rounded-md border border-[#3B1E8A]/20 bg-[#3B1E8A]/5 px-4 py-2.5 text-[12px] text-[#3B1E8A]">
+        <div className="flex items-center gap-2 rounded-md border border-[#3B1E8A]/20 bg-[#3B1E8A]/5 px-4 py-2.5 text-xs text-[#3B1E8A]">
           <Link2 className="size-3.5 shrink-0" />
-          <span>
-            Este presupuesto quedará vinculado a la visita desde la que lo
-            estás creando.
-          </span>
+          <span>Este presupuesto quedará vinculado a la visita desde la que lo estás creando.</span>
         </div>
       )}
 
-      <div className="rounded-lg border border-zinc-200 bg-white p-5">
-        <div className="grid grid-cols-1 gap-5">
-          {/* Linea de negocio */}
-          <Field label="Línea de negocio">
-            {fixedBusinessLine ? (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-8 items-center gap-2 rounded-md border border-[#3B1E8A] bg-[#3B1E8A] px-3 text-sm font-medium text-white">
-                  {businessLinePrefix[fixedBusinessLine]} ·{" "}
-                  {businessLineLabels[fixedBusinessLine]}
-                </span>
-                <span className="text-[12px] text-zinc-500">
-                  Línea fijada al crear el presupuesto.
-                </span>
+      {/* Invoice container */}
+      <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+        {/* ===== HEADER ===== */}
+        <div className="relative border-b border-zinc-200 px-10 pb-8 pt-8">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex size-20 items-center justify-center rounded-xl bg-[#1C1135]">
+                <span className="text-2xl font-bold tracking-tight text-white">AI</span>
               </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {(["adimenai", "herrikonekt", "hiopos"] as const).map((line) => {
-                  const prefix = businessLinePrefix[line];
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Adimen Intelligence Services S.L.</p>
+                <p className="mt-0.5 text-xs text-zinc-500">NIF: B88787171</p>
+                <p className="text-xs text-zinc-500">Kalea/Lorem Ipsum dolor</p>
+                <p className="text-xs text-zinc-500">adimenai.tech@gmail.com | +34 650 60 90 28</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-semibold text-zinc-900">
+                <span className="font-normal text-zinc-500">{presupuestoNumber}</span>
+                <span className="mx-1.5 text-zinc-300">|</span>
+                <span>PRESUPUESTO</span>
+              </p>
+              <div className="mt-1.5 flex justify-end gap-1.5">
+                {businessLineEnum.options.map((line) => {
+                  const active = businessLines.includes(line);
+                  const label = businessLineLabels[line as keyof typeof businessLineLabels] ?? line;
                   return (
                     <button
                       key={line}
                       type="button"
                       onClick={() => {
-                        setBusinessLine(line);
-                        setSelectedClient(null);
+                        setBusinessLines((prev) =>
+                          active ? prev.filter((l) => l !== line) : [...prev, line]
+                        );
                       }}
                       className={cn(
-                        "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
-                        businessLine === line
-                          ? "border-[#3B1E8A] bg-[#3B1E8A] text-white"
-                          : "border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                        "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                        active
+                          ? "bg-[#3B1E8A] text-white"
+                          : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200"
                       )}
                     >
-                      {prefix} · {businessLineLabels[line]}
+                      {label}
                     </button>
                   );
                 })}
               </div>
-            )}
-          </Field>
-
-          {/* Cliente */}
-          <Field label="Cliente" required>
-            {selectedClient ? (
-              <div className="flex items-center justify-between rounded-md border border-zinc-200 bg-zinc-50/40 px-3 py-2">
-                <div>
-                  <p className="text-sm font-medium text-zinc-900">{selectedClient.name}</p>
-                  <p className="text-xs text-zinc-500">
-                    {selectedClient.billing?.taxId ? `NIF: ${selectedClient.billing.taxId}` : ""}
-                    {selectedClient.email ? ` · ${selectedClient.email}` : ""}
-                    {selectedClient.phones?.[0] ? ` · ${selectedClient.phones[0]}` : ""}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setSelectedClient(null)}
-                  className="text-zinc-400 hover:text-rose-600"
-                >
-                  <X />
-                </Button>
-              </div>
-            ) : (
-              <div className="relative">
-                <Input
-                  value={clientQuery}
-                  onChange={(e) => searchClients(e.target.value)}
-                  placeholder="Buscar cliente por nombre…"
-                />
-                {clientResults.length > 0 && (
-                  <ul className="absolute z-10 mt-1 w-full rounded-md border border-zinc-200 bg-white shadow-lg">
-                    {clientResults.map((c) => (
-                      <li key={c._id}>
-                        <button
-                          type="button"
-                          onClick={() => selectClient(c)}
-                          className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-50"
-                        >
-                          <span className="font-medium text-zinc-900">{c.name}</span>
-                          <span className="ml-2 text-xs text-zinc-500">
-                            {c.billing?.taxId ? c.billing.taxId : ""}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {searching && (
-                  <p className="mt-1 text-xs text-zinc-400">Buscando…</p>
-                )}
-              </div>
-            )}
-          </Field>
-
-          {/* Introduccion */}
-          <Field label="Introducción">
-            <textarea
-              value={introduction}
-              onChange={(e) => setIntroduction(e.target.value)}
-              placeholder="Texto de introducción para el presupuesto (opcional)"
-              rows={3}
-              className={cn(
-                "flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none",
-                "placeholder:text-zinc-400",
-                "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              )}
-            />
-          </Field>
-
-          {/* Lineas de pedido */}
-          <div>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-zinc-900">Líneas de pedido</h3>
-              <Button type="button" variant="ghost" size="sm" onClick={addItem} className="text-[#3B1E8A] hover:bg-[#3B1E8A]/10">
-                <Plus /> Añadir línea
-              </Button>
             </div>
-            <div className="overflow-x-auto rounded-md border border-zinc-200">
-              <table className="w-full min-w-[36rem] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200 text-xs font-medium text-zinc-500">
-                    <th className="py-2 pr-2">Título</th>
-                    <th className="w-20 px-2 py-2">Cant.</th>
-                    <th className="w-28 px-2 py-2">Precio ud.</th>
-                    <th className="w-28 px-2 py-2 text-right">Total</th>
-                    <th className="w-10 py-2" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item, i) => (
-                    <tr key={i} className="border-b border-zinc-100">
-                      <td className="py-1 pr-2">
-                        <Input
-                          value={item.title}
-                          onChange={(e) => updateItem(i, { title: e.target.value })}
-                          placeholder="Ej. Página web"
-                          className="h-8"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <Input
-                          type="number"
-                          min={1}
-                          value={item.quantity}
-                          onChange={(e) => updateItem(i, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
-                          className="h-8 text-center"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <Input
-                          type="number"
-                          min={0}
-                          step={0.01}
-                          value={item.unitPrice}
-                          onChange={(e) => updateItem(i, { unitPrice: Math.max(0, parseFloat(e.target.value) || 0) })}
-                          className="h-8 text-right"
-                        />
-                      </td>
-                      <td className="px-2 py-1 text-right font-mono text-sm text-zinc-900">
-                        {item.total.toFixed(2).replace(".", ",")} €
-                      </td>
-                      <td className="py-1">
-                        {items.length > 1 && (
-                          <Button
+          </div>
+        </div>
+
+        {/* ===== CLIENT / META ROW ===== */}
+        <div className="border-b border-zinc-200 px-10 py-5">
+          <div className="flex items-start justify-between gap-8">
+            {/* Client */}
+            <div className="flex-1 min-w-0">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.06em] text-zinc-500">
+                Empresa a la que se factura
+              </p>
+              {selectedClient ? (
+                <div className="group relative rounded-md border border-zinc-200 bg-zinc-50/60 px-3 py-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedClient(null)}
+                    className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-200 hover:text-rose-600 group-hover:opacity-100"
+                  >
+                    <X className="size-3" />
+                  </button>
+                  <p className="text-sm font-bold text-zinc-900">{selectedClient.name}</p>
+                  {selectedClient.billing?.taxId && (
+                    <p className="text-xs text-zinc-500">CIF / NIF: {selectedClient.billing.taxId}</p>
+                  )}
+                  {selectedClient.addresses?.[0]?.line1 && (
+                    <p className="text-xs text-zinc-500">{selectedClient.addresses[0].line1}</p>
+                  )}
+                  {selectedClient.email && <p className="text-xs text-zinc-500">{selectedClient.email}</p>}
+                </div>
+              ) : (
+                <div ref={clientSearchRef} className="relative">
+                  <input
+                    value={clientQuery}
+                    onChange={(e) => searchClients(e.target.value)}
+                    placeholder="Buscar cliente por nombre…"
+                    className="w-full rounded-md border border-zinc-200 bg-zinc-50/60 px-3 py-2 text-xs text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-[#3B1E8A] focus:ring-2 focus:ring-[#3B1E8A]/20"
+                  />
+                  {searchingClient && <p className="mt-1 text-[10px] text-zinc-400">Buscando…</p>}
+                  {clientResults.length > 0 && (
+                    <ul className="absolute left-0 right-0 z-10 mt-1 rounded-md border border-zinc-200 bg-white shadow-lg">
+                      {clientResults.map((c) => (
+                        <li key={c._id}>
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => removeItem(i)}
-                            className="text-zinc-400 hover:text-rose-600"
+                            onClick={() => selectClient(c)}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-50"
                           >
-                            <X />
-                          </Button>
-                        )}
-                      </td>
+                            <span className="font-medium text-zinc-900">{c.name}</span>
+                            {c.billing?.taxId && <span className="text-zinc-400">· {c.billing.taxId}</span>}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Meta info */}
+            <div className="w-48 shrink-0 text-right">
+              <table className="ml-auto text-xs">
+                <tbody>
+                  {[
+                    ["NÚMERO DE FACTURA:", presupuestoNumber],
+                    ["FECHA DE FACTURA:", todayFormatted],
+                    ["FECHA DE PAGO:", todayFormatted],
+                  ].map(([label, val]) => (
+                    <tr key={label}>
+                      <td className="pr-2 text-zinc-500">{label}</td>
+                      <td className="font-medium text-zinc-900">{val}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
+        </div>
 
-          {/* Totales */}
-          <div className="ml-auto w-full max-w-xs space-y-1 border-t border-zinc-200 pt-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-zinc-600">Subtotal</span>
-              <span className="font-mono text-zinc-900">{subtotal.toFixed(2).replace(".", ",")} €</span>
+        {/* ===== INTRODUCTION ===== */}
+        {introduction || mode === "create" ? (
+          <div className="border-b border-zinc-200 px-10 py-4">
+            <textarea
+              value={introduction}
+              onChange={(e) => setIntroduction(e.target.value)}
+              placeholder="Texto de introducción (opcional)"
+              rows={2}
+              className="w-full resize-none border-0 bg-transparent text-xs text-zinc-700 outline-none placeholder:text-zinc-400"
+            />
+          </div>
+        ) : null}
+
+        {/* ===== LINE ITEMS TABLE ===== */}
+        <div className="border-b border-zinc-200">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="bg-zinc-50 text-[10px] font-bold uppercase tracking-[0.05em] text-zinc-500">
+                <th className="px-10 py-2.5 pr-2">Descripción</th>
+                <th className="w-20 px-2 py-2.5 text-center">Cantidad</th>
+                <th className="w-24 px-2 py-2.5 text-right">Precio</th>
+                <th className="w-14 px-2 py-2.5 text-center">IVA</th>
+                <th className="w-24 px-2 py-2.5 pr-10 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, i) => (
+                <tr key={i} className="border-t border-zinc-100">
+                  <td className="px-10 py-1.5 pr-2">
+                    <div className="flex items-center gap-1">
+                      <ServiceSearchInput
+                        value={item.title}
+                        onChange={(val) => updateItem(i, { title: val })}
+                        businessLines={businessLines}
+                        onServicePick={(svc) => updateItem(i, { title: svc.name, unitPrice: svc.price })}
+                      />
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(i)}
+                          className="shrink-0 rounded p-0.5 text-zinc-300 hover:bg-zinc-100 hover:text-rose-500"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-2 py-1.5 text-center">
+                    <input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      onChange={(e) => updateItem(i, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                      className="w-14 rounded border border-zinc-200 bg-transparent py-1 text-center text-xs text-zinc-900 outline-none focus:border-[#3B1E8A]"
+                    />
+                  </td>
+                  <td className="px-2 py-1.5 text-right">
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={item.unitPrice}
+                      onChange={(e) => updateItem(i, { unitPrice: Math.max(0, parseFloat(e.target.value) || 0) })}
+                      className="w-20 rounded border border-zinc-200 bg-transparent py-1 text-right text-xs text-zinc-900 outline-none focus:border-[#3B1E8A]"
+                    />
+                  </td>
+                  <td className="px-2 py-1.5 text-center text-xs text-zinc-500">{taxRate}%</td>
+                  <td className="px-2 py-1.5 pr-10 text-right font-mono text-xs font-medium text-zinc-900">
+                    {formatPrice(item.total)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Add line button */}
+          <div className="border-t border-dashed border-zinc-200 px-10 py-2">
+            <button
+              type="button"
+              onClick={addItem}
+              className="flex items-center gap-1.5 text-[11px] font-medium text-[#3B1E8A] transition-colors hover:text-[#2D1666]"
+            >
+              <Plus className="size-3" />
+              Añadir línea
+            </button>
+          </div>
+        </div>
+
+        {/* ===== TOTALS ===== */}
+        <div className="flex justify-end border-b border-zinc-200 px-10 py-4">
+          <div className="w-56 space-y-1">
+            <div className="flex justify-between rounded bg-zinc-50 px-4 py-2 text-xs">
+              <span className="font-bold uppercase tracking-[0.04em] text-zinc-600">Subtotal</span>
+              <span className="font-mono text-zinc-900">{formatPrice(subtotal)}</span>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span className="text-zinc-600">IVA</span>
+            <div className="flex items-center justify-between rounded bg-zinc-50 px-4 py-2 text-xs">
+              <span className="font-bold uppercase tracking-[0.04em] text-zinc-600">
+                IVA
+                <span className="ml-1 font-normal text-zinc-500">({taxRate}%)</span>
+              </span>
               <div className="flex items-center gap-1">
-                <Input
+                <input
                   type="number"
                   min={0}
                   max={100}
                   value={taxRate}
                   onChange={(e) => setTaxRate(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-                  className="h-7 w-16 text-right"
+                  className="w-12 rounded border border-zinc-200 bg-white py-0.5 text-center text-[10px] text-zinc-500 outline-none focus:border-[#3B1E8A]"
                 />
-                <span className="text-zinc-500">%</span>
-                <span className="font-mono text-zinc-900">{taxAmount.toFixed(2).replace(".", ",")} €</span>
+                <span className="font-mono text-[#7252FF]">{formatPrice(taxAmount)}</span>
               </div>
             </div>
-            <div className="flex justify-between border-t border-zinc-200 pt-1 text-sm font-semibold">
-              <span className="text-zinc-900">Total</span>
-              <span className="font-mono text-zinc-900">{total.toFixed(2).replace(".", ",")} €</span>
+            <div className="flex justify-between rounded bg-[#3B1E8A] px-4 py-2.5 text-sm">
+              <span className="font-bold uppercase tracking-[0.04em] text-white">Total presupuesto</span>
+              <span className="font-mono font-bold text-white">{formatPrice(total)}</span>
             </div>
           </div>
-
-          {/* Notas */}
-          <Field label="Notas">
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ej. (*) Precios sin IVA. Se aplicará el tipo impositivo vigente…"
-              rows={2}
-              className={cn(
-                "flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none",
-                "placeholder:text-zinc-400",
-                "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              )}
-            />
-          </Field>
         </div>
+
+        {/* ===== FOOTER ===== */}
+        <div className="border-b border-zinc-200 px-10 py-6">
+          <p className="mb-3 text-sm font-bold uppercase tracking-[0.08em] text-zinc-800">
+            Instrucciones de pago
+          </p>
+          <div className="flex justify-between gap-12">
+            <div className="space-y-1.5 text-xs text-zinc-600">
+              <p className="font-bold text-zinc-800">Adimen Intelligence Services S.L.</p>
+              <p><span className="font-bold">Número de cuenta:</span> ES 123 456 789</p>
+              <p><span className="font-bold">SWIFT/BIC:</span> NTSBDEB1XXX</p>
+              <p><span className="font-bold">Nombre del banco:</span> N26</p>
+            </div>
+            <div className="space-y-1 text-right text-xs text-zinc-500">
+              <p className="font-bold text-zinc-600">Adimen AI</p>
+              <p>www.adimenai.com</p>
+              <p>adimenai.tech@gmail.com</p>
+              <p>+34 650 60 90 28</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== TERMS ===== */}
+        <div className="border-b border-zinc-200 px-10 py-5">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.06em] text-zinc-500">
+            Términos y condiciones
+          </p>
+          <p className="text-[11px] leading-relaxed text-zinc-500">
+            Los términos de pago y las tarifas se establecerán en el contrato o acuerdo previo al inicio del proyecto.
+            Se requerirá un depósito inicial antes de comenzar cualquier trabajo de diseño. Nos reservamos el derecho
+            de suspender o detener el trabajo en caso de impago.
+          </p>
+          <p className="mt-3 text-[11px] text-zinc-600">
+            Por favor, utilice <span className="font-bold">{presupuestoNumber}</span> como número de referencia.
+          </p>
+        </div>
+
+
       </div>
 
-      <footer className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t border-zinc-200 bg-white px-4 py-3 sm:-mx-6 sm:px-6 md:-mx-10 md:px-10">
+      {/* Actions */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-3 border-t border-zinc-200 bg-white px-6 py-3 shadow-sm md:left-64 md:px-10">
         <Button asChild variant="outline">
           <Link href="/admin/presupuestos">Cancelar</Link>
         </Button>
@@ -502,23 +655,11 @@ export function PresupuestoForm({
           type="button"
           onClick={handleSubmit}
           disabled={isPending}
-          className="bg-[#3B1E8A] text-white hover:bg-[#2D1666] disabled:bg-zinc-200 disabled:text-zinc-500"
+          className="min-w-40 bg-[#3B1E8A] text-white hover:bg-[#2D1666] disabled:bg-zinc-200 disabled:text-zinc-500"
         >
           {isPending ? "Guardando…" : mode === "create" ? "Crear presupuesto" : "Guardar cambios"}
         </Button>
-      </footer>
-    </div>
-  );
-}
-
-function Field({ label, required, children, className }: { label: string; required?: boolean; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <label className="text-sm font-semibold text-zinc-700">
-        {label}
-        {required && <span className="ml-0.5 text-rose-500">*</span>}
-      </label>
-      {children}
+      </div>
     </div>
   );
 }

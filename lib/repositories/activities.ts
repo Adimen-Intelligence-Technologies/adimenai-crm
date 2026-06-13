@@ -27,15 +27,23 @@ export type Activity = {
   linkedPresupuestoId?: string;
   linkedDealId?: string;
   requestQuote: boolean;
+  quoteInProgress: boolean;
   createdAt: string;
   updatedAt: string;
 };
 
 type ActivityDoc = Omit<Activity, "_id"> & { _id: ObjectId };
 
-function toActivity(doc: ActivityDoc): Activity {
-  const { _id, ...rest } = doc;
-  return { _id: _id.toString(), ...rest };
+function toActivity(doc: Record<string, unknown>): Activity {
+  const plain: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(doc)) {
+    if (value instanceof ObjectId) {
+      plain[key] = value.toString();
+    } else {
+      plain[key] = value;
+    }
+  }
+  return plain as unknown as Activity;
 }
 
 export type ListActivitiesFilter = {
@@ -221,6 +229,7 @@ export async function createActivity(
       ? new ObjectId(data.linkedDealId).toString()
       : undefined,
     requestQuote: data.requestQuote ?? false,
+    quoteInProgress: false,
     createdAt: now,
     updatedAt: now,
   };

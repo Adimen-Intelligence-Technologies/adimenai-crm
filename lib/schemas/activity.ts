@@ -90,5 +90,6 @@ export const updateActivitySchema = z.object({
   linkedDealId: objectIdSchema.optional(),
   salesAgentId: objectIdSchema.optional(),
   requestQuote: z.boolean().optional(),
+  quoteInProgress: z.boolean().optional(),
 });
 export type UpdateActivityInput = z.infer<typeof updateActivitySchema>;

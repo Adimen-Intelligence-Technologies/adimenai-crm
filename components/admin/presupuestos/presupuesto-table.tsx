@@ -53,9 +53,8 @@ export function PresupuestoTable({
             </tr>
           ) : (
             presupuestos.map((p) => {
-              const theme =
-                businessLineTheme[p.businessLine as keyof typeof businessLineTheme] ??
-                businessLineTheme.adimenai;
+              const primaryLine = (p.businessLines?.[0] ?? "adimenai") as keyof typeof businessLineTheme;
+              const theme = businessLineTheme[primaryLine] ?? businessLineTheme.adimenai;
               return (
                 <tr
                   key={p._id}
@@ -74,8 +73,9 @@ export function PresupuestoTable({
                         theme.badge
                       )}
                     >
-                      {businessLineLabels[p.businessLine as keyof typeof businessLineLabels] ??
-                        p.businessLine}
+                      {(p.businessLines ?? ["adimenai"])
+                        .map((l) => businessLineLabels[l as keyof typeof businessLineLabels] ?? l)
+                        .join(", ")}
                     </span>
                   </td>
                   <td className="px-4 py-3 font-mono text-[12px] tabular-nums text-zinc-900">

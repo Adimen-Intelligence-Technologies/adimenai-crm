@@ -24,6 +24,13 @@ function createAuth() {
         }
       : {}),
   },
+  baseURL: process.env.BETTER_AUTH_URL ?? `https://${process.env.VERCEL_URL ?? "adimenai-crm.vercel.app"}`,
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://adimenai-crm.vercel.app",
+    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+  ],
   plugins: [admin({ defaultRole: "comercial" }), dash(), nextCookies()],
   });
 }

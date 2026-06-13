@@ -1,11 +1,6 @@
 import { MongoClient, type Db } from "mongodb";
 
-const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB ?? "adimencrm";
-
-if (!uri) {
-  throw new Error("MONGODB_URI is not defined in environment variables");
-}
 
 type GlobalWithMongo = typeof globalThis & {
   _mongoClient?: MongoClient;
@@ -13,14 +8,26 @@ type GlobalWithMongo = typeof globalThis & {
 
 const globalForMongo = globalThis as GlobalWithMongo;
 
-export async function getDb(): Promise<Db> {
+function getUri(): string {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error("MONGODB_URI is not defined in environment variables");
+  }
+  return uri;
+}
+
+export function getMongoClient(): MongoClient {
   if (!globalForMongo._mongoClient) {
-    globalForMongo._mongoClient = new MongoClient(uri!, {
+    globalForMongo._mongoClient = new MongoClient(getUri(), {
       serverSelectionTimeoutMS: 10_000,
       appName: "AdimenCRM",
     });
   }
-  const client = globalForMongo._mongoClient;
+  return globalForMongo._mongoClient;
+}
+
+export async function getDb(): Promise<Db> {
+  const client = getMongoClient();
   await client.connect();
   return client.db(dbName);
 }

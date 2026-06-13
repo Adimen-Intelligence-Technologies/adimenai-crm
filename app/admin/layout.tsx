@@ -1,12 +1,23 @@
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/admin/sidebar";
 import { SidebarProvider } from "@/components/admin/sidebar-context";
 import { Topbar } from "@/components/admin/topbar";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/login");
+  }
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden bg-zinc-50 text-zinc-900">

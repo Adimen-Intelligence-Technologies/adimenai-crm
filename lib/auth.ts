@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins";
+import { dash } from "@better-auth/infra";
 import { getMongoClient } from "@/lib/db";
 
 function createAuth() {
@@ -23,7 +24,7 @@ function createAuth() {
         }
       : {}),
   },
-  plugins: [admin({ defaultRole: "comercial" }), nextCookies()],
+  plugins: [admin({ defaultRole: "comercial" }), dash(), nextCookies()],
   });
 }
 

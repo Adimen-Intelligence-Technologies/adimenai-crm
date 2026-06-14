@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { businessLineTheme } from "@/lib/theme";
 import {
   businessLineLabels,
+  serviceBillingShort,
   type PresupuestoStatus,
 } from "@/lib/schemas/presupuesto";
 import { activityTypeLabels } from "@/lib/schemas/activity";
@@ -376,8 +377,11 @@ export function PresupuestoDetail({
                     <th className="w-20 px-3 py-2.5 text-center font-semibold">
                       Cant.
                     </th>
-                    <th className="w-32 px-3 py-2.5 text-right font-semibold">
+                    <th className="w-28 px-3 py-2.5 text-right font-semibold">
                       Precio ud.
+                    </th>
+                    <th className="w-24 px-3 py-2.5 text-center font-semibold">
+                      Tipo
                     </th>
                     <th className="w-32 px-5 py-2.5 text-right font-semibold">
                       Total
@@ -395,6 +399,9 @@ export function PresupuestoDetail({
                       </td>
                       <td className="px-3 py-3 text-right font-mono text-sm tabular-nums text-zinc-600">
                         {formatEUR(item.unitPrice)}
+                      </td>
+                      <td className="px-3 py-3 text-center text-xs text-zinc-500">
+                        {serviceBillingShort[item.billing] ?? "/ ud."}
                       </td>
                       <td className="px-5 py-3 text-right font-mono text-sm font-semibold tabular-nums text-zinc-900">
                         {formatEUR(item.total)}

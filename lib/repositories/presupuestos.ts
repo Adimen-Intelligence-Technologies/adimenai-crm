@@ -26,6 +26,7 @@ export type Presupuesto = {
     title: string;
     quantity: number;
     unitPrice: number;
+    billing: "one_time" | "monthly" | "yearly";
     total: number;
   }>;
   subtotal: number;
@@ -257,7 +258,7 @@ export async function createPresupuestoFromActivity(
       phone: client.phones?.[0] ?? "",
     },
     introduction: "",
-    items: [{ title: "(Pendiente)", quantity: 1, unitPrice: 0, total: 0 }],
+    items: [{ title: "(Pendiente)", quantity: 1, unitPrice: 0, billing: "one_time", total: 0 }],
     taxRate: 21,
     notes: "",
     sourceActivityId: activityId,

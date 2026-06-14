@@ -107,14 +107,16 @@ const styles = StyleSheet.create({
   td: { fontSize: 9, color: "#0A2540" },
 
   colDesc: { flex: 1, paddingRight: 8 },
-  colCant: { width: 62, textAlign: "center" },
-  colPrice: { width: 82, textAlign: "right", paddingRight: 4 },
-  colIva: { width: 52, textAlign: "center" },
-  colTotal: { width: 82, textAlign: "right" },
-  colPriceCell: { width: 82, textAlign: "right", paddingRight: 4 },
-  colTotalCell: { width: 82, textAlign: "right" },
-  colCantCell: { width: 62, textAlign: "center" },
-  colIvaCell: { width: 52, textAlign: "center" },
+  colCant: { width: 52, textAlign: "center" },
+  colPrice: { width: 70, textAlign: "right", paddingRight: 4 },
+  colBilling: { width: 50, textAlign: "center" },
+  colIva: { width: 42, textAlign: "center" },
+  colTotal: { width: 72, textAlign: "right" },
+  colPriceCell: { width: 70, textAlign: "right", paddingRight: 4 },
+  colBillingCell: { width: 50, textAlign: "center" },
+  colTotalCell: { width: 72, textAlign: "right" },
+  colCantCell: { width: 52, textAlign: "center" },
+  colIvaCell: { width: 42, textAlign: "center" },
 
   totalsBlock: { alignItems: "flex-end", marginTop: 2 },
   totalRow: {
@@ -216,7 +218,7 @@ type PresupuestoPDFProps = {
   clientEmail?: string;
   clientPhone?: string;
   introduction: string;
-  items: Array<{ title: string; quantity: number; unitPrice: number; total: number }>;
+  items: Array<{ title: string; quantity: number; unitPrice: number; billing?: string; total: number }>;
   subtotal: number;
   taxRate: number;
   taxAmount: number;
@@ -293,16 +295,24 @@ export function PresupuestoPDF(props: PresupuestoPDFProps) {
               <Text style={[styles.thText, styles.colDesc]}>Descripción</Text>
               <Text style={[styles.thText, styles.colCant]}>Cantidad</Text>
               <Text style={[styles.thText, styles.colPrice]}>Precio</Text>
+              <Text style={[styles.thText, styles.colBilling]}>Tipo</Text>
               <Text style={[styles.thText, styles.colIva]}>IVA</Text>
               <Text style={[styles.thText, styles.colTotal]}>Total</Text>
             </View>
             {props.items.map((item, index) => {
               const isLast = index === props.items.length - 1;
+              const billingLabel =
+                item.billing === "monthly"
+                  ? "/ mes"
+                  : item.billing === "yearly"
+                    ? "/ año"
+                    : "/ ud.";
               return (
                 <View key={index} style={isLast ? [styles.tr, { borderBottomWidth: 0 }] : styles.tr}>
                   <Text style={[styles.td, styles.colDesc]}>{item.title}</Text>
                   <Text style={[styles.td, styles.colCantCell]}>{String(item.quantity).padStart(2, "0")}</Text>
                   <Text style={[styles.td, styles.colPriceCell]}>{formatPrice(item.unitPrice)}</Text>
+                  <Text style={[styles.td, styles.colBillingCell]}>{billingLabel}</Text>
                   <Text style={[styles.td, styles.colIvaCell]}>{props.taxRate}%</Text>
                   <Text style={[styles.td, styles.colTotalCell]}>{formatPrice(item.total)}</Text>
                 </View>

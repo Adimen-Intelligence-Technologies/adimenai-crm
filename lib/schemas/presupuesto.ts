@@ -2,6 +2,9 @@ import { z } from "zod";
 import { businessLineEnum, businessLineLabels } from "./client";
 export { businessLineEnum, businessLineLabels };
 export type { BusinessLine } from "./client";
+import { serviceBillingEnum } from "./service";
+export { serviceBillingEnum, serviceBillingLabels, serviceBillingShort } from "./service";
+export type { ServiceBilling } from "./service";
 
 export const presupuestoStatusEnum = z.enum([
   "draft",
@@ -31,6 +34,7 @@ const lineItemSchema = z.object({
   title: z.string().min(1, "El título es obligatorio"),
   quantity: z.number().min(1, "La cantidad debe ser 1 o más"),
   unitPrice: z.number().min(0, "El precio no puede ser negativo"),
+  billing: serviceBillingEnum.default("one_time"),
   total: z.number(),
 });
 export type LineItem = z.infer<typeof lineItemSchema>;

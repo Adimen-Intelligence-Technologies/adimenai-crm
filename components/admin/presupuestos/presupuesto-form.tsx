@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Plus, X, Link2, Search, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createPresupuestoSchema, calculateItemTotal, businessLineLabels } from "@/lib/schemas/presupuesto";
+import { createPresupuestoSchema, calculateItemTotal, businessLineLabels, serviceBillingLabels, serviceBillingShort, type ServiceBilling } from "@/lib/schemas/presupuesto";
 import type { Client } from "@/lib/repositories/clients";
 import type { Presupuesto } from "@/lib/repositories/presupuestos";
 import type { Service } from "@/lib/schemas/service";
@@ -16,6 +16,7 @@ type LineItem = {
   title: string;
   quantity: number;
   unitPrice: number;
+  billing: ServiceBilling;
   total: number;
 };
 
@@ -55,7 +56,7 @@ function ServiceSearchInput({
   value: string;
   onChange: (val: string) => void;
   businessLines: string[];
-  onServicePick: (service: { name: string; price: number }) => void;
+  onServicePick: (service: { name: string; price: number; billing: ServiceBilling }) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -147,7 +148,7 @@ function ServiceSearchInput({
               key={s._id}
               type="button"
               onClick={() => {
-                onServicePick({ name: s.name, price: s.price });
+                onServicePick({ name: s.name, price: s.price, billing: s.billing });
                 onChange(s.name);
                 setOpen(false);
               }}
@@ -204,7 +205,7 @@ export function PresupuestoForm({
   const [introduction, setIntroduction] = useState(initial?.introduction ?? "");
   const [items, setItems] = useState<LineItem[]>(
     initial?.items.map((i) => ({ ...i })) ?? [
-      { title: "", quantity: 1, unitPrice: 0, total: 0 },
+      { title: "", quantity: 1, unitPrice: 0, billing: "one_time", total: 0 },
     ]
   );
   const [taxRate, setTaxRate] = useState(initial?.taxRate ?? 21);
@@ -255,7 +256,7 @@ export function PresupuestoForm({
   }
 
   function addItem() {
-    setItems((prev) => [...prev, { title: "", quantity: 1, unitPrice: 0, total: 0 }]);
+    setItems((prev) => [...prev, { title: "", quantity: 1, unitPrice: 0, billing: "one_time", total: 0 }]);
   }
 
   function removeItem(index: number) {
@@ -313,7 +314,7 @@ export function PresupuestoForm({
         phone: selectedClient.phones?.[0] ?? "",
       },
       introduction,
-      items: items.map((i) => ({ title: i.title.trim(), quantity: i.quantity, unitPrice: i.unitPrice, total: i.total })),
+      items: items.map((i) => ({ title: i.title.trim(), quantity: i.quantity, unitPrice: i.unitPrice, billing: i.billing, total: i.total })),
       taxRate,
       notes,
       sourceActivityId: sourceActivityId || "",
@@ -502,6 +503,7 @@ export function PresupuestoForm({
                 <th className="px-10 py-2.5 pr-2">Descripción</th>
                 <th className="w-20 px-2 py-2.5 text-center">Cantidad</th>
                 <th className="w-24 px-2 py-2.5 text-right">Precio</th>
+                <th className="w-28 px-2 py-2.5 text-center">Tipo</th>
                 <th className="w-14 px-2 py-2.5 text-center">IVA</th>
                 <th className="w-24 px-2 py-2.5 pr-10 text-right">Total</th>
               </tr>
@@ -515,7 +517,7 @@ export function PresupuestoForm({
                         value={item.title}
                         onChange={(val) => updateItem(i, { title: val })}
                         businessLines={businessLines}
-                        onServicePick={(svc) => updateItem(i, { title: svc.name, unitPrice: svc.price })}
+                        onServicePick={(svc) => updateItem(i, { title: svc.name, unitPrice: svc.price, billing: svc.billing })}
                       />
                       {items.length > 1 && (
                         <button
@@ -546,6 +548,24 @@ export function PresupuestoForm({
                       onChange={(e) => updateItem(i, { unitPrice: Math.max(0, parseFloat(e.target.value) || 0) })}
                       className="w-20 rounded border border-zinc-200 bg-transparent py-1 text-right text-xs text-zinc-900 outline-none focus:border-[#3B1E8A]"
                     />
+                  </td>
+                  <td className="px-2 py-1.5 text-center">
+                    <div className="inline-flex rounded-md border border-zinc-200 bg-zinc-50 text-[10px]">
+                      {(["monthly", "yearly", "one_time"] as const).map((b) => (
+                        <button
+                          key={b}
+                          type="button"
+                          onClick={() => updateItem(i, { billing: b })}
+                          className={`px-1.5 py-1 font-medium transition-colors ${
+                            item.billing === b
+                              ? "bg-[#3B1E8A] text-white"
+                              : "text-zinc-500 hover:text-zinc-800"
+                          }`}
+                        >
+                          {serviceBillingShort[b]}
+                        </button>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-2 py-1.5 text-center text-xs text-zinc-500">{taxRate}%</td>
                   <td className="px-2 py-1.5 pr-10 text-right font-mono text-xs font-medium text-zinc-900">

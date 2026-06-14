@@ -72,3 +72,8 @@ export async function getActivitiesCollection() {
   const db = await getDb();
   return db.collection("activities");
 }
+
+export async function getVisitPlansCollection() {
+  const db = await getDb();
+  return db.collection("visitPlans");
+}
